@@ -2,7 +2,7 @@
   "name": "bale",
   "private": true,
   "type": "module",
-  "license": "AGPL-3.0-or-later",
+  "license": "MIT",
   "packageManager": "bun@1.4.1",
   "workspaces": [
     "apps/*",

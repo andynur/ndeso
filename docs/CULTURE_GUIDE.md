@@ -9,7 +9,7 @@
 2. **People are people first.** An NPC's regional or religious identity is a background detail, not a punchline or their whole personality.
 3. **No sacred things as loot.** Sacred objects, prayers, and rituals are never items to sell, farm, or grind.
 4. **Portray the diversity that is actually there.** Baledono is a Javanese, overwhelmingly Muslim kelurahan — writing it otherwise would be a different kind of falsehood. Its real diversity is local: musholla on the lanes and a masjid agung in town, a church in Purworejo (a colonial-era town), a Chinese-Indonesian trading presence around the pasar that is part of the fabric rather than a token. Show what is there; do not import a diversity checklist, and do not flatten the place into one note either.
-5. **Ask the community.** Anything regional gets reviewed by at least one person from that region before v1. Because the setting is a real kelurahan, **this review happens before M2 writing begins**, not at M4. Use the *Culture feedback* issue template.
+5. **Ask the community.** Anything regional gets reviewed by at least one person from that region before v1. Because the setting is a real kelurahan, **this review happens before M2 writing begins**, not at M4 — it is ROADMAP task **M1-11**, and the pack to send and the questions to ask are in [`docs/culture-review/`](culture-review/README.md). Use the *Culture feedback* issue template for anything that arrives later.
 
 ## 2. Glossary seeds (keep terms consistent; also used by the in-game *Kamus*)
 

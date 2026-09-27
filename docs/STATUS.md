@@ -20,6 +20,17 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · scope · docs/m1-scope-and-review-pack
+- Done: the decisions M1-01 needed before a line of it was written, plus the M1-11 review pack (`docs/culture-review/`), plus two real bugs found on the way.
+- Notes/decisions:
+  - **Prayer-time bands are a fixed table varying by mangsa, not computed.** Real prayer times need latitude, longitude and a date — astronomy, which would cost `packages/sim` its purity and determinism to buy precision the game never uses. Identical reasoning to ADR-0007's tabular Hijri choice. Recorded in GDD §3.2 so it does not get "improved" mid-task.
+  - **M1-01 also validates the calendar data it reads.** `check:content` is a stub until M2-01, 20+ tasks away, so without this M1-01 consumes `mangsa.json5` with nothing checking that `gameDays` still sums to 120 — and a golden test would happily snapshot the wrong answer as correct. A narrow validator, not the full M2-01 schema: the task that consumes a data file validates it.
+  - **The calendar locale keys had no home.** GDD said they land "in the task that first surfaces them (M1-01)", but M1-01 is pure sim and *no M1 task owned the HUD clock* that GDD §3.2 specifies — so they would have landed nowhere. Keys ship in M1-01 (AGENTS rule 3 binds whoever introduces the vocabulary); the HUD rides on **M1-08**, the first task with a persistent on-screen readout.
+  - **`package.json` declared `AGPL-3.0-or-later` while LICENSE, README and Accepted ADR-0005 all say MIT.** Three sources against one. Fixed to MIT. Not cosmetic — the obligations differ completely, and a public repo publishing builds makes it concrete.
+  - **`.claude/agents/reviewer.md` still told the reviewer to check "season change"**, which stopped existing at ADR-0007. Now mangsa and pasaran boundaries.
+  - **M1-11 is unblocked and should start in parallel.** The pack is written and aimed at four kinds of reader (Baledono resident, NU/pesantren background, Bagelen speaker, farmer). 25 questions, front-loaded with the one that matters most: whether using the real name "Balé Al Jannah" is appropriate at all, and who to ask. A review round takes weeks and blocks every line of M2 dialog.
+- Next: M1-01.
+
 ### 2026-09-27 · ci · ci/pages-deploy
 - Done: every merge to `main` now publishes the built client to <https://andynur.github.io/ndeso/>. `apps/client/build.ts` gained `--public-path`; `shellFiles`, the precache manifest and `check:size` learned about it.
 - Tests: `bun run check` green — **173 pass** (9 new). Verified the real artefact, not just the flags: built with `--public-path /ndeso/` and confirmed the emitted HTML references `/ndeso/index-<hash>.js` and the manifest lists prefixed URLs; then confirmed `check:size` still measures correctly for both a root build and a project-site build.
