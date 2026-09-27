@@ -27,11 +27,47 @@ if [ "$ACTUAL" != "$BUN_VERSION" ]; then
   FAILED="${FAILED} bun(want ${BUN_VERSION}, got ${ACTUAL})"
 fi
 
+# Trust the workspace, so the repo's own permission allow-list is actually honoured.
+#
+# Without this, Claude Code prints
+#   "Ignoring 34 permissions.allow entries from .claude/settings.json:
+#    this workspace has not been trusted"
+# and every allow-listed command falls back to asking. The allow-list in
+# .claude/settings.json is read-only shell verbs and safe git subcommands, reviewed in PRs
+# like any other file — this makes that list effective rather than decorative.
+#
+# It grants nothing beyond what that file already declares: the deny-list still applies,
+# and `git push`, `curl`, `wget` and dependency changes stay on "ask".
+CLAUDE_JSON=/root/.claude.json
+WORKSPACE="${BALE_WORKSPACE:-/home/user/repo}"
+if ! python3 - "$CLAUDE_JSON" "$WORKSPACE" <<'PY'
+import json, os, sys
+
+path, workspace = sys.argv[1], sys.argv[2]
+data = {}
+if os.path.exists(path):
+    try:
+        with open(path) as handle:
+            data = json.load(handle)
+    except (OSError, ValueError) as error:
+        # Do not clobber a file we could not parse — a corrupt ~/.claude.json is the
+        # user's session history and credentials pointer.
+        print(f"cannot read {path}: {error}", file=sys.stderr)
+        raise SystemExit(1)
+
+data.setdefault("projects", {}).setdefault(workspace, {})["hasTrustDialogAccepted"] = True
+with open(path, "w") as handle:
+    json.dump(data, handle, indent=2)
+PY
+then
+  FAILED="${FAILED} trust(${WORKSPACE})"
+fi
+
 if [ -n "$FAILED" ]; then
   echo "SETUP INCOMPLETE —${FAILED}"
   echo "see /tmp/bun-install.log; the SessionStart hook will warn again"
   exit 1
 fi
 
-echo "setup ok — bun ${ACTUAL}"
+echo "setup ok — bun ${ACTUAL} | workspace trusted: ${WORKSPACE}"
 exit 0
