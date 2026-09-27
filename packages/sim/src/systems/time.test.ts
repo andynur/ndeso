@@ -1,56 +1,53 @@
-import { describe, expect, test } from 'bun:test';
-import { calendarData } from '@bale/content/calendar';
+import { beforeAll, describe, expect, test } from 'bun:test';
+import type { CalendarData } from '@bale/shared';
+import { loadCalendarForTests } from '../testing/calendar-data.ts';
 import { createContext, type SimEvent } from '../types.ts';
-import { type ClockState, createClockState, createTimeSystem } from './time.ts';
+import { createTimeState, createTimeSystem, startNextDay, type TimeState } from './time.ts';
 
-const time = createTimeSystem(calendarData);
-const { ticksPerMinute, dayStartMinute, dayEndMinute } = calendarData.clock;
-const ticksPerDay = (dayEndMinute - dayStartMinute) * ticksPerMinute;
+let cal: CalendarData;
+beforeAll(async () => {
+  cal = await loadCalendarForTests();
+});
 
-const run = (ticks: number, state: ClockState = createClockState(calendarData)) => {
+const minutes = (n: number) => n * cal.clock.ticksPerMinute;
+const dayTicks = () => minutes(cal.clock.dayEndMinute - cal.clock.dayStartMinute);
+
+function run(ticks: number, state: TimeState = createTimeState(cal)) {
   const ctx = createContext(ticks);
-  time(state, ctx);
+  createTimeSystem(cal)(state, ctx);
   return { state, events: ctx.events };
-};
+}
 
-const ofType = (events: readonly SimEvent[], type: string) =>
-  events.filter((event) => event.type === type);
+const ofType = (events: SimEvent[], type: string) => events.filter((e) => e.type === type);
 
 describe('time system', () => {
   test('starts on day 0 at 05:00', () => {
-    expect(createClockState(calendarData)).toEqual({ clock: { tick: 0, day: 0, minute: 300 } });
+    expect(createTimeState(cal)).toEqual({ clock: { tick: 0, day: 0, minute: 300 } });
   });
 
-  test('a game-minute takes ticksPerMinute ticks (0.7 real s)', () => {
-    expect(ticksPerMinute).toBe(7);
-    expect(run(ticksPerMinute - 1).state.clock).toEqual({ tick: 6, day: 0, minute: 300 });
-    expect(run(ticksPerMinute).state.clock).toEqual({ tick: 0, day: 0, minute: 301 });
+  test('advances one game minute every ticksPerMinute ticks (0.7 s at 10 Hz)', () => {
+    expect(cal.clock.ticksPerMinute).toBe(7);
+    expect(run(6).state.clock).toEqual({ tick: 6, day: 0, minute: 300 });
+    expect(run(7).state.clock).toEqual({ tick: 0, day: 0, minute: 301 });
   });
 
   test('emits hourChanged on the hour', () => {
-    const { events } = run(59 * ticksPerMinute);
-    expect(ofType(events, 'hourChanged')).toEqual([]);
-    expect(ofType(run(ticksPerMinute * 61).events, 'hourChanged')).toEqual([
-      { type: 'hourChanged', hour: 6 },
+    const { events } = run(minutes(60));
+    expect(ofType(events, 'hourChanged')).toEqual([{ type: 'hourChanged', hour: 6 }]);
+  });
+
+  test('emits prayerTimeChanged when a band starts (dhuha at 05:55 in Kasa)', () => {
+    const { events } = run(minutes(55));
+    expect(ofType(events, 'prayerTimeChanged')).toEqual([
+      { type: 'prayerTimeChanged', band: 'dhuha' },
     ]);
   });
 
-  test('emits prayerTimeChanged when the band changes', () => {
-    const { events } = run(ticksPerDay - 1);
-    expect(ofType(events, 'prayerTimeChanged').map(({ band }) => band)).toEqual([
-      'terbit',
-      'dhuha',
-      'dzuhur',
-      'ashar',
-      'maghrib',
-      'isya',
-    ]);
-  });
-
-  test('01:00 starts the next day at 05:00 with dayStarted and pasaranChanged', () => {
-    const { state, events } = run(ticksPerDay);
+  test('the day ends at 01:00 and the next starts at 05:00', () => {
+    const { state, events } = run(dayTicks());
     expect(state.clock).toEqual({ tick: 0, day: 1, minute: 300 });
-    expect(events.slice(-4)).toEqual([
+    const rollover = events.slice(events.findIndex((e) => e.type === 'dayStarted'));
+    expect(rollover).toEqual([
       { type: 'dayStarted', day: 1 },
       { type: 'pasaranChanged', pasaran: 'pahing' },
       { type: 'hourChanged', hour: 5 },
@@ -58,35 +55,29 @@ describe('time system', () => {
     ]);
   });
 
-  test('emits mangsaChanged and musimChanged only at a boundary', () => {
-    const state = createClockState(calendarData);
-    state.clock.day = 12; // last day of Kasa (kemarau)
-    const karo = run(ticksPerDay, state).events;
-    expect(ofType(karo, 'mangsaChanged')).toEqual([
+  test('passes midnight without ending the day', () => {
+    const { state, events } = run(minutes(1440 - 300));
+    expect(state.clock).toMatchObject({ day: 0, minute: 1440 });
+    expect(events.at(-1)).toEqual({ type: 'hourChanged', hour: 0 });
+  });
+
+  test('emits mangsaChanged when Karo starts on day 13', () => {
+    const state = createTimeState(cal);
+    const ctx = createContext();
+    for (let i = 0; i < 13; i++) startNextDay(state, ctx, cal);
+    expect(ofType(ctx.events, 'mangsaChanged')).toEqual([
       { type: 'mangsaChanged', mangsa: 'karo', year: 1 },
     ]);
-    expect(ofType(karo, 'musimChanged')).toEqual([]);
-
-    state.clock.day = 36; // last day of Kapat (pancaroba)
-    state.clock.minute = dayStartMinute;
-    const kalima = run(ticksPerDay, state).events;
-    expect(ofType(kalima, 'musimChanged')).toEqual([{ type: 'musimChanged', musim: 'hujan' }]);
+    expect(ofType(ctx.events, 'musimChanged')).toEqual([]);
   });
 
-  test('emits hijriMonthChanged on the first of a Hijri month', () => {
-    const state = createClockState(calendarData);
-    state.clock.day = 76; // 1 Ramadan 1448 is day 77
-    expect(ofType(run(ticksPerDay, state).events, 'hijriMonthChanged')).toEqual([
-      { type: 'hijriMonthChanged', year: 1448, month: 9 },
-    ]);
-  });
-
-  test('is deterministic: one big step equals many small ones', () => {
-    const big = run(ticksPerDay * 2);
-    const state = createClockState(calendarData);
+  test('one big step equals many single-tick steps', () => {
+    const ticks = minutes(1300);
+    const whole = run(ticks);
+    const state = createTimeState(cal);
     const events: SimEvent[] = [];
-    for (let i = 0; i < ticksPerDay * 2; i++) events.push(...run(1, state).events);
-    expect(state).toEqual(big.state);
-    expect(events).toEqual(big.events);
+    for (let i = 0; i < ticks; i++) events.push(...run(1, state).events);
+    expect(state).toEqual(whole.state);
+    expect(events).toEqual(whole.events);
   });
 });

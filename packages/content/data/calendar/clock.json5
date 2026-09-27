@@ -1,37 +1,19 @@
-// The game clock and the prayer-time bands the HUD reads it in (GDD §3, §3.2).
+// The game clock and the anchors that pin every calendar to day 0 (GDD §3, ADR-0007).
 //
-// Minutes count from the game day's midnight, so the day runs from 05:00 (300)
-// until 01:00 the next morning (1500): reaching 01:00 starts the next day at
-// 05:00, so the clock itself never reads 01:00. One game-minute is 7 ticks at 10 ticks/s,
-// i.e. 0.7 real seconds, so a day is ~14 real minutes.
+// Times are minutes since the midnight that opens the game day. A day runs
+// 05:00 → 01:00, so `dayEndMinute` is past 24:00 (1500 = 01:00 the next morning).
+// At 10 sim ticks per second (ARCHITECTURE §3.1), 7 ticks per game minute is the
+// GDD's "1 game-minute = 0.7 real s", which makes a day ~14 real minutes.
 //
-// Prayer bands are a FIXED TABLE per mangsa, not astronomy (GDD §3.2,
-// ADR-0007). A band starts at its time and lasts until the next band starts;
-// `isya` runs past midnight until the day ends. These are a time display only:
-// they never gate, score or require anything (CULTURE_GUIDE §3).
-//
-// verified: false — approximate Kemenag times for the Yogyakarta/Purworejo
-// area, taken at the middle of each mangsa's real date range and rounded.
-// `dhuha` is set ~20 minutes after `terbit`. A local jadwal sholat should
-// confirm them before v1. Correcting a time here needs no code change.
+// Day 0 is the arrival and the first day of Kasa. The anchors below are design
+// choices, not facts to verify: the real Kasa starts around 22 June, and 22 June
+// 2026 was a Senin falling on 6 Muharram 1448 in the tabular calendar, so the
+// save opens in a plausible present. Pasaran is `day % 5` (ADR-0007), so day 0
+// is Legi by definition.
 {
-  verified: false,
   ticksPerMinute: 7,
   dayStartMinute: 300,
   dayEndMinute: 1500,
-  prayer: {
-    //          subuh    terbit   dhuha    dzuhur   ashar    maghrib  isya
-    kasa:     { subuh: '04:28', terbit: '05:47', dhuha: '06:07', dzuhur: '11:47', ashar: '15:08', maghrib: '17:36', isya: '18:50' },
-    karo:     { subuh: '04:25', terbit: '05:42', dhuha: '06:02', dzuhur: '11:48', ashar: '15:09', maghrib: '17:43', isya: '18:54' },
-    katelu:   { subuh: '04:14', terbit: '05:30', dhuha: '05:50', dzuhur: '11:42', ashar: '14:59', maghrib: '17:46', isya: '18:55' },
-    kapat:    { subuh: '04:00', terbit: '05:16', dhuha: '05:36', dzuhur: '11:34', ashar: '14:44', maghrib: '17:46', isya: '18:57' },
-    kalima:   { subuh: '03:52', terbit: '05:08', dhuha: '05:28', dzuhur: '11:31', ashar: '14:46', maghrib: '17:49', isya: '19:01' },
-    kanem:    { subuh: '03:52', terbit: '05:11', dhuha: '05:31', dzuhur: '11:39', ashar: '15:04', maghrib: '18:01', isya: '19:15' },
-    kapitu:   { subuh: '04:06', terbit: '05:25', dhuha: '05:45', dzuhur: '11:52', ashar: '15:19', maghrib: '18:10', isya: '19:25' },
-    kawolu:   { subuh: '04:15', terbit: '05:33', dhuha: '05:53', dzuhur: '11:54', ashar: '15:17', maghrib: '18:08', isya: '19:20' },
-    kasanga:  { subuh: '04:17', terbit: '05:34', dhuha: '05:54', dzuhur: '11:49', ashar: '15:05', maghrib: '17:59', isya: '19:08' },
-    kasadasa: { subuh: '04:16', terbit: '05:32', dhuha: '05:52', dzuhur: '11:41', ashar: '14:58', maghrib: '17:48', isya: '18:58' },
-    dhesta:   { subuh: '04:18', terbit: '05:35', dhuha: '05:55', dzuhur: '11:37', ashar: '14:57', maghrib: '17:38', isya: '18:50' },
-    sadha:    { subuh: '04:23', terbit: '05:42', dhuha: '06:02', dzuhur: '11:40', ashar: '15:02', maghrib: '17:35', isya: '18:49' },
-  },
+  weekdayOfDay0: 'mon',
+  hijriOfDay0: { year: 1448, month: 1, day: 6 },
 }

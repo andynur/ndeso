@@ -1,113 +1,115 @@
 import { describe, expect, test } from 'bun:test';
-import { CalendarDataError, parseClockTime, validateCalendarData } from './calendar.ts';
+import { parseClockTime, type RawCalendarFiles, validateCalendar } from './calendar.ts';
 
-const times = {
-  subuh: '04:20',
-  terbit: '05:40',
-  dhuha: '06:00',
-  dzuhur: '11:45',
-  ashar: '15:05',
-  maghrib: '17:40',
-  isya: '18:55',
+const TIMES = ['04:30', '05:50', '11:45', '15:00', '17:40', '18:50'];
+
+function nth<T>(items: T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) throw new Error(`fixture has no item ${index}`);
+  return item;
+}
+
+/** A minimal valid set: two mangsa of 60 game days each. */
+function files() {
+  return {
+    mangsa: {
+      realYearDays: 365,
+      gameYearDays: 120,
+      mangsa: [
+        { id: 'kasa', realDays: 180, gameDays: 60, musim: 'kemarau' },
+        { id: 'karo', realDays: 185, gameDays: 60, musim: 'hujan' },
+      ],
+    },
+    clock: {
+      ticksPerMinute: 7,
+      dayStartMinute: 300,
+      dayEndMinute: 1500,
+      weekdayOfDay0: 'mon',
+      hijriOfDay0: { year: 1448, month: 1, day: 6 },
+    },
+    prayerTimes: {
+      bands: ['subuh', 'dhuha', 'dzuhur', 'ashar', 'maghrib', 'isya'],
+      byMangsa: [
+        { mangsa: 'kasa', starts: TIMES },
+        { mangsa: 'karo', starts: TIMES },
+      ],
+    },
+  };
+}
+
+const errorsOf = (raw: RawCalendarFiles): readonly string[] => {
+  const result = validateCalendar(raw);
+  return result.ok ? [] : result.errors;
 };
 
-const valid = () => ({
-  mangsa: {
-    verified: false,
-    realYearDays: 365,
-    gameYearDays: 10,
-    mangsa: [
-      { id: 'kasa', realDays: 200, gameDays: 6, musim: 'kemarau' },
-      { id: 'karo', realDays: 165, gameDays: 4, musim: 'hujan' },
-    ],
-  },
-  clock: {
-    ticksPerMinute: 7,
-    dayStartMinute: 300,
-    dayEndMinute: 1500,
-    prayer: { kasa: { ...times }, karo: { ...times } },
-  },
-  hijri: {
-    monthDays: [9, 10, 10, 9, 10, 10, 9, 10, 10, 9, 10, 10],
-    cycleYears: 30,
-    leapYears: [2, 5, 7],
-    epoch: { year: 1448, month: 1, day: 1 },
-  },
+describe('validateCalendar', () => {
+  test('accepts valid data and converts prayer times to minutes', () => {
+    const result = validateCalendar(files());
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.mangsa[0]?.prayerStarts[0]).toBe(270);
+  });
+
+  test('rejects gameDays that do not sum to gameYearDays', () => {
+    const raw = files();
+    nth(raw.mangsa.mangsa, 0).gameDays = 59;
+    expect(errorsOf(raw)).toContain('mangsa.json5: gameDays sum to 119, but gameYearDays is 120');
+  });
+
+  test('rejects a year length that breaks the pasaran grid', () => {
+    const raw = files();
+    raw.mangsa.gameYearDays = 121;
+    nth(raw.mangsa.mangsa, 0).gameDays = 61;
+    expect(errorsOf(raw).join()).toContain('divisible by 5');
+  });
+
+  test('rejects duplicate mangsa ids', () => {
+    const raw = files();
+    nth(raw.mangsa.mangsa, 1).id = 'kasa';
+    expect(errorsOf(raw).join()).toContain("'kasa' is a duplicate");
+  });
+
+  test('rejects an unknown musim tag', () => {
+    const raw = files();
+    nth(raw.mangsa.mangsa, 0).musim = 'both';
+    expect(errorsOf(raw).join()).toContain("kasa.musim 'both' is not one of");
+  });
+
+  test('rejects a mangsa with no prayer-time row, and a row for an unknown mangsa', () => {
+    const raw = files();
+    nth(raw.prayerTimes.byMangsa, 1).mangsa = 'kapat';
+    const errors = errorsOf(raw).join('\n');
+    expect(errors).toContain("no row for mangsa 'karo'");
+    expect(errors).toContain("row for unknown mangsa 'kapat'");
+  });
+
+  test('rejects prayer times out of order', () => {
+    const raw = files();
+    nth(raw.prayerTimes.byMangsa, 0).starts = [...TIMES].reverse();
+    expect(errorsOf(raw).join()).toContain('kasa: starts must be strictly increasing');
+  });
+
+  test('rejects an impossible Hijri anchor', () => {
+    const raw = files();
+    raw.clock.hijriOfDay0 = { year: 1448, month: 2, day: 30 };
+    expect(errorsOf(raw).join()).toContain('hijriOfDay0');
+  });
+
+  test('rejects a day that ends before it starts', () => {
+    const raw = files();
+    raw.clock.dayEndMinute = 200;
+    expect(errorsOf(raw).join()).toContain('dayEndMinute');
+  });
 });
 
-const problemsOf = (sources: ReturnType<typeof valid>): readonly string[] => {
-  try {
-    validateCalendarData(sources);
-    return [];
-  } catch (error) {
-    if (error instanceof CalendarDataError) return error.problems;
-    throw error;
-  }
-};
-
 describe('parseClockTime', () => {
-  test('reads HH:MM as minutes from midnight', () => {
+  test('reads HH:MM as minutes after midnight', () => {
     expect(parseClockTime('00:00')).toBe(0);
-    expect(parseClockTime('17:36')).toBe(1056);
+    expect(parseClockTime('18:51')).toBe(1131);
   });
 
   test('rejects anything else', () => {
-    for (const bad of ['24:00', '12:60', '9:05', '0905', 905, undefined]) {
+    for (const bad of ['24:00', '5:00', '12:60', 300, undefined]) {
       expect(parseClockTime(bad)).toBeUndefined();
     }
-  });
-});
-
-describe('validateCalendarData', () => {
-  test('accepts valid data and converts prayer times to minutes', () => {
-    const data = validateCalendarData(valid());
-    expect(data.clock.prayer['kasa']?.maghrib).toBe(17 * 60 + 40);
-  });
-
-  test('rejects mangsa lengths that do not sum to the year', () => {
-    const sources = valid();
-    sources.mangsa.gameYearDays = 11;
-    expect(problemsOf(sources)).toEqual(['mangsa: gameDays sum to 10, but gameYearDays is 11']);
-  });
-
-  test('rejects duplicate ids and unknown musim', () => {
-    const sources = valid();
-    sources.mangsa.mangsa[1] = { id: 'kasa', realDays: 165, gameDays: 4, musim: 'semi' };
-    expect(problemsOf(sources)).toEqual([
-      "mangsa[1]: duplicate id 'kasa'",
-      "mangsa[1] (kasa): unknown musim 'semi'",
-      'clock.prayer.karo: not a mangsa id',
-    ]);
-  });
-
-  test('requires a prayer row per mangsa, with bands in order', () => {
-    const sources = valid();
-    sources.clock.prayer = {
-      kasa: { ...times, ashar: '11:00' },
-      karo: undefined as unknown as typeof times,
-    };
-    expect(problemsOf(sources)).toEqual([
-      'clock.prayer.kasa.ashar: not after the band before',
-      'clock.prayer.karo: missing',
-    ]);
-  });
-
-  test('checks the Hijri table and epoch', () => {
-    const sources = valid();
-    sources.hijri.monthDays = [9, 10];
-    sources.hijri.leapYears = [2, 2, 31];
-    sources.hijri.epoch = { year: 1448, month: 13, day: 1 };
-    expect(problemsOf(sources)).toEqual([
-      'hijri.monthDays: expected 12 positive integers',
-      'hijri.leapYears: expected unique integers in 1..30',
-      'hijri.epoch: expected a valid { year, month, day }',
-    ]);
-  });
-
-  test('lists every problem at once in the error message', () => {
-    const sources = valid();
-    sources.mangsa.gameYearDays = 11;
-    sources.clock.ticksPerMinute = 0;
-    expect(() => validateCalendarData(sources)).toThrow(/gameDays sum to 10[\s\S]*ticksPerMinute/);
   });
 });

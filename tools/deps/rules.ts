@@ -270,9 +270,7 @@ export function checkImport(
   if (region === rule.region) return undefined;
 
   if (region !== undefined && rule.typeOnlyRegions?.includes(region) === true) {
-    // A test may load real data as a fixture (the sim golden runs on the shipped calendar);
-    // tests are never bundled, so this cannot leak runtime content into the sim.
-    return ref.typeOnly || isTestFile(fromFile)
+    return ref.typeOnly
       ? undefined
       : fail(
           `imports '${ref.specifier}' as a value — ${rule.region} may only import types from ${region}`,

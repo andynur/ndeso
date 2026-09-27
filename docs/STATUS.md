@@ -6,11 +6,11 @@
 ## Now
 - **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-02 (fixed-step game loop with render interpolation and pause on hide — ARCH §4.1). It should drive `createTimeSystem(calendarData)` from `@bale/sim`.
+- **Next task:** M1-02 (fixed-step game loop with render interpolation and pause on hide — ARCH §4.1). It wires `createTimeSystem(cal)` from `@bale/sim` into the client loop.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2, blocks release not development) · `verified: false` on the mangsa lengths (§12.6) **and on the prayer table in `clock.json5`** · the Hijri epoch (1 Muharram 1448 = day 0) is a design knob. Repo stays `ndeso`; the game is `Balé` (§12.3 closed)
-- **Known issues:** `check:content` (M2-01) and `smoke` (M2-19) are still `tools/todo.ts` stubs. `ui:hud.day` / `ui:season.*` still describe the old two-season model; M1-08 replaces them. The `clock` slice is not in a save schema yet (no `shared/save.ts` exists); the task that adds saves must include it.
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19); the calendar data is already validated by `bun test`. Shell size is 120 KB brotli of a 350 KB budget (three.js + Preact; no art yet).
 
 ## Log
 <!-- Newest first. Format:
@@ -20,10 +20,17 @@
 - Notes/decisions: …
 - Next: …
 -->
-### 2026-09-27 · M1-01 · claude/cool-albattani-s1w499
-- Done: `sim/calendar.ts` holds the pure projections of `day`: mangsa, musim, pasaran, weekday, tabular Hijri, and the prayer band. `sim/systems/time.ts` (`createTimeSystem`) emits the ARCH §3.2 events and replaces `hello`. `shared/calendar.ts` has the types and the narrow validator. `content/calendar.ts` validates `mangsa`, `clock` and `hijri.json5` at import time. A new `calendar` locale namespace (EN + ID) holds mangsa names and signs, musim, prayer bands and Hijri months.
-- Tests: `bun run check` green, 203 tests. New: validator, projections (including the real 10 631-day cycle), time system, and a golden run of 3 years of every-day projections, calendar events and festival dates.
-- Notes/decisions: Hijri months are **proportional** (9–10 days, Ramadan 10; the user chose this over a 30-day Ramadan), and GDD §10 now says so. The prayer table is approximate Kemenag times for the Yogyakarta area. A deps-gate exception lets `*.test.ts` in sim import content data as a fixture (ARCH §2). JSON5 goes through Bun's native import, so there is no new dependency.
+### 2026-09-27 · M1-01 follow-up · claude/cool-albattani-s1w499
+- Done: settled the open GDD §10 question. The owner chose **proportional** Hijri months, so Ramadan stays 9–10 game days (30 in life), as the build already does. There is no Ramadan-specific rule. GDD §10 is updated.
+- Notes: this branch had a second, independent M1-01 implementation. It was dropped in favour of the one merged in PR #14, and only this decision was carried over.
+
+### 2026-09-27 · M1-01 · claude/brave-ramanujan-rkivah
+- Done: `time` system + pure calendar projections in `packages/sim` (mangsa, musim, pasaran, weekday, tabular Hijri, prayer band); calendar schema/validator in `packages/shared`; `clock.json5` + `prayer-times.json5`; `calendar` locale namespace with the 12 mangsa names and pertanda in EN + ID. `hello` system deleted.
+- Tests: `bun run check` green — **211 pass**, incl. a 3-year golden (mangsa boundaries, Ramadan/Lebaran/Idul Adha dates) and a check that the system's events agree with the projections over all 360 days. Hijri arithmetic cross-checked ad hoc against ICU `islamic-civil` over ~1,400 years.
+- Notes/decisions:
+  - **Hijri = real tabular calendar sampled at 365/120 real days per game day**, so months are 9–10 game days and Ramadan drifts 3–4 days earlier per year (76 → 73 → 69 in-year). Festivals are real tabular dates mapped to the first game day on/after them, so 10 Dzulhijah shows as game day 4 of that month.
+  - **Schema in `shared`, file reading in `content`.** That let sim tests validate the real JSON5 (via `src/testing/calendar-data.ts`, test-only) without breaking the types-only sim → content rule. `ClockState` lives in `sim` until `save.ts` exists.
+  - Day 0 anchors: Senin, Legi, 6 Muharram 1448 (= real 22 June 2026, ~start of Kasa). Clock: 7 ticks/min, day 05:00 → 01:00.
 - Next: M1-02.
 
 ### 2026-09-27 · scope · docs/m1-scope-and-review-pack
@@ -134,3 +141,14 @@
   - `Season` / `Weekday` / `Pasaran` literals live in the i18n runtime for now; M1-01 owns the clock and moves them into `packages/shared`.
   - `@preact/signals` added (already on the TECH_STACK §2 allow-list) and `@bale/shared` linked into the root so `tools/` can import it.
 - Next: M0-05
+### 2026-09-27 · M0-03 · feat/M0-03-client-bootstrap
+- Done: `apps/client` walking skeleton — `index.html` + `src/main.ts`, Three.js scene (ground plane, rotating low-poly house placeholder, camera per DESIGN §1.1: FOV 30 / pitch 38 / distance 14), Preact overlay reading strings from the locale bundles, `src/ui/tokens.ts` mirroring DESIGN §2, `src/render/quality/presets.ts` (preset + DPR cap per PERF §4). `tools/dev.ts` serves it with HMR on `0.0.0.0` and prints the LAN URL.
+- Tests: `bun run check` green; 26 tests across 5 files (8 new for `quality.ts`). Verified in headless Chromium: overlay renders over the WebGL canvas, no page console errors, scene draws.
+- Notes/decisions:
+  - `check:types` is now two programs: `tsc -b --noEmit` for `packages/*` + `tools/*` (bun-types), then `tsc -b apps/client --noEmit` for browser code (`lib: ["DOM","ES2023"]`, `types: []`) as TECH_STACK §4 requires. Build mode accepts `--noEmit` per project; it is only composite *references* that TS 5.9 rejects (TS6310), so no project references were reintroduced.
+  - Added dev dep `@types/three` (three ships no declarations), pinned to three's minor and listed in TECH_STACK §2. Types only — never bundled.
+  - New strings `boot.hello` / `boot.placeholder` in both `locales/en/ui.json` and `locales/id/ui.json`; no hardcoded player-facing text. `src/i18n/boot.ts` is a ~20-line eager loader (`resolveLocale(navigator.languages)` + JSON imports) so the first frame needs no fetch; M0-04 replaces it with the real runtime.
+  - ARCHITECTURE §2 forbids `render/` importing `ui/`, so `main.ts` reads `ui/tokens.ts` and passes a `ScenePalette` down instead of the scene importing the tokens. Lighting uses the DESIGN §1.3 noon keyframe directly (those are lighting values, not §2 palette tokens); M1-07 moves the table into `content/data/lighting.json5`.
+  - The scene owns only rendering plumbing (DPR cap, resize observer, `visibilitychange` pause, `webglcontextlost`/`restored`). The fixed-step loop and interpolation are M1-02; sprites M1-03; the full camera rig M1-04.
+  - **Not verified on a real phone yet** — the ROADMAP AC "loads on a phone" needs the maintainer to open the printed LAN URL. The device checklist is M1-10.
+- Next: M0-04

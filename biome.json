@@ -66,12 +66,7 @@
       }
     },
     {
-      "includes": [
-        "packages/shared/src/message.ts",
-        "packages/shared/src/calendar.ts",
-        "packages/shared/src/calendar.test.ts",
-        "apps/client/src/platform/env.ts"
-      ],
+      "includes": ["packages/shared/src/message.ts", "apps/client/src/platform/env.ts"],
       "linter": {
         "rules": {
           "complexity": {

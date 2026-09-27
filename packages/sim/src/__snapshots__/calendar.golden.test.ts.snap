@@ -1,0 +1,56 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`mangsa boundaries for 3 years 1`] = `
+[
+  "day   0 · y1 · kasa 1/13 (kemarau) · mon legi · 2/1/1448 of 10",
+  "day  13 · y1 · karo 1/8 (kemarau) · sun wage · 5/2/1448 of 9",
+  "day  21 · y1 · katelu 1/8 (kemarau) · mon pahing · 4/3/1448 of 10",
+  "day  29 · y1 · kapat 1/8 (pancaroba) · tue kliwon · 2/4/1448 of 10",
+  "day  37 · y1 · kalima 1/9 (hujan) · wed pon · 10/4/1448 of 10",
+  "day  46 · y1 · kanem 1/14 (hujan) · fri pahing · 9/5/1448 of 10",
+  "day  60 · y1 · kapitu 1/14 (hujan) · fri legi · 4/7/1448 of 10",
+  "day  74 · y1 · kawolu 1/9 (hujan) · fri kliwon · 8/8/1448 of 9",
+  "day  83 · y1 · kasanga 1/8 (hujan) · sun wage · 8/9/1448 of 10",
+  "day  91 · y1 · kasadasa 1/8 (pancaroba) · mon pahing · 6/10/1448 of 10",
+  "day  99 · y1 · dhesta 1/8 (kemarau) · tue kliwon · 4/11/1448 of 10",
+  "day 107 · y1 · sadha 1/13 (kemarau) · wed pon · 2/12/1448 of 9",
+  "day 120 · y2 · kasa 1/13 (kemarau) · tue legi · 6/1/1449 of 10",
+  "day 133 · y2 · karo 1/8 (kemarau) · mon wage · 9/2/1449 of 10",
+  "day 141 · y2 · katelu 1/8 (kemarau) · tue pahing · 7/3/1449 of 9",
+  "day 149 · y2 · kapat 1/8 (pancaroba) · wed kliwon · 6/4/1449 of 10",
+  "day 157 · y2 · kalima 1/9 (hujan) · thu pon · 4/5/1449 of 10",
+  "day 166 · y2 · kanem 1/14 (hujan) · sat pahing · 3/6/1449 of 9",
+  "day 180 · y2 · kapitu 1/14 (hujan) · sat legi · 8/7/1449 of 10",
+  "day 194 · y2 · kawolu 1/9 (hujan) · sat kliwon · 2/9/1449 of 10",
+  "day 203 · y2 · kasanga 1/8 (hujan) · mon wage · 1/10/1449 of 9",
+  "day 211 · y2 · kasadasa 1/8 (pancaroba) · tue pahing · 9/10/1449 of 9",
+  "day 219 · y2 · dhesta 1/8 (kemarau) · wed kliwon · 8/11/1449 of 10",
+  "day 227 · y2 · sadha 1/13 (kemarau) · thu pon · 6/12/1449 of 10",
+  "day 240 · y3 · kasa 1/13 (kemarau) · wed legi · 9/1/1450 of 9",
+  "day 253 · y3 · karo 1/8 (kemarau) · tue wage · 3/3/1450 of 10",
+  "day 261 · y3 · katelu 1/8 (kemarau) · wed pahing · 1/4/1450 of 9",
+  "day 269 · y3 · kapat 1/8 (pancaroba) · thu kliwon · 9/4/1450 of 9",
+  "day 277 · y3 · kalima 1/9 (hujan) · fri pon · 8/5/1450 of 10",
+  "day 286 · y3 · kanem 1/14 (hujan) · sun pahing · 7/6/1450 of 10",
+  "day 300 · y3 · kapitu 1/14 (hujan) · sun legi · 1/8/1450 of 9",
+  "day 314 · y3 · kawolu 1/9 (hujan) · sun kliwon · 6/9/1450 of 10",
+  "day 323 · y3 · kasanga 1/8 (hujan) · tue wage · 5/10/1450 of 10",
+  "day 331 · y3 · kasadasa 1/8 (pancaroba) · wed pahing · 3/11/1450 of 9",
+  "day 339 · y3 · dhesta 1/8 (kemarau) · thu kliwon · 2/12/1450 of 10",
+  "day 347 · y3 · sadha 1/13 (kemarau) · fri pon · 10/12/1450 of 10",
+]
+`;
+
+exports[`Hijri festival dates for 3 years 1`] = `
+[
+  "ramadan   day  76 · y1 · kawolu 3/9 (hujan) · sun pahing · 1/9/1448 of 10",
+  "lebaran   day  86 · y1 · kasanga 4/8 (hujan) · wed pahing · 1/10/1448 of 10",
+  "idul_adha day 109 · y1 · sadha 3/13 (kemarau) · fri kliwon · 4/12/1448 of 9",
+  "ramadan   day 193 · y2 · kapitu 14/14 (hujan) · fri wage · 1/9/1449 of 10",
+  "lebaran   day 203 · y2 · kasanga 1/8 (hujan) · mon wage · 1/10/1449 of 9",
+  "idul_adha day 225 · y2 · dhesta 7/8 (kemarau) · tue legi · 4/12/1449 of 10",
+  "ramadan   day 309 · y3 · kapitu 10/14 (hujan) · tue kliwon · 1/9/1450 of 10",
+  "lebaran   day 319 · y3 · kawolu 6/9 (hujan) · fri kliwon · 1/10/1450 of 10",
+  "idul_adha day 341 · y3 · dhesta 3/8 (kemarau) · sat pahing · 4/12/1450 of 10",
+]
+`;

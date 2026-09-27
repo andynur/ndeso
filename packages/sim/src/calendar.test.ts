@@ -1,58 +1,59 @@
-import { describe, expect, test } from 'bun:test';
-import { calendarData } from '@bale/content/calendar';
-import type { CalendarData, HijriDate } from '@bale/shared';
+import { beforeAll, describe, expect, test } from 'bun:test';
+import type { CalendarData } from '@bale/shared';
 import {
-  calendarDateOf,
   hijriOf,
+  hijriToDay,
+  hijriToReal,
   mangsaOf,
   pasaranOf,
   prayerBandOf,
+  projectDay,
+  realToHijri,
   weekdayOf,
 } from './calendar.ts';
+import { loadCalendarForTests } from './testing/calendar-data.ts';
 
-const at = (day: number) => {
-  const date = mangsaOf(calendarData, day);
-  return `${date.year}:${date.mangsa.id} ${date.dayOfMangsa}/${date.mangsa.gameDays}`;
-};
+let cal: CalendarData;
+beforeAll(async () => {
+  cal = await loadCalendarForTests();
+});
 
-const hhmm = (text: string) => Number(text.slice(0, 2)) * 60 + Number(text.slice(3));
-
-const nextHijri = (calendar: CalendarData, date: HijriDate, length: number): HijriDate => {
-  if (date.day < length) return { ...date, day: date.day + 1 };
-  if (date.month < calendar.hijri.monthDays.length) {
-    return { year: date.year, month: date.month + 1, day: 1 };
-  }
-  return { year: date.year + 1, month: 1, day: 1 };
+const at = (hhmm: string): number => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return (h as number) * 60 + (m as number);
 };
 
 describe('pranata mangsa', () => {
-  test('day 0 is 1 Kasa of year 1', () => {
-    expect(at(0)).toBe('1:kasa 1/13');
+  test('day 0 is the first day of Kasa, year 1', () => {
+    expect(projectDay(0, cal)).toMatchObject({
+      year: 1,
+      dayOfYear: 0,
+      mangsa: { id: 'kasa', day: 1, length: 13, musim: 'kemarau' },
+    });
   });
 
-  test('each mangsa hands over to the next at its length', () => {
-    expect(at(12)).toBe('1:kasa 13/13');
-    expect(at(13)).toBe('1:karo 1/8');
-    expect(at(119)).toBe('1:sadha 13/13');
+  test('Kasa lasts 13 days, then Karo starts', () => {
+    expect(mangsaOf(12, cal)).toMatchObject({ id: 'kasa', day: 13 });
+    expect(mangsaOf(13, cal)).toMatchObject({ id: 'karo', day: 1, length: 8 });
   });
 
-  test('the year wraps after 120 days', () => {
-    expect(at(120)).toBe('2:kasa 1/13');
-    expect(at(360)).toBe('4:kasa 1/13');
+  test('the last day of the year is Sadha 13/13 and day 120 opens year 2 in Kasa', () => {
+    expect(mangsaOf(119, cal)).toMatchObject({ id: 'sadha', day: 13, length: 13 });
+    expect(projectDay(120, cal)).toMatchObject({ year: 2, dayOfYear: 0, mangsa: { id: 'kasa' } });
   });
 
-  test('musim adds up to the GDD §3 split: hujan 54, kemarau 50, pancaroba 16', () => {
-    const days: Record<string, number> = {};
-    for (let day = 0; day < 120; day++) {
-      const { musim } = calendarDateOf(calendarData, day);
-      days[musim] = (days[musim] ?? 0) + 1;
+  test('musim totals match GDD §3: hujan 54, kemarau 50, pancaroba 16', () => {
+    const totals: Record<string, number> = {};
+    for (let day = 0; day < cal.gameYearDays; day++) {
+      const { musim } = mangsaOf(day, cal);
+      totals[musim] = (totals[musim] ?? 0) + 1;
     }
-    expect(days).toEqual({ hujan: 54, kemarau: 50, pancaroba: 16 });
+    expect(totals).toEqual({ kemarau: 50, pancaroba: 16, hujan: 54 });
   });
 });
 
 describe('pasaran and weekday', () => {
-  test('pasaran is day % 5 from Legi, and stays aligned to the 120-day year', () => {
+  test('pasaran is day % 5 starting at Legi', () => {
     expect([0, 1, 2, 3, 4, 5].map(pasaranOf)).toEqual([
       'legi',
       'pahing',
@@ -61,82 +62,87 @@ describe('pasaran and weekday', () => {
       'kliwon',
       'legi',
     ]);
-    expect(pasaranOf(120)).toBe(pasaranOf(0));
   });
 
-  test('day 0 is a Senin and the week repeats every 7 days', () => {
-    expect(weekdayOf(0)).toBe('mon');
-    expect(weekdayOf(6)).toBe('sun');
-    expect(weekdayOf(7)).toBe('mon');
+  test('pasaran is stable against the year because 120 is divisible by 5', () => {
+    expect(pasaranOf(cal.gameYearDays)).toBe(pasaranOf(0));
+  });
+
+  test('the week starts on Senin at day 0 and repeats every 7 days', () => {
+    expect(weekdayOf(0, cal)).toBe('mon');
+    expect(weekdayOf(6, cal)).toBe('sun');
+    expect(weekdayOf(7, cal)).toBe('mon');
   });
 });
 
 describe('tabular Hijri', () => {
-  test('day 0 is the epoch in the data file', () => {
-    expect(hijriOf(calendarData, 0)).toEqual(calendarData.hijri.epoch);
-  });
-
-  test('1 Ramadan walks ~4 days earlier each game year', () => {
-    const starts: number[] = [];
-    for (let day = 0; day < 360; day++) {
-      const { month, day: date } = hijriOf(calendarData, day);
-      if (month === 9 && date === 1) starts.push(day);
+  test('converts dates to real day counts and back', () => {
+    for (let real = 0; real < 10631 * 2; real += 7) {
+      expect(hijriToReal(realToHijri(real))).toBe(real);
     }
-    // 1448 and 1449 are common (116 days), 1450 is a leap year (117).
-    expect(starts).toEqual([77, 193, 309]);
   });
 
-  test('every day is the successor of the one before; 11 leap days per 30 years', () => {
-    let previous = hijriOf(calendarData, 0);
-    let leapDays = 0;
-    const cycleDays = 30 * 116 + 11;
-    for (let day = 1; day <= cycleDays; day++) {
-      const today = hijriOf(calendarData, day);
-      const length = calendarData.hijri.monthDays[previous.month - 1] as number;
-      if (today.month === 12 && today.day === length + 1) leapDays++;
-      else expect(today).toEqual(nextHijri(calendarData, previous, length));
-      previous = today;
+  test('a 30-year cycle is 10631 days with 11 leap years', () => {
+    expect(hijriToReal({ year: 1441, month: 1, day: 1 })).toBe(
+      hijriToReal({ year: 1411, month: 1, day: 1 }) + 10631,
+    );
+  });
+
+  test('day 0 falls in Muharram 1448, the month having started before the arrival', () => {
+    expect(hijriOf(0, cal)).toMatchObject({ year: 1448, month: 1 });
+    expect(hijriOf(0, cal).day).toBeGreaterThan(1);
+  });
+
+  test('months are 9 or 10 game days and each day follows the last', () => {
+    for (let day = 1; day < cal.gameYearDays * 3; day++) {
+      const prev = hijriOf(day - 1, cal);
+      const today = hijriOf(day, cal);
+      expect([9, 10]).toContain(today.monthLength);
+      if (today.month === prev.month) {
+        expect(today.day).toBe(prev.day + 1);
+      } else {
+        expect(today.day).toBe(1);
+        expect(prev.day).toBe(prev.monthLength);
+      }
     }
-    expect(leapDays).toBe(11);
-    expect(hijriOf(calendarData, cycleDays)).toEqual({ ...calendarData.hijri.epoch, year: 1478 });
   });
 
-  test('with real month lengths a 30-year cycle is 10 631 days, as in the real calendar', () => {
-    const real: CalendarData = {
-      ...calendarData,
-      hijri: {
-        ...calendarData.hijri,
-        monthDays: [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29],
-        epoch: { year: 1, month: 1, day: 1 },
-      },
-    };
-    expect(hijriOf(real, 10_631)).toEqual({ year: 31, month: 1, day: 1 });
-    expect(hijriOf(real, 10_630)).toEqual({ year: 30, month: 12, day: 29 });
-    // Year 29 is a leap year, so its Dzulhijjah has a 30th day; year 30 is common.
-    expect(hijriOf(real, 10_631 - 355)).toEqual({ year: 29, month: 12, day: 30 });
-    expect(hijriOf(real, 10_631 - 354)).toEqual({ year: 30, month: 1, day: 1 });
+  test('hijriToDay lands on the first game day of the month', () => {
+    const day = hijriToDay({ year: 1448, month: 9, day: 1 }, cal);
+    expect(hijriOf(day, cal)).toMatchObject({ year: 1448, month: 9, day: 1 });
+  });
+
+  test('Ramadan walks 3–4 days earlier against the solar year each year (ADR-0007)', () => {
+    const starts = [1448, 1449, 1450, 1451].map(
+      (year) => hijriToDay({ year, month: 9, day: 1 }, cal) % cal.gameYearDays,
+    );
+    for (let i = 1; i < starts.length; i++) {
+      const drift = (starts[i - 1] as number) - (starts[i] as number);
+      expect(drift).toBeGreaterThanOrEqual(3);
+      expect(drift).toBeLessThanOrEqual(4);
+    }
   });
 });
 
 describe('prayer-time bands', () => {
-  const { kasa, kapitu } = calendarData.clock.prayer;
+  const kasa = () => mangsaOf(0, cal);
+  const kapat = () => mangsaOf(31, cal); // Kapat hari 3/8, as in GDD §3.2
 
-  test('reads the band from the fixed table for the day’s mangsa', () => {
-    expect(prayerBandOf(calendarData, 0, 300)).toBe('subuh');
-    expect(prayerBandOf(calendarData, 0, kasa?.terbit ?? 0)).toBe('terbit');
-    expect(prayerBandOf(calendarData, 0, hhmm('15:40'))).toBe('ashar');
-    expect(prayerBandOf(calendarData, 0, kasa?.maghrib ?? 0)).toBe('maghrib');
+  test('the day opens at 05:00 in subuh', () => {
+    expect(prayerBandOf(at('05:00'), kasa(), cal)).toBe('subuh');
   });
 
-  test('isya carries past midnight until the day ends', () => {
-    expect(prayerBandOf(calendarData, 0, hhmm('23:59'))).toBe('isya');
-    expect(prayerBandOf(calendarData, 0, 1440 + 30)).toBe('isya');
+  test('reads the GDD §3.2 example: 15:40 in Kapat is Ashar', () => {
+    expect(kapat().id).toBe('kapat');
+    expect(prayerBandOf(at('15:40'), kapat(), cal)).toBe('ashar');
   });
 
-  test('maghrib moves with the mangsa', () => {
-    const kapituDay = 60;
-    expect(mangsaOf(calendarData, kapituDay).mangsa.id).toBe('kapitu');
-    expect(prayerBandOf(calendarData, kapituDay, kasa?.maghrib ?? 0)).toBe('ashar');
-    expect(prayerBandOf(calendarData, kapituDay, kapitu?.maghrib ?? 0)).toBe('maghrib');
+  test('a band starts exactly at its table time', () => {
+    expect(prayerBandOf(at('17:36'), kasa(), cal)).toBe('ashar');
+    expect(prayerBandOf(at('17:37'), kasa(), cal)).toBe('maghrib');
+  });
+
+  test('after midnight it is still isya', () => {
+    expect(prayerBandOf(at('24:30'), kasa(), cal)).toBe('isya');
   });
 });

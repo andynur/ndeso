@@ -9,8 +9,5 @@
   },
   "dependencies": {
     "@bale/shared": "workspace:*"
-  },
-  "devDependencies": {
-    "@bale/content": "workspace:*"
   }
 }

@@ -4,18 +4,6 @@
 import type { LocaleId } from '@bale/shared';
 
 export type CalendarKey =
-  | 'hijri.month.1'
-  | 'hijri.month.10'
-  | 'hijri.month.11'
-  | 'hijri.month.12'
-  | 'hijri.month.2'
-  | 'hijri.month.3'
-  | 'hijri.month.4'
-  | 'hijri.month.5'
-  | 'hijri.month.6'
-  | 'hijri.month.7'
-  | 'hijri.month.8'
-  | 'hijri.month.9'
   | 'mangsa.dhesta.name'
   | 'mangsa.dhesta.sign'
   | 'mangsa.kalima.name'
@@ -39,17 +27,7 @@ export type CalendarKey =
   | 'mangsa.kawolu.name'
   | 'mangsa.kawolu.sign'
   | 'mangsa.sadha.name'
-  | 'mangsa.sadha.sign'
-  | 'musim.hujan'
-  | 'musim.kemarau'
-  | 'musim.pancaroba'
-  | 'prayer.ashar'
-  | 'prayer.dhuha'
-  | 'prayer.dzuhur'
-  | 'prayer.isya'
-  | 'prayer.maghrib'
-  | 'prayer.subuh'
-  | 'prayer.terbit';
+  | 'mangsa.sadha.sign';
 
 export type GlossaryKey =
   | 'gotong_royong.def'
