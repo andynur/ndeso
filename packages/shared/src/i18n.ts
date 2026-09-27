@@ -24,7 +24,14 @@ export type LocaleId = (typeof SUPPORTED_LOCALES)[number]['id'];
 export const SOURCE_LOCALE: LocaleId = 'en';
 
 /** Namespaces = locale file names without the extension (I18N §2). */
-export const LOCALE_NAMESPACES = ['ui', 'items', 'npcs', 'glossary', 'tutorial'] as const;
+export const LOCALE_NAMESPACES = [
+  'ui',
+  'items',
+  'npcs',
+  'glossary',
+  'tutorial',
+  'calendar',
+] as const;
 export type LocaleNamespace = (typeof LOCALE_NAMESPACES)[number];
 
 export function isLocaleId(value: string): value is LocaleId {

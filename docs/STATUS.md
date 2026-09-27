@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M0 complete. **Concept pivoted and documented** (see the 2026-09-27 entries). Next up: M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB).
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-01 (sim clock — **all three calendars**: pranata mangsa 12×/120-day year, pasaran, tabular Hijri; golden test over 3 years — GDD §3, ADR-0007)
+- **Next task:** M1-02 (fixed-step game loop with render interpolation and pause on hide — ARCH §4.1). It wires `createTimeSystem(cal)` from `@bale/sim` into the client loop.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2, blocks release not development) · mangsa day-lengths marked `verified: false` (§12.6). Repo stays `ndeso`; the game is `Balé` (§12.3 closed)
-- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Shell size is 120 KB brotli of a 350 KB budget, but that is three.js and Preact only; no art has landed yet.
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · **GDD §10 says "Ramadan (30 days)", but ADR-0007's scaled Hijri makes every month 9–10 game days** — Ramadan is ~10 days in the build; GDD §10 needs the owner's call (keep ~10, or a Ramadan-specific rule).
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19); the calendar data is already validated by `bun test`. Shell size is 120 KB brotli of a 350 KB budget (three.js + Preact; no art yet).
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,15 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M1-01 · claude/brave-ramanujan-rkivah
+- Done: `time` system + pure calendar projections in `packages/sim` (mangsa, musim, pasaran, weekday, tabular Hijri, prayer band); calendar schema/validator in `packages/shared`; `clock.json5` + `prayer-times.json5`; `calendar` locale namespace with the 12 mangsa names and pertanda in EN + ID. `hello` system deleted.
+- Tests: `bun run check` green — **211 pass**, incl. a 3-year golden (mangsa boundaries, Ramadan/Lebaran/Idul Adha dates) and a check that the system's events agree with the projections over all 360 days. Hijri arithmetic cross-checked ad hoc against ICU `islamic-civil` over ~1,400 years.
+- Notes/decisions:
+  - **Hijri = real tabular calendar sampled at 365/120 real days per game day**, so months are 9–10 game days and Ramadan drifts 3–4 days earlier per year (76 → 73 → 69 in-year). Festivals are real tabular dates mapped to the first game day on/after them, so 10 Dzulhijah shows as game day 4 of that month.
+  - **Schema in `shared`, file reading in `content`.** That let sim tests validate the real JSON5 (via `src/testing/calendar-data.ts`, test-only) without breaking the types-only sim → content rule. `ClockState` lives in `sim` until `save.ts` exists.
+  - Day 0 anchors: Senin, Legi, 6 Muharram 1448 (= real 22 June 2026, ~start of Kasa). Clock: 7 ticks/min, day 05:00 → 01:00.
+- Next: M1-02.
+
 ### 2026-09-27 · scope · docs/m1-scope-and-review-pack
 - Done: the decisions M1-01 needed before a line of it was written, plus the M1-11 review pack (`docs/culture-review/`), plus two real bugs found on the way.
 - Notes/decisions:
@@ -139,21 +148,3 @@
   - The scene owns only rendering plumbing (DPR cap, resize observer, `visibilitychange` pause, `webglcontextlost`/`restored`). The fixed-step loop and interpolation are M1-02; sprites M1-03; the full camera rig M1-04.
   - **Not verified on a real phone yet** — the ROADMAP AC "loads on a phone" needs the maintainer to open the printed LAN URL. The device checklist is M1-10.
 - Next: M0-04
-### 2026-09-27 · M0-01 + M0-02 · feat/M0-01-workspace-bootstrap
-- Done: Root Bun workspace (`package.json` with every TESTING §1 script, `bunfig.toml` exact installs, `tsconfig.base.json`, `biome.json`); `packages/shared` (constants, `SUPPORTED_LOCALES`/`resolveLocale` per I18N §5), `packages/sim` (`SimContext`/`System` contracts + placeholder `hello` system), `packages/content` (locale seed loader over the existing `locales/`).
-- Tests: `bun run check` green; `bun run ci` green (build/size/smoke are stubs); 18 tests across shared, sim, content.
-- Notes/decisions:
-  - `check:types` stays `tsc -b --noEmit`, but as **one root program** with `incremental` instead of composite project references: TS 5.9 rejects `--noEmit` in build mode against composite references (TS6310). M0-03 adds `apps/client` as a separate project (`lib: ["DOM","ES2023"]`, no bun-types) and can reintroduce references then.
-  - Added dev dep `bun-types@1.4.1` (needed by the `types: ["bun-types"]` convention in TECH_STACK §4) and listed it in TECH_STACK §2.
-  - `allowImportingTsExtensions` is on so source-to-source workspace imports (`./foo.ts`) type-check; Bun resolves them natively.
-  - Biome 2.3.14 with `recommended` + `noExplicitAny: error` + `noConsole: warn` (off in `tools/`, `scripts/`) + `noDefaultExport: error`. Its first run reformatted the pre-existing `.claude/settings.json`.
-  - `hello` is a walking skeleton (ticks → `helloSecond` events); M1-01 replaces it with the real `time` system.
-- Next: M0-03
-### 2026-09-27 · README · docs
-- Done: Reworked the English README for GitHub onboarding, project status, repository structure, contribution flow, security, and licensing.
-- Tests: Documentation-only change; runtime checks are not available before M0-01.
-- Notes/decisions: Kept the README explicit that the project is not playable yet and linked the Indonesian README.
-- Next: M0-01
-### 2026-09-26 · setup · docs
-- Done: PRD, GDD, DESIGN, architecture docs, AI harness (CLAUDE.md, AGENTS.md, .claude/, .mcp.json)
-- Next: M0-01

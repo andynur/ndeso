@@ -1,0 +1,19 @@
+// The game clock and the anchors that pin every calendar to day 0 (GDD §3, ADR-0007).
+//
+// Times are minutes since the midnight that opens the game day. A day runs
+// 05:00 → 01:00, so `dayEndMinute` is past 24:00 (1500 = 01:00 the next morning).
+// At 10 sim ticks per second (ARCHITECTURE §3.1), 7 ticks per game minute is the
+// GDD's "1 game-minute = 0.7 real s", which makes a day ~14 real minutes.
+//
+// Day 0 is the arrival and the first day of Kasa. The anchors below are design
+// choices, not facts to verify: the real Kasa starts around 22 June, and 22 June
+// 2026 was a Senin falling on 6 Muharram 1448 in the tabular calendar, so the
+// save opens in a plausible present. Pasaran is `day % 5` (ADR-0007), so day 0
+// is Legi by definition.
+{
+  ticksPerMinute: 7,
+  dayStartMinute: 300,
+  dayEndMinute: 1500,
+  weekdayOfDay0: 'mon',
+  hijriOfDay0: { year: 1448, month: 1, day: 6 },
+}
