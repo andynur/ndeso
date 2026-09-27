@@ -21,8 +21,8 @@
   - **A narrow validator for the calendar data** (`gameDays` sums to `gameYearDays`, ids unique, musim tags known). Not the full `check:content`, which stays M2-01 — but the task that consumes a data file is the task that validates it, and M2-01 is 20+ tasks away.
   - **Locale keys for the mangsa names and pertanda** in **both** `en` and `id` (`calendar:mangsa.<id>.name` / `.sign`), from the GDD §3.1 table. Unused until M1-08 shows them; they ship here because AGENTS rule 3 binds the task that introduces the vocabulary.
 - [x] **M1-02** Fixed-step game loop with render interpolation and pause on hide. (ARCH §4.1)
-- [ ] **M1-03** Billboard sprite system (instanced, atlas UV, animation by tag) with a placeholder character atlas. (DESIGN §1.2)
-- [ ] **M1-04** Camera rig: follow, 4-angle rotation, zoom limits. (DESIGN §1.1)
+- [x] **M1-03** Billboard sprite system (instanced, atlas UV, animation by tag) with a placeholder character atlas. (DESIGN §1.2)
+- [x] **M1-04** Camera rig: follow, 4-angle rotation, zoom limits. (DESIGN §1.1)
 - [ ] **M1-05** Input abstraction: keyboard + virtual joystick + context button → `Command`s. (GDD §12)
 - [ ] **M1-06** Player movement in sim with a tile collision grid; render follows. Walk anim by direction.
 - [ ] **M1-07** Day/night lighting from `lighting.json5` keyframes driven by the clock. Maghrib is the signature hour — get it right first. (DESIGN §1.3)

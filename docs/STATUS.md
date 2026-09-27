@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01, M1-02 done.
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-04 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-03 (billboard sprite system: instanced, atlas UV, animation by tag — DESIGN §1.2). The loop is in `apps/client/src/game/`; render gets `(ticks + alpha)` sim time via `scene.draw(simSeconds)`.
+- **Next task:** M1-05 (input abstraction → `Command`s, GDD §12). It must take over the stopgap `bindCameraKeys` in `main.ts` (Q/E turn, wheel/± zoom) and add touch rotate/zoom; the camera is view state, so it stays a direct `scene.camera` call, not a sim `Command`. Sprite facing is picked per frame from a world heading via `CameraRig.screenFacing`.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
-- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. Shell size is 124 KB brotli of a 350 KB budget.
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. Shell size is 127 KB brotli of a 350 KB budget.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,18 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M1-04 · claude/friendly-curie-r6bxqk
+- Done: `render/camera/camera-rig.ts` — pure (no `three`) rig: critically damped follow (0.15 s) with a 0.5-unit dead zone, 4 yaw angles eased over 250 ms (mid-turn presses continue from the current angle), zoom clamped 10–18 and eased, `pose()` into a scratch object, `screenFacing()` maps world heading → down/up/side for the current yaw. Loop hands `frame()` a clamped real dt; the camera runs on real time. Scene follows the walker; all placeholder sprites pick their tag from a world heading.
+- Tests: `bun run check` green (254 tests); build + `check:size` ok (shell 127 KB). No headless screenshot this session (Playwright not installed).
+- Notes/decisions: fog near/far track zoom distance. Desktop-only Q/E + wheel bindings until M1-05.
+- Next: M1-05.
+
+### 2026-09-27 · M1-03 · claude/friendly-curie-r6bxqk
+- Done: `render/sprites/` — `atlas.ts` (Aseprite json-array-shaped descriptor, `frameUv` with flipX), `animation.ts` (`frameAt` by tag, per-frame durations), `placeholder-atlas.ts` (32×48 villager drawn in code at boot: idle 4 / walk 6 × down/up/side, 1 px ink outline), `sprite-batch.ts` (one `InstancedMesh`, translation in `instanceMatrix`, `aUvRect` per instance, cylindrical billboard + alpha cutout + fog in a `ShaderMaterial`, zero per-frame allocation). Scene shows one walker circling the house and four idle facings.
+- Tests: `bun run check` green (239 tests); build + `check:size` ok (shell 126 KB); Chromium screenshots render the sprites with no console errors.
+- Notes/decisions: the placeholder atlas is generated at runtime, so nothing generated is committed; idle speed 4 fps (DESIGN gives only walk's 10 fps). Sprites are unlit apart from `SpriteBatch.tint`, which M1-07 should drive.
+- Next: M1-04.
+
 ### 2026-09-27 · M1-02 · claude/friendly-curie-r6bxqk
 - Done: `game/loop.ts` fixed-step loop (pure `advance()`, 250 ms clamp, `alpha`, injected frame scheduler); `game/game.ts` owns the sim state and runs `createTimeSystem`, buffering events; `scene.ts` no longer schedules itself (`draw(simSeconds)`, skips frames while the GL context is lost); `main.ts` pauses the loop on `visibilitychange`. New `@bale/content/calendar` imports the calendar JSON5 statically for the browser.
 - Tests: `bun run check` green (221 tests); build + `check:size` ok; Chromium renders with no console errors.
@@ -98,39 +110,3 @@
   - **Caught in review, all fixed before merge:** ARCHITECTURE §3.2/§3.3 still emitted `seasonChanged` and stored `clock.season` — exactly the stale shape M1-01 would have implemented; `I18N.md` still passed `season` into `format.gameDate`; `GLOSSARY.md` still defined the 28-day season with pancaroba as a sub-phase; the `sign` prose I put in `mangsa.json5` broke `.claude/rules/content-i18n.md` (content data holds ids and numbers, not prose — the pertanda now lives in GDD §3.1 and becomes `calendar:mangsa.<id>.sign` in both locales at M1-01); and the crop tag `both` became ambiguous once pancaroba was promoted to a first-class musim, so it is now `semua`.
   - **Two human tasks added to M1** (M1-11, M1-12) because CULTURE_GUIDE §1.5 now demands a cultural review *before* M2 writing and the roadmap had no task for it, and because the art direction is blocked on reference photography that does not exist online.
 - Next: M1-01, written against ADR-0007 rather than the old two-season model.
-
-### 2026-09-27 · M0-07 · feat/M0-07-production-build
-- Done: `apps/client/build.ts` (Bun.build from `index.html`, split, minified, content-hashed, linked sourcemaps, `public/` copied as-is, `precache-manifest.json` for M2-15) and the real `tools/check-size.ts`. `bun run build` and `bun run check:size` replaced their `tools/todo.ts` stubs, which completes `bun run ci`.
-- Tests: `bun run check` green; 140 tests across 15 files (12 new for the shell definition and the budget table). `bun run ci` green end to end. Verified the *built* bundle, not just its emission: served `dist/` and drove it in headless Chromium — `__GAME_READY__` true, WebGL2 context live, overlay localized, one hashed module script, no page errors.
-- Notes/decisions:
-  - **Shell: 120.3 KB brotli, 34% of the 350 KB budget** (PERF §2) — three.js and Preact, before any art.
-  - **A budget that cannot be measured yet is reported `pending` with the task that unblocks it, never as a pass.** Three of the five are pending (title critical path → M2-17, first playable frame → M1-09, area chunk → M2-13). A gate that prints "ok" for something it never looked at is worse than no gate.
-  - **The core shell is derived from the built HTML** (`tools/size/shell.ts`: `index.html` plus exactly what it links), not from a filename pattern. That keeps the budget tracking what a cold visit downloads even when the bundler changes how it splits or names things — the lazy locale chunks are correctly outside it.
-  - **Flat output naming**, deviating from the `'[dir]/[name]-[hash].[ext]'` written in ARCHITECTURE §7: `[dir]` is relative to the entry, so chunks from `packages/content` were published under `_.._/_.._/packages/content/locales/…`. §7 updated with the reason. `index.html` stays unhashed because it is served `no-cache`.
-  - Locale namespaces are measured at the source file, where they are authored and reviewed, rather than at the bundled chunk.
-  - `check:size` writes `artifacts/size-report.json`, which the M0-06 workflow already uploads, so a size regression can be diffed between runs instead of eyeballed in a log.
-  - `<link rel="icon" href="data:," />` in `index.html` — a placeholder that stops a favicon 404 on every cold load until M2-15 ships real icons. It is not an asset, so AGENTS rule 7 is untouched.
-  - Review fixes: an earlier edit to `build.ts` was lost when a compound shell command was denied mid-run, so the precache manifest was still using a filename heuristic that flat output naming had defeated — both locale chunks were being precached as shell, disagreeing with `check:size`. The manifest now uses the same `shellFiles` as the budget, and `apps/client/build.test.ts` pins that regression. Also: `check:size` treats a missing `dist/` as a failure rather than a pending budget, `public/` is refused if it would overwrite a hashed build output, `--outdir` accepts an absolute path, and the sixth §2 row (music track, → M2-14) is now listed as pending instead of silently absent.
-  - `apps/client/build.ts` was type-checked by neither `tsc` program — it sits outside `apps/client/src` and outside the root include. Added to the root program, where it belongs (it is a Bun script, not browser code).
-- Next: M1-01
-### 2026-09-27 · M0-06 · ci/M0-06-workflow
-- Done: real CI workflow. Dropped the "skip until M0-01" gate that guarded every step, added `actions/cache` on `~/.bun/install/cache` keyed by `bun.lock`, `permissions: contents: read`, `workflow_dispatch`, and an artifact upload for `artifacts/`. The steps now mirror `bun run ci` stage by stage (install → check → coverage → build + size → smoke) so a red check names itself instead of pointing at one opaque script.
-- Tests: `bun run check` green; 128 tests across 13 files (2 new for `todoAllowed`). Workflow YAML parses; `bun run ci` green locally end to end.
-- Notes/decisions:
-  - **`[TODO-ID]` no longer fails on `main`, only on a release tag.** I18N §1 rule 3 said CI "fails on `main` release tags", which the checker had read as *main or tags*. That contradicts AGENTS rule 3, which lets a PR merge with `[TODO-ID]` plus a `needs-translation` label: the PR would pass and then turn `main` red on the merge commit — an alarm arriving after the decision it was meant to gate. A release tag is the point where untranslated strings must not ship. I18N §1 rule 3 reworded to say so unambiguously, and `todoAllowed(ref)` is now a pure function with tests for branch / main / PR / tag.
-  - **`bunfig.toml` no longer sets `[test] coverage = false`.** An explicit `false` there *overrides* `bun test --coverage`, so the CI coverage step would have silently produced nothing. Bun's default is already off, so removing the key keeps the local loop fast and lets CI opt in with the flag. TECH_STACK §4 corrected — it claimed `coverage = true` on CI, which was never what the file did. Current coverage: 99.84% lines, 93.73% functions; no threshold gate yet.
-  - The workflow duplicates the *stages* of `bun run ci` but not their contents — what each stage runs stays in `package.json`, and a comment at the top of the workflow says so.
-  - `cancel-in-progress` is on for branches and off for `main`, so a merge queue never cancels the run that proves the default branch is green.
-- Next: M0-07
-### 2026-09-27 · M0-05 · feat/M0-05-check-deps
-- Done: real `check:deps`. `tools/check-deps.ts` walks every source file in `packages/` and `apps/` and applies the ARCHITECTURE §2 table, which now lives as data in `tools/deps/rules.ts`; `tools/deps/scan.ts` is a small tokenizer that finds import specifiers, and `tools/deps/purity.ts` holds the `packages/sim` API rules. `scripts/hooks/post-edit.ts` was rewritten to call the same `checkSource`, so the edit hook and the CI gate cannot drift.
-- Tests: `bun run check` green; 118 tests across 12 files (36 new). AC verified live — adding `import { Vector3 } from 'three'` to `packages/sim/src/index.ts` makes `bun run check:deps` exit 1 and the PostToolUse hook exit 2 with the same message.
-- Notes/decisions:
-  - **The gate found a real violation on `main`:** `ui/app.tsx` imported `QualityPreset` from `render/quality/presets.ts`. Fixed by moving the preset *names* (`QUALITY_PRESETS`, `QualityPreset`, `isQualityPreset`) to `packages/shared/src/quality.ts` — settings (M2-16) and the save schema need the same vocabulary, so shared is where it belongs. `render/quality/presets.ts` keeps `MAX_DPR`, `clampPixelRatio` and `guessPreset`.
-  - Type-only imports are **not** a general escape hatch. The one place ARCHITECTURE §2 allows them is the `sim → content` row ("content types only"), so `import type` is honoured there and nowhere else; `ui/` importing a type from `render/` still fails.
-  - Rules the table implies but does not spell out, added deliberately: no zone of the client bundle may import `tools/` or `scripts/`, and `packages/shared`, `packages/sim` and `apps/client/**` may not import `node:*`/`bun:*` (a colocated `*.test.ts` may import `bun:test`). `packages/content` may, because its loaders read locale files from disk for tools and tests.
-  - A tokenizer rather than a regex: the checker must not fire on a commented-out import or the word `import` inside a string, and the sim purity rules must not fire on prose that mentions `Math.random`. It handles regex literals, template literals and a shebang line; `scan.test.ts` pins each of those.
-  - No new dependency — no `dependency-cruiser`, no `madge`. The rules are ~15 lines of data and the scanner is ~230 lines, against a tool that would need its own TypeScript resolver config to say the same thing.
-  - Review fix: the tokenizer originally masked a whole template literal, so `` `seed-${Math.random()}` `` or `` `${await import('three')}` `` inside `packages/sim` was invisible to both halves of the check. `${…}` spans are now re-tokenized as code with brace-depth tracking (nesting included); only the literal text between them is blanked.
-  - `apps/client/build.ts` is registered as build-time code so M0-07 can use `Bun.build`, `node:*` and `tools/` helpers without a carve-out mid-task; the bundle may not import it.
-- Next: M0-06

@@ -14,12 +14,10 @@ import {
   Scene,
   WebGLRenderer,
 } from 'three';
+import { type CameraPose, CameraRig, type Facing, FOV_DEG } from './camera/camera-rig.ts';
 import { clampPixelRatio } from './quality/presets.ts';
-
-/** Camera rig constants, DESIGN §1.1. The full rig (follow, yaw snap, zoom) is M1-04. */
-const FOV_DEG = 30;
-const PITCH_DEG = 38;
-const DISTANCE = 14;
+import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
+import { createAtlasTexture, type Sprite, SpriteBatch } from './sprites/sprite-batch.ts';
 
 /**
  * Noon keyframe from the DESIGN §1.3 lighting table. Those are lighting values, not
@@ -32,8 +30,13 @@ const NOON_SUN = { color: 0xfff4e0, intensity: 2.5 };
 const NOON_AMBIENT = { color: 0xa8c4e0, intensity: 0.7 };
 
 const GROUND_SIZE = 40;
-/** One full turn every 8 s, slow enough to read on a 30 fps phone. */
-const SPIN_RAD_PER_SECOND = (Math.PI * 2) / 8;
+
+/** Placeholder villagers: one walks a square round the house, four stand facing each way. */
+const WALK_HALF_SIDE = 2.5;
+const WALK_SPEED = 1.5;
+/** Flanking the house, inside the landscape-phone frame at the default zoom. */
+const IDLE_XS = [-6.5, -5, 5, 6.5] as const;
+const IDLE_Z = 0.5;
 
 /**
  * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
@@ -46,6 +49,7 @@ export interface ScenePalette {
   readonly roof: number;
   readonly marker: number;
   readonly fog: number;
+  readonly character: CharPalette;
 }
 
 export interface SceneOptions {
@@ -54,22 +58,33 @@ export interface SceneOptions {
   readonly palette: ScenePalette;
 }
 
+/** What the input layer may do to the camera (DESIGN §1.1). */
+export interface CameraControls {
+  /** One quarter turn: `+1` counter-clockwise seen from above, `-1` clockwise. */
+  rotate(direction: 1 | -1): void;
+  /** Zoom by `delta` world units, positive = out; clamped to 10–18. */
+  zoomBy(delta: number): void;
+}
+
 export interface SceneHandle {
   /** Current render scale; re-clamped whenever the canvas resizes onto another screen. */
   readonly pixelRatio: number;
   /**
    * Draws one frame at `simSeconds`, the sim time interpolated between ticks
    * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
-   * frame timing; the scene never schedules itself.
+   * frame timing; the scene never schedules itself. `realDtSeconds` is wall-clock frame
+   * time, which the camera runs on so it still eases while the sim is paused.
    */
-  draw(simSeconds: number): void;
+  draw(simSeconds: number, realDtSeconds: number): void;
+  readonly camera: CameraControls;
   dispose(): void;
 }
 
 /**
- * M0-03 walking skeleton: a ground plane and a rotating low-poly placeholder, enough to
- * prove WebGL2 and the camera framing on a real phone. Sprites (M1-03), area streaming
- * and day/night lighting (M1-07) replace the contents; the plumbing here stays.
+ * M0-03 walking skeleton: a ground plane and a low-poly placeholder house, enough to
+ * prove WebGL2 and the camera framing on a real phone, plus the M1-03 billboard sprites.
+ * Area streaming (M1-09) and day/night lighting (M1-07) replace the contents; the
+ * plumbing here stays.
  */
 export function createScene({ canvas, preset, palette }: SceneOptions): SceneHandle {
   const renderer = new WebGLRenderer({
@@ -80,12 +95,12 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
 
   const scene = new Scene();
   scene.background = new Color(palette.fog);
-  scene.fog = new Fog(palette.fog, DISTANCE, DISTANCE * 3);
+  const rig = new CameraRig();
+  const fog = new Fog(palette.fog, rig.distance, rig.distance * 3);
+  scene.fog = fog;
 
   const camera = new PerspectiveCamera(FOV_DEG, 1, 0.1, 200);
-  const pitch = (PITCH_DEG * Math.PI) / 180;
-  camera.position.set(0, Math.sin(pitch) * DISTANCE, Math.cos(pitch) * DISTANCE);
-  camera.lookAt(0, 1.2, 0);
+  const cameraPose: CameraPose = { x: 0, y: 0, z: 0, lookX: 0, lookY: 0, lookZ: 0 };
 
   const sun = new DirectionalLight(NOON_SUN.color, NOON_SUN.intensity);
   sun.position.set(6, 10, 4);
@@ -120,6 +135,41 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
   placeholder.add(marker);
   scene.add(placeholder);
 
+  const { atlas, pixels } = buildPlaceholderCharAtlas(palette.character);
+  const atlasTexture = createAtlasTexture(pixels, atlas);
+  const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
+  scene.add(sprites.mesh);
+  // The walker stands in for the player (M1-06) as the camera's follow target.
+  const walker = sprites.add({ x: 0, y: 0, z: WALK_HALF_SIDE, tag: 'walk_side' });
+  rig.snapTo(walker.x, walker.z);
+  // World headings (dx, dz): at yaw 0 these face down, up, right and left.
+  const idleHeadings = [
+    [0, 1],
+    [0, -1],
+    [1, 0],
+    [-1, 0],
+  ] as const;
+  const idlers = idleHeadings.map(([dx, dz], i) => ({
+    // Staggered starts, so the four do not breathe in lockstep.
+    sprite: sprites.add({
+      x: IDLE_XS[i] ?? 0,
+      y: 0,
+      z: IDLE_Z,
+      tag: 'idle_down',
+      startSeconds: i * 0.3,
+    }),
+    dx,
+    dz,
+  }));
+  const facing: Facing = { facing: 'down', flipX: false };
+
+  /** Picks the tag for a world heading as the camera currently sees it. */
+  function face(sprite: Sprite, action: 'idle' | 'walk', dx: number, dz: number): void {
+    rig.screenFacing(dx, dz, facing);
+    sprite.tag = TAGS[action][facing.facing];
+    sprite.flipX = facing.flipX;
+  }
+
   let pixelRatio = 0;
 
   function resize(): void {
@@ -138,9 +188,21 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
 
   let contextLost = false;
 
-  function draw(simSeconds: number): void {
+  function draw(simSeconds: number, realDtSeconds: number): void {
+    // The rig keeps easing while the context is lost, so it is settled when it returns.
+    const leg = walkSquare(walker, simSeconds);
+    rig.follow(walker.x, walker.z);
+    rig.update(realDtSeconds);
     if (contextLost) return;
-    placeholder.rotation.y = simSeconds * SPIN_RAD_PER_SECOND;
+    face(walker, 'walk', LEG_HEADINGS[leg * 2] ?? 0, LEG_HEADINGS[leg * 2 + 1] ?? 0);
+    for (const idler of idlers) face(idler.sprite, 'idle', idler.dx, idler.dz);
+    sprites.update(simSeconds);
+
+    rig.pose(cameraPose);
+    camera.position.set(cameraPose.x, cameraPose.y, cameraPose.z);
+    camera.lookAt(cameraPose.lookX, cameraPose.lookY, cameraPose.lookZ);
+    fog.near = rig.distance;
+    fog.far = rig.distance * 3;
     marker.position.y = 2.9 + Math.sin(simSeconds * 2) * 0.15;
     renderer.render(scene, camera);
   }
@@ -166,8 +228,10 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     observer.disconnect();
     canvas.removeEventListener('webglcontextlost', onContextLost);
     canvas.removeEventListener('webglcontextrestored', onContextRestored);
+    sprites.dispose();
+    atlasTexture.dispose();
     scene.traverse((object) => {
-      if (!(object instanceof Mesh)) return;
+      if (!(object instanceof Mesh) || object === sprites.mesh) return;
       object.geometry.dispose();
       const { material } = object;
       for (const slot of Array.isArray(material) ? material : [material]) slot.dispose();
@@ -180,6 +244,52 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
       return pixelRatio;
     },
     draw,
+    camera: {
+      rotate: (direction) => rig.rotate(direction),
+      zoomBy: (delta) => rig.zoomBy(delta),
+    },
     dispose,
   };
+}
+
+/** Atlas tags by action and screen facing; a table so the per-frame pick builds no strings. */
+const TAGS = {
+  idle: { down: 'idle_down', up: 'idle_up', side: 'idle_side' },
+  walk: { down: 'walk_down', up: 'walk_up', side: 'walk_side' },
+} as const;
+
+/** World heading `(dx, dz)` of each leg of the walk: +x, -z, -x, +z. */
+const LEG_HEADINGS = [1, 0, 0, -1, -1, 0, 0, 1] as const;
+
+/**
+ * Moves `sprite` round a square centred on the house and returns which leg (0–3) it is
+ * on; the caller turns the leg's heading into a tag for the current camera yaw. Each side
+ * restarts the walk cycle so a turn begins on the contact frame.
+ */
+function walkSquare(sprite: Sprite, simSeconds: number): number {
+  const side = WALK_HALF_SIDE * 2;
+  const sideSeconds = side / WALK_SPEED;
+  const leg = Math.floor(simSeconds / sideSeconds) % 4;
+  const along = (simSeconds % sideSeconds) * WALK_SPEED - WALK_HALF_SIDE;
+  const h = WALK_HALF_SIDE;
+  // A switch rather than a table of poses: this runs every frame and must not allocate.
+  switch (leg) {
+    case 0:
+      sprite.x = along;
+      sprite.z = h;
+      break;
+    case 1:
+      sprite.x = h;
+      sprite.z = -along;
+      break;
+    case 2:
+      sprite.x = -along;
+      sprite.z = -h;
+      break;
+    default:
+      sprite.x = -h;
+      sprite.z = along;
+  }
+  sprite.startSeconds = simSeconds - (simSeconds % sideSeconds);
+  return leg;
 }
