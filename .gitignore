@@ -12,8 +12,7 @@ assets/*
 .env.*
 !.env.example
 # tooling
-.serena/*
-!.serena/project.yml
+
 .claude/settings.local.json
 .DS_Store
 *.log

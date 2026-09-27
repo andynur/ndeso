@@ -8,7 +8,8 @@
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
 - **Next task:** M1-01 (sim clock — **all three calendars**: pranata mangsa 12×/120-day year, pasaran, tabular Hijri; golden test over 3 years — GDD §3, ADR-0007)
 - **Blockers:** none.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2, blocks release not development) · rename the GitHub repo? (§12.3) · mangsa day-lengths marked `verified: false` (§12.6)
+- **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2, blocks release not development) · mangsa day-lengths marked `verified: false` (§12.6). Repo stays `ndeso`; the game is `Balé` (§12.3 closed)
 - **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Shell size is 120 KB brotli of a 350 KB budget, but that is three.js and Preact only; no art has landed yet.
 
 ## Log
@@ -19,6 +20,19 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · harness · chore/harness-slim
+- Done: removed the Serena and context-mode MCP servers and everything that referenced them; added `tools/gh.ts` and `tools/check-links.ts` (wired into `bun run check`); rewrote the CLAUDE.md token-discipline and shell-safety sections; widened the permission allow-list; made the cloud setup script fail loudly. [ADR-0008](adr/0008-drop-serena-context-mode.md) supersedes ADR-0006 items 5 and 7.
+- Tests: `bun run check` green — **164 pass** (17 new for the link checker). `check:links` verified to actually fail on a missing file and a bad anchor before being trusted.
+- Notes/decisions:
+  - **Neither MCP server was ever installed.** Measured in a live cloud session: `serena`, `context-mode` and `serena-hooks` all absent from `PATH`; the launchers fell back to `uvx`/`npx`, producing four connect/disconnect cycles. The real damage was not latency — it was that CLAUDE.md told agents to prefer symbol tools that did not exist, so the project's stated token strategy had not been running since M0.
+  - **Root cause worth keeping: `scripts/cloud-env-setup.sh` swallowed every error** (`>/dev/null 2>&1 || true`). It now verifies each install and exits non-zero with what failed. A setup step that can fail silently will.
+  - **One assumption of mine was wrong and I checked it before reporting it.** I expected the no-op Serena `PreToolUse` hook (matching `Grep|Glob|Read|Bash`) to be a meaningful cost; measured at **~5 ms per call**. It was removed for being dead code, not for being slow.
+  - **`curl` deliberately stays out of the allow-list.** Permission patterns match a command prefix and the URL comes after the flags, so `Bash(curl:*)` would permit requests to any host. `tools/gh.ts` is allow-listed instead via `Bash(bun tools/:*)`, and it takes PR bodies from a file so markdown is not mangled by the shell.
+  - **Reviewer subagent priced:** one pass on the 16-file docs PR cost **90 555 tokens** because it re-derives context cold. CLAUDE.md now makes it *required* above 5 files or in `packages/sim`, and *skipped* for one-file PRs, instead of a vague "use proactively".
+  - **Shell-safety rules are written down now** because each already cost something: a denied path inside an `&&` chain kills the whole command (that is how stale `build.ts` reached `main` in M0-07), and `sed -i` fails silently where `Edit` fails loudly.
+  - **`slugify` bug caught by testing the gate itself.** The first version collapsed whitespace runs with `\s+`, but GitHub emits one hyphen per space — so a dropped em dash yields `--`. It would have rejected working links. Pinned by a named regression test.
+- Next: M1-01.
+
 ### 2026-09-27 · concept · docs/konsep-bale
 - Done: the concept rewrite. `docs/PLACES.md` (new), `ADR-0007` (new), `packages/content/data/calendar/mangsa.json5` (new), and rewrites of GDD, PRD, CULTURE_GUIDE, ROADMAP M1–M4, both READMEs, AGENTS.
 - Notes/decisions:

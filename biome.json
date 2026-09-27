@@ -14,7 +14,6 @@
       "!**/coverage",
       "!assets",
       "!assets-src",
-      "!.serena",
       "!bun.lock"
     ]
   },

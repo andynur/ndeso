@@ -34,11 +34,11 @@ Di claude.ai/code, klik ikon awan di atas kotak pesan, lalu pilih **Add cloud en
 ```text
 BASH_DEFAULT_TIMEOUT_MS=300000
 BASH_MAX_TIMEOUT_MS=600000
-MCP_TIMEOUT=60000
 ```
 
 Tentang setup script ini:
-- Script memasang **Bun 1.4.1** (VM cloud bawaannya masih Bun 1.3.x), **Serena**, dan **context-mode**.
+- Script memasang **Bun 1.4.1** (VM cloud bawaannya masih Bun 1.3.x). Itu saja — proyek ini tidak memakai MCP server ([ADR-0008](../adr/0008-drop-serena-context-mode.md)).
+- Script **gagal keras** kalau instalasi tidak berhasil. Versi sebelumnya menelan semua error, dan itu sebabnya dua MCP server sempat terdaftar tapi tidak pernah benar-benar terpasang selama dua milestone.
 - Hasilnya di-cache sekitar 7 hari, jadi sesi berikutnya langsung siap.
 - `bun install` untuk repo dijalankan otomatis oleh hook SessionStart (`scripts/hooks/session-start.sh`).
 - Pemasangan Bun lewat npm sudah diuji berjalan di balik proxy cloud.
@@ -49,9 +49,7 @@ Jangan simpan secret atau API key di environment variables, karena siapa pun yan
 
 1. Mulai sesi baru, pilih repo `ndeso` dan environment `ndeso`.
 2. Tempel **Prompt #1** dari [`MASTER_PROMPT.md`](../../MASTER_PROMPT.md).
-3. Setelah sesi berjalan, cek dua hal:
-   - Ketik `/mcp`: **serena** dan **context-mode** harus berstatus *connected*.
-   - Ketik `/context` untuk melihat pemakaian konteks. Idealnya konteks awal kecil.
+3. Setelah sesi berjalan, ketik `/context` untuk melihat pemakaian konteks. Idealnya konteks awal kecil.
 4. Di akhir sesi, agent akan meng-update `docs/STATUS.md`, mencentang ROADMAP, lalu commit. Buat PR dari tombol di claude.ai/code, lalu merge setelah CI hijau.
 
 ## Langkah 5: Ritme harian
@@ -66,34 +64,24 @@ Jangan simpan secret atau API key di environment variables, karena siapa pun yan
 ## Langkah 6 (opsional): Setup lokal untuk maintainer
 
 ```bash
-# Bun versi terkunci
+# Bun versi terkunci — ini satu-satunya yang wajib
 npm i -g bun@1.4.1            # atau: curl -fsSL https://bun.sh/install | bash -s "bun-v1.4.1"
-# Serena
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv tool install -p 3.13 serena-agent && serena init
 ```
-Lalu, di dalam Claude Code lokal:
-```text
-/plugin marketplace add mksglu/context-mode
-/plugin install context-mode@context-mode
-claude plugin marketplace add JuliusBrussee/caveman
-claude plugin install caveman@caveman
-```
-- Pakai `/caveman lite` untuk chat. Jangan pakai mode `ultra` saat mendesain atau debugging.
-- Detail dan alasannya ada di AI_WORKFLOW §4.
+Tidak ada MCP server atau plugin yang perlu dipasang. Kalau nanti Anda ingin menambah satu,
+baca dulu [AI_WORKFLOW §4](../AI_WORKFLOW.md) — syaratnya: setup script harus gagal keras
+kalau instalasinya tidak mendarat, dan statusnya diverifikasi di sesi cloud sungguhan.
 
-## Kenapa context-mode dan Caveman berbeda di cloud?
+## Kenapa plugin berbeda di cloud?
 
-Sesi cloud **tidak memasang plugin** yang dideklarasikan di repo. Akibatnya:
-- **context-mode** tetap tersedia sebagai **MCP server** (lewat `.mcp.json`), tetapi tanpa hook yang otomatis mengarahkan tool. `CLAUDE.md` sudah menginstruksikan kapan agent harus memakainya.
-- **Caveman** diganti skill proyek **`terse`**. Ketik `terse` atau `hemat token` di chat untuk mengaktifkannya.
+Sesi cloud **tidak memasang plugin** yang dideklarasikan di repo, dan tidak membaca
+`~/.claude` pribadi Anda. Jadi tool yang ada di laptop maintainer belum tentu ada di cloud.
+Untuk ringkas di chat, pakai skill proyek **`terse`** — ketik `terse` atau `hemat token`.
 
 ## Troubleshooting
 
 | Gejala | Solusi |
 |---|---|
-| `/mcp` menunjukkan serena *failed* | Cek setup script sudah jalan: minta Claude menjalankan `serena --version`. Jika lambat start, pastikan `MCP_TIMEOUT=60000` |
-| Serena jarang dipakai agent | Wajar, karena Claude cenderung memakai tool bawaan. Hook `remind` sudah aktif. Di prompt, bisa tambahkan "prefer Serena symbol tools" |
+| `/mcp` kosong | Memang benar — proyek ini tidak memakai MCP server (ADR-0008) |
 | Versi Bun salah (1.3.x) | Hook SessionStart akan memperbaikinya. Cek `/tmp/ndeso-session-setup.log` |
 | `bun install` gagal di cloud | Minta Claude menjalankan `bash scripts/cloud-env-setup.sh`, lalu `bun install` |
 | Sesi lama terasa lambat dan mahal | Tutup sesi, lalu mulai baru dengan `/next-task`. STATUS.md menjaga kesinambungan |
