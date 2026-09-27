@@ -1,12 +1,15 @@
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { TICK_MS } from '@bale/shared';
+import { createCommandMapper } from './game/commands.ts';
 import { createGame } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { initI18n, locale, t } from './i18n/index.ts';
+import { attachInput, createInput } from './platform/input/input.ts';
 import { guessPreset } from './render/quality/presets.ts';
-import { type CameraControls, createScene, type ScenePalette } from './render/scene.ts';
+import { createScene, type ScenePalette } from './render/scene.ts';
 import { mountOverlay } from './ui/mount.ts';
 import { colorHex } from './ui/tokens.ts';
+import { stickView } from './ui/touch-controls.tsx';
 
 /** `tools/smoke.ts` (M2-19) waits for this before screenshotting. */
 declare global {
@@ -38,39 +41,6 @@ const BROWSER_FRAMES: FrameScheduler = {
   now: () => performance.now(),
 };
 
-/** World units per wheel notch or +/- press. */
-const ZOOM_STEP = 1;
-
-/**
- * Stopgap camera bindings for desktop testing: Q/E turn, wheel and -/+ zoom. M1-05's input
- * layer replaces this and adds the touch controls; the camera is view state, not a sim
- * `Command`, so it will stay a direct call there too.
- */
-function bindCameraKeys(camera: CameraControls): void {
-  window.addEventListener('keydown', (event) => {
-    if (event.repeat) return;
-    switch (event.key) {
-      case 'q':
-      case 'Q':
-        camera.rotate(1);
-        break;
-      case 'e':
-      case 'E':
-        camera.rotate(-1);
-        break;
-      case '-':
-        camera.zoomBy(ZOOM_STEP);
-        break;
-      case '+':
-      case '=':
-        camera.zoomBy(-ZOOM_STEP);
-    }
-  });
-  window.addEventListener('wheel', (event) => camera.zoomBy(Math.sign(event.deltaY) * ZOOM_STEP), {
-    passive: true,
-  });
-}
-
 async function boot(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#stage');
   const overlay = document.querySelector<HTMLElement>('#overlay');
@@ -94,13 +64,28 @@ async function boot(): Promise<void> {
 
   // PERFORMANCE_BUDGET §6: render telemetry belongs behind `?debug=perf`.
   const debug = new URLSearchParams(location.search).get('debug') === 'perf';
-  mountOverlay(overlay, debug ? { stats: { preset, pixelRatio: scene.pixelRatio } } : {});
+  // GDD §12: keyboard, the floating stick, and the on-screen buttons all feed one input.
+  const input = createInput((view) => {
+    stickView.value = view;
+  });
+  attachInput(window, canvas, input);
+  mountOverlay(overlay, {
+    ...(debug ? { stats: { preset, pixelRatio: scene.pixelRatio } } : {}),
+    controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
+  });
 
   const game = createGame(CALENDAR_DATA);
+  const commands = createCommandMapper();
   const loop = createLoop(
     {
       step: game.step,
       frame(alpha, realDtMs) {
+        const frame = input.sample();
+        // The camera is view state (DESIGN §1.1), so it answers input directly; the sim only
+        // hears world-space `Command`s, queued for the next tick.
+        if (frame.rotate !== 0) scene.camera.rotate(frame.rotate > 0 ? 1 : -1);
+        if (frame.zoom !== 0) scene.camera.zoomBy(frame.zoom);
+        commands.map(frame, scene.camera.yaw, game.submit);
         scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000);
         // Nothing listens yet; the HUD clock (M1-08) is the first `ui.sync` consumer.
         game.drainEvents();
@@ -108,8 +93,6 @@ async function boot(): Promise<void> {
     },
     BROWSER_FRAMES,
   );
-
-  bindCameraKeys(scene.camera);
 
   // ARCHITECTURE §4.1: pause the sim and the renderer while hidden, so the game clock does
   // not run on in a background tab and the battery is spared. Saving first joins here once

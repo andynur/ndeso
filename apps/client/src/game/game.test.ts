@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { CALENDAR_DATA } from '@bale/content/calendar';
+import type { Command } from '@bale/sim';
 import { createGame } from './game.ts';
 
 const cal = CALENDAR_DATA;
@@ -19,4 +20,16 @@ test('events are buffered across steps and drained once', () => {
   const events = game.drainEvents();
   expect(events.some((e) => e.type === 'hourChanged')).toBe(true);
   expect(game.drainEvents()).toEqual([]);
+});
+
+test('submitted commands reach the next tick only, sanitized and in order', () => {
+  const seen: (readonly Command[])[] = [];
+  const game = createGame(cal, undefined, [(_state, ctx) => seen.push(ctx.commands)]);
+  game.submit({ type: 'move', x: 3, z: 4 });
+  game.submit({ type: 'selectSlot', slot: 99 });
+  game.submit({ type: 'interact' });
+  game.step();
+  game.step();
+  expect(seen[0]).toEqual([{ type: 'move', x: 0.6, z: 0.8 }, { type: 'interact' }]);
+  expect(seen[1]).toEqual([]);
 });

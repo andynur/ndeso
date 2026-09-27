@@ -60,6 +60,11 @@ export interface SceneOptions {
 
 /** What the input layer may do to the camera (DESIGN §1.1). */
 export interface CameraControls {
+  /**
+   * The displayed yaw in radians, easing through a turn. Input maps screen-relative
+   * movement through it, so "up" on the stick stays "away from the camera" mid-turn.
+   */
+  readonly yaw: number;
   /** One quarter turn: `+1` counter-clockwise seen from above, `-1` clockwise. */
   rotate(direction: 1 | -1): void;
   /** Zoom by `delta` world units, positive = out; clamped to 10–18. */
@@ -245,6 +250,9 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     },
     draw,
     camera: {
+      get yaw() {
+        return rig.yaw;
+      },
       rotate: (direction) => rig.rotate(direction),
       zoomBy: (delta) => rig.zoomBy(delta),
     },

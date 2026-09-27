@@ -23,7 +23,7 @@
 - [x] **M1-02** Fixed-step game loop with render interpolation and pause on hide. (ARCH §4.1)
 - [x] **M1-03** Billboard sprite system (instanced, atlas UV, animation by tag) with a placeholder character atlas. (DESIGN §1.2)
 - [x] **M1-04** Camera rig: follow, 4-angle rotation, zoom limits. (DESIGN §1.1)
-- [ ] **M1-05** Input abstraction: keyboard + virtual joystick + context button → `Command`s. (GDD §12)
+- [x] **M1-05** Input abstraction: keyboard + virtual joystick + context button → `Command`s. (GDD §12)
 - [ ] **M1-06** Player movement in sim with a tile collision grid; render follows. Walk anim by direction.
 - [ ] **M1-07** Day/night lighting from `lighting.json5` keyframes driven by the clock. Maghrib is the signature hour — get it right first. (DESIGN §1.3)
 - [ ] **M1-08** Quality presets + DPR cap + perf overlay (`?debug=perf`), plus the **HUD clock** from GDD §3.2 — `15:40 · Ashar · Mangsa Kapat hari 3/8 · Kliwon`, consuming the locale keys M1-01 landed. It rides here because this is the first task that owns a persistent on-screen readout. (PERF §4, §6, GDD §3.2)
