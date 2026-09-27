@@ -4,11 +4,11 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M0 — Bootstrap
-- **Next task:** M0-07 (production build `apps/client/build.ts` + `tools/check-size.ts`)
-- **Blockers:** none
+- **Milestone:** M0 — Bootstrap **complete**. Next up: M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB).
+- **Next task:** M1-01 (sim clock: ticks, minutes, days, seasons, pasaran, events; golden test for 56 days — GDD §3)
+- **Blockers:** none. M0's exit criteria are met: `bun run check` is green in CI and the Three.js scene loads on a phone over the LAN dev server.
 - **Open decisions:** final game title (PRD §12)
-- **Known issues:** unimplemented `bun run` scripts are `tools/todo.ts` stubs that print `TODO <task-id>` and exit 0 (content M2-01, build/size M0-07, smoke M2-19).
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Shell size is 120 KB brotli of a 350 KB budget, but that is three.js and Preact only; no art has landed yet.
 
 ## Log
 <!-- Newest first. Format:
@@ -18,6 +18,18 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M0-07 · feat/M0-07-production-build
+- Done: `apps/client/build.ts` (Bun.build from `index.html`, split, minified, content-hashed, linked sourcemaps, `public/` copied as-is, `precache-manifest.json` for M2-15) and the real `tools/check-size.ts`. `bun run build` and `bun run check:size` replaced their `tools/todo.ts` stubs, which completes `bun run ci`.
+- Tests: `bun run check` green; 140 tests across 15 files (12 new for the shell definition and the budget table). `bun run ci` green end to end. Verified the *built* bundle, not just its emission: served `dist/` and drove it in headless Chromium — `__GAME_READY__` true, WebGL2 context live, overlay localized, one hashed module script, no page errors.
+- Notes/decisions:
+  - **Shell: 120.3 KB brotli, 34% of the 350 KB budget** (PERF §2) — three.js and Preact, before any art.
+  - **A budget that cannot be measured yet is reported `pending` with the task that unblocks it, never as a pass.** Three of the five are pending (title critical path → M2-17, first playable frame → M1-09, area chunk → M2-13). A gate that prints "ok" for something it never looked at is worse than no gate.
+  - **The core shell is derived from the built HTML** (`tools/size/shell.ts`: `index.html` plus exactly what it links), not from a filename pattern. That keeps the budget tracking what a cold visit downloads even when the bundler changes how it splits or names things — the lazy locale chunks are correctly outside it.
+  - **Flat output naming**, deviating from the `'[dir]/[name]-[hash].[ext]'` written in ARCHITECTURE §7: `[dir]` is relative to the entry, so chunks from `packages/content` were published under `_.._/_.._/packages/content/locales/…`. §7 updated with the reason. `index.html` stays unhashed because it is served `no-cache`.
+  - Locale namespaces are measured at the source file, where they are authored and reviewed, rather than at the bundled chunk.
+  - `check:size` writes `artifacts/size-report.json`, which the M0-06 workflow already uploads, so a size regression can be diffed between runs instead of eyeballed in a log.
+  - `<link rel="icon" href="data:," />` in `index.html` — a placeholder that stops a favicon 404 on every cold load until M2-15 ships real icons. It is not an asset, so AGENTS rule 7 is untouched.
+- Next: M1-01
 ### 2026-09-27 · M0-06 · ci/M0-06-workflow
 - Done: real CI workflow. Dropped the "skip until M0-01" gate that guarded every step, added `actions/cache` on `~/.bun/install/cache` keyed by `bun.lock`, `permissions: contents: read`, `workflow_dispatch`, and an artifact upload for `artifacts/`. The steps now mirror `bun run ci` stage by stage (install → check → coverage → build + size → smoke) so a red check names itself instead of pointing at one opaque script.
 - Tests: `bun run check` green; 128 tests across 13 files (2 new for `todoAllowed`). Workflow YAML parses; `bun run ci` green locally end to end.

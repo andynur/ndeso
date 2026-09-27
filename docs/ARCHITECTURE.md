@@ -143,7 +143,9 @@ requestAnimationFrame(frame):
 - Locales: see [I18N](I18N.md).
 
 ## 7. Build & delivery
-- `bun apps/client/build.ts`: `Bun.build({ entrypoints: [index.html, sw.ts], splitting: true, minify: true, naming: '[dir]/[name]-[hash].[ext]' })`, then generate `precache-manifest.json` (core shell only, not all areas).
+- `bun apps/client/build.ts`: `Bun.build` from `index.html` (Bun follows the `<script>` and `<link>` tags itself), `splitting: true`, `minify: true`, `sourcemap: 'linked'`, then generate `precache-manifest.json` (core shell only, not all areas). `sw.ts` joins the entrypoints in M2-15.
+- Output naming is flat and content-hashed — `chunk`/`asset` as `[name]-[hash].[ext]`, `index.html` left unhashed because it is served `no-cache`. Not `[dir]/…`: `[dir]` is relative to the entry, so a chunk from `packages/content` would be published under `_.._/_.._/packages/…`.
+- The **core shell** is `index.html` plus exactly the files it links (`tools/size/shell.ts`). Everything else — lazy locale chunks now, area chunks and atlases later — is on-demand and budgeted separately.
 - Assets: `tools/assets/build.ts` → KTX2 (UASTC for UI/sprites where quality matters; ETC1S for world), Meshopt-compressed glb, Opus audio, hashed names.
 - Hosting: static files on Cloudflare Pages (or any CDN). `Cache-Control: public, max-age=31536000, immutable` for hashed files; `no-cache` for `index.html` and `sw.js`.
 
