@@ -1,4 +1,4 @@
-# 🌾 Ndeso *(working title)*
+# 🌾 Ndeso*
 
 **A cozy HD-2D farming life sim set on an Indonesian island. Open source, plays instantly in your browser, on desktop and on low-end Android phones.**
 

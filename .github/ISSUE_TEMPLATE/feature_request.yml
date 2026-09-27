@@ -1,0 +1,24 @@
+name: Idea / Ide fitur
+description: Suggest a feature or content / Usulkan fitur atau konten
+labels:
+- idea
+body:
+- type: textarea
+  id: idea
+  attributes:
+    label: Idea / Ide
+  validations:
+    required: true
+- type: dropdown
+  id: pillar
+  attributes:
+    label: Which pillar does it serve? (PRD §3)
+    options:
+    - Cozy & grounded
+    - Authentically Indonesian
+    - Instant & light
+    - Open
+- type: textarea
+  id: why
+  attributes:
+    label: Why would players love it? / Kenapa pemain akan suka?

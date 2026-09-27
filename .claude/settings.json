@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enableAllProjectMcpServers": true,
+  "env": {
+    "MCP_TIMEOUT": "60000",
+    "BASH_MAX_OUTPUT_LENGTH": "20000"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bun install:*)",
+      "Bash(bun run:*)",
+      "Bash(bun test:*)",
+      "Bash(bunx biome:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(ls:*)",
+      "mcp__serena",
+      "mcp__context-mode"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(bun add:*)",
+      "Bash(bun remove:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./bun.lock)",
+      "Read(./dist/**)",
+      "Read(./assets/**)",
+      "Read(./assets-src/**)",
+      "Read(**/node_modules/**)",
+      "Read(**/*.glb)",
+      "Read(**/*.ktx2)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(npm publish:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh",
+            "timeout": 300
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh activate",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Grep|Glob|Read|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh remind",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__serena__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh auto-approve",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v bun >/dev/null 2>&1; then bun \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/post-edit.ts; fi",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh cleanup",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "serena": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/scripts/mcp/serena.sh"]
+    },
+    "context-mode": {
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/scripts/mcp/context-mode.sh"]
+    }
+  }
+}

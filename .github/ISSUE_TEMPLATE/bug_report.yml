@@ -1,0 +1,44 @@
+name: Bug report / Laporan bug
+description: Something doesn't work / Ada yang tidak berjalan
+labels:
+- bug
+body:
+- type: textarea
+  id: what
+  attributes:
+    label: What happened? / Apa yang terjadi?
+    description: Include steps to reproduce / langkah untuk mengulang
+  validations:
+    required: true
+- type: input
+  id: device
+  attributes:
+    label: Device / Perangkat
+    placeholder: Redmi 12C, Android 13
+  validations:
+    required: true
+- type: dropdown
+  id: browser
+  attributes:
+    label: Browser
+    options:
+    - Chrome Android
+    - Samsung Internet
+    - WhatsApp in-app
+    - Instagram in-app
+    - TikTok in-app
+    - Safari iOS
+    - Desktop Chrome
+    - Desktop Firefox
+    - Desktop Safari
+    - Other
+  validations:
+    required: true
+- type: input
+  id: version
+  attributes:
+    label: Game version / build (title screen, bottom corner)
+- type: textarea
+  id: extra
+  attributes:
+    label: Screenshots, save file, console log (optional)

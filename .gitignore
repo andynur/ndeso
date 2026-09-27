@@ -1,0 +1,20 @@
+# deps & builds
+node_modules/
+dist/
+.cache/
+artifacts/
+*.tsbuildinfo
+# generated assets (sources live in assets-src/, tracked via LFS)
+assets/*
+!assets/CREDITS.md
+# env & secrets
+.env
+.env.*
+!.env.example
+# tooling
+.serena/*
+!.serena/project.yml
+.claude/settings.local.json
+.DS_Store
+*.log
+coverage/

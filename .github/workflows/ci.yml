@@ -1,0 +1,27 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip until workspace exists (before M0-01)
+        id: gate
+        run: |
+          if [ -f package.json ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "No package.json yet, skipping."; fi
+      - uses: oven-sh/setup-bun@v2
+        if: steps.gate.outputs.run == 'true'
+        with:
+          bun-version-file: .bun-version
+      - if: steps.gate.outputs.run == 'true'
+        run: bun install --frozen-lockfile
+      - if: steps.gate.outputs.run == 'true'
+        run: bun run check
+      - if: steps.gate.outputs.run == 'true'
+        run: bun run build && bun run check:size

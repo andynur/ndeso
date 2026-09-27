@@ -1,0 +1,29 @@
+name: Culture feedback / Masukan budaya
+description: Help us represent a tradition, region, or language respectfully / Bantu kami merepresentasikan budaya dengan tepat
+labels:
+- culture-review
+body:
+- type: input
+  id: region
+  attributes:
+    label: Region / Daerah
+    placeholder: Bali, Minangkabau, Sunda, …
+  validations:
+    required: true
+- type: textarea
+  id: feedback
+  attributes:
+    label: Feedback or knowledge / Masukan atau pengetahuan
+    description: What is inaccurate, sensitive, or missing? Tell us the story, term, or custom.
+  validations:
+    required: true
+- type: textarea
+  id: sources
+  attributes:
+    label: Sources or personal experience (optional) / Sumber atau pengalaman pribadi
+- type: checkboxes
+  id: consent
+  attributes:
+    label: Credit
+    options:
+    - label: You may credit me as a cultural contributor (name/handle) / Boleh cantumkan nama saya sebagai kontributor budaya
