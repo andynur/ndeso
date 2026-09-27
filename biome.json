@@ -1,6 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
       "**",
@@ -31,8 +35,12 @@
     }
   },
   "json": {
-    "formatter": { "trailingCommas": "none" },
-    "parser": { "allowComments": true }
+    "formatter": {
+      "trailingCommas": "none"
+    },
+    "parser": {
+      "allowComments": true
+    }
   },
   "linter": {
     "enabled": true,
@@ -44,13 +52,22 @@
       },
       "style": {
         "noDefaultExport": "error"
+      },
+      "complexity": {
+        "useLiteralKeys": "off"
       }
     }
   },
   "overrides": [
     {
       "includes": ["tools/**", "scripts/**"],
-      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
     }
   ]
 }

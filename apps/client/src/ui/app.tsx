@@ -1,4 +1,5 @@
-import type { BootI18n } from '../i18n/boot.ts';
+import { SUPPORTED_LOCALES } from '@ndeso/shared';
+import { format, locale, setLocale, t } from '../i18n/index.ts';
 import type { QualityPreset } from '../render/quality/presets.ts';
 
 export interface RenderStats {
@@ -7,24 +8,53 @@ export interface RenderStats {
 }
 
 export interface AppProps {
-  readonly i18n: BootI18n;
   /** Only set under `?debug=perf` (PERFORMANCE_BUDGET §6). */
   readonly stats?: RenderStats | undefined;
 }
 
+/** M0-04 acceptance criterion: picking a locale re-renders every string below. */
+function LocalePicker() {
+  const active = locale.value;
+  return (
+    <p class="picker">
+      <span class="picker__label">{t('settings.language')}</span>
+      {SUPPORTED_LOCALES.map((entry) => (
+        <button
+          key={entry.id}
+          type="button"
+          class="picker__option"
+          lang={entry.tag}
+          aria-pressed={entry.id === active}
+          onClick={() => {
+            void setLocale(entry.id);
+          }}
+        >
+          {entry.nativeName}
+        </button>
+      ))}
+    </p>
+  );
+}
+
 /**
- * M0-03 overlay: proves the Preact layer renders above the WebGL canvas and that
- * strings come from the locale bundles. The HUD from DESIGN §4 replaces it in M2.
+ * M0-03/M0-04 overlay: the Preact layer renders above the WebGL canvas, every string
+ * comes from the locale bundles, and the locale can be switched live. The HUD from
+ * DESIGN §4 replaces it in M2.
  */
-export function App({ i18n, stats }: AppProps) {
+export function App({ stats }: AppProps) {
   return (
     <div class="panel">
-      <p class="panel__greeting">{i18n.t('boot.hello')}</p>
-      <p class="panel__tagline">{i18n.t('app.tagline')}</p>
-      <p class="panel__note">{i18n.t('boot.placeholder')}</p>
+      <p class="panel__greeting">{t('boot.hello')}</p>
+      <p class="panel__tagline">{t('app.tagline')}</p>
+      <p class="panel__note">{t('boot.placeholder')}</p>
+      {/* Sample data until M1-01 owns the clock and M2-07 the wallet. */}
+      <p class="panel__sample">
+        {t('hud.money')}: {format.value.money(12500)}
+      </p>
+      <LocalePicker />
       {stats ? (
         <p class="panel__stats">
-          {i18n.locale} · {stats.preset} @ {stats.pixelRatio}x
+          {locale.value} · {stats.preset} @ {stats.pixelRatio}x
         </p>
       ) : null}
     </div>

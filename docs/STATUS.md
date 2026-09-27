@@ -5,10 +5,10 @@
 
 ## Now
 - **Milestone:** M0 — Bootstrap
-- **Next task:** M0-04 (i18n runtime: `t`, `format.money`, locale switch + `tools/i18n/check.ts`)
+- **Next task:** M0-05 (`tools/check-deps.ts` enforcing the ARCHITECTURE §2 import table)
 - **Blockers:** none
 - **Open decisions:** final game title (PRD §12)
-- **Known issues:** unimplemented `bun run` scripts are `tools/todo.ts` stubs that print `TODO <task-id>` and exit 0 (deps M0-05, i18n M0-04, content M2-01, build/size M0-07, smoke M2-19). `check:deps` is still a stub, so ARCHITECTURE §2 import boundaries are only enforced by the PostToolUse hook.
+- **Known issues:** unimplemented `bun run` scripts are `tools/todo.ts` stubs that print `TODO <task-id>` and exit 0 (deps M0-05, content M2-01, build/size M0-07, smoke M2-19). `check:deps` is still a stub, so ARCHITECTURE §2 import boundaries are only enforced by the PostToolUse hook.
 
 ## Log
 <!-- Newest first. Format:
@@ -18,6 +18,18 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M0-04 · feat/M0-04-i18n-runtime
+- Done: i18n runtime in `apps/client/src/i18n/` (`t`, lazy namespaces, signal-backed locale switch, `createNumberFormats` for money/number/clock, `formatGameDate`), the ICU subset of I18N §3 as `packages/shared/src/message.ts`, a locale picker in the overlay, and the real `check:i18n` (`tools/i18n/check.ts`) plus `tools/i18n/gen-types.ts`.
+- Tests: `bun run check` green; 65 tests across 8 files (39 new: message formatter, parity rules, key parsing, number formats). Verified live over CDP — clicking *Bahasa Indonesia* re-renders every overlay string, switches `Rp12,500` → `Rp12.500`, updates `<html lang>` and persists the choice. `check:i18n` exits 1 on a removed key and on a placeholder mismatch.
+- Notes/decisions:
+  - **`packages/content/src/i18n.generated.ts` is generated and committed** (`bun run gen:i18n`), exported as `@ndeso/content/i18n`. It holds the `I18nKey` unions *and* a per-locale map of lazy namespace loaders, so there is no hand-maintained registry to forget. `check:i18n` fails when it drifts, and the generator pipes its output through Biome so `bun run fmt` cannot cause false drift. Committing it keeps `bun run check` working on a clean checkout without a codegen step.
+  - Our own ~190-line ICU subset instead of a formatter dependency: `{name}`, `plural` with `#` and `=n` selectors, `select`. Apostrophe escaping, `selectordinal` and number skeletons are rejected loudly rather than silently mis-rendered.
+  - Biome's `complexity/useLiteralKeys` is now off: it demands `obj.other` where tsconfig `noPropertyAccessFromIndexSignature` demands `obj['other']`, so the two rules cannot both be satisfied.
+  - `format.money` needs `currencyDisplay: 'narrowSymbol'` — otherwise an `en` locale renders IDR as `IDR12,500` instead of the `Rp12,500` I18N §7 specifies.
+  - Locale preference persists in `localStorage` (`ndeso.locale`), wrapped in try/catch for private mode. M2's storage adapter (`idb-keyval`, ARCHITECTURE §4.4) takes over settings later; `localStorage` is used here because the choice must be readable synchronously before the first render.
+  - `Season` / `Weekday` / `Pasaran` literals live in the i18n runtime for now; M1-01 owns the clock and moves them into `packages/shared`.
+  - `@preact/signals` added (already on the TECH_STACK §2 allow-list) and `@ndeso/shared` linked into the root so `tools/` can import it.
+- Next: M0-05
 ### 2026-09-27 · M0-03 · feat/M0-03-client-bootstrap
 - Done: `apps/client` walking skeleton — `index.html` + `src/main.ts`, Three.js scene (ground plane, rotating low-poly house placeholder, camera per DESIGN §1.1: FOV 30 / pitch 38 / distance 14), Preact overlay reading strings from the locale bundles, `src/ui/tokens.ts` mirroring DESIGN §2, `src/render/quality/presets.ts` (preset + DPR cap per PERF §4). `tools/dev.ts` serves it with HMR on `0.0.0.0` and prints the LAN URL.
 - Tests: `bun run check` green; 26 tests across 5 files (8 new for `quality.ts`). Verified in headless Chromium: overlay renders over the WebGL canvas, no page console errors, scene draws.

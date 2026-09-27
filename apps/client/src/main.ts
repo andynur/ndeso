@@ -1,4 +1,4 @@
-import { createBootI18n } from './i18n/boot.ts';
+import { initI18n, locale, t } from './i18n/index.ts';
 import { guessPreset } from './render/quality/presets.ts';
 import { createScene, type ScenePalette } from './render/scene.ts';
 import { mountOverlay } from './ui/mount.ts';
@@ -20,14 +20,19 @@ const PALETTE: ScenePalette = {
   fog: colorHex('indigo700'),
 };
 
-function boot(): void {
+async function boot(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#stage');
   const overlay = document.querySelector<HTMLElement>('#overlay');
   if (!canvas || !overlay) throw new Error('index.html is missing #stage or #overlay');
 
-  const i18n = createBootI18n(navigator.languages);
-  document.documentElement.lang = i18n.locale;
-  document.title = i18n.t('app.title');
+  await initI18n(navigator.languages);
+  // `locale` is a signal, so the document metadata follows a live switch too.
+  const applyDocumentLocale = (): void => {
+    document.documentElement.lang = locale.value;
+    document.title = t('app.title');
+  };
+  applyDocumentLocale();
+  locale.subscribe(applyDocumentLocale);
 
   const preset = guessPreset({
     deviceMemoryGb: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
@@ -39,10 +44,7 @@ function boot(): void {
 
   // PERFORMANCE_BUDGET §6: render telemetry belongs behind `?debug=perf`.
   const debug = new URLSearchParams(location.search).get('debug') === 'perf';
-  mountOverlay(overlay, {
-    i18n,
-    ...(debug ? { stats: { preset, pixelRatio: scene.pixelRatio } } : {}),
-  });
+  mountOverlay(overlay, debug ? { stats: { preset, pixelRatio: scene.pixelRatio } } : {});
 
   // ARCHITECTURE §4.1: stop burning battery (and the frame budget) while hidden.
   document.addEventListener('visibilitychange', () => {
@@ -54,4 +56,4 @@ function boot(): void {
   window.__GAME_READY__ = true;
 }
 
-boot();
+await boot();
