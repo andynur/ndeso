@@ -1,13 +1,18 @@
-# 🌾 Balé*
+# 🌾 Balé
 
-**Game simulasi bertani bergaya HD-2D berlatar sebuah pulau di Indonesia. Open source, langsung main di browser, di laptop maupun HP Android kelas menengah ke bawah.**
+**Game simulasi bertani bergaya HD-2D berlatar Baledono, Purworejo, Jawa Tengah. Open source, langsung main di browser, di laptop maupun HP Android kelas menengah ke bawah.**
 
 *English: [README.md](README.md)*
 
 > Status: **pra-alfa, tahap perencanaan dan bootstrap** (lihat [docs/STATUS.md](docs/STATUS.md)).
 
+## Ceritanya
+Kamu pulang dari Jakarta ke Purworejo, mengambil alih sebidang tanah dari kakekmu, **Mbah Hita** — masih ada, sudah sepuh, sudah tidak kuat menggarap. Mbah Hita punya cita-cita yang belum selesai: menjadikan tanah itu **asri, nyaman, tenang**. Karena itu namanya **Balé Al Jannah**.
+
+Bertani itu caranya. Tujuannya bukan seberapa banyak uangmu, tapi **seberapa enak tempatnya** — serindang apa, senyaman apa, setenang apa.
+
 ## Kenapa game ini?
-Terinspirasi *Harvest Moon: Back to Nature* dan *Coral Island*, dengan kehidupan desa Indonesia sebagai intinya: sawah terasering, berbagi air ala subak, hari pasar mengikuti *pasaran* Jawa, gotong royong, dan festival seperti Tujuhbelasan. Tanpa instalasi: buka link, main, dan tetap bisa main saat offline.
+Terinspirasi *Harvest Moon: Back to Nature* dan *Coral Island*, tapi berpijak pada satu tempat yang betulan ada. Waktunya jalan seperti di sana: **12 mangsa pranata mangsa**, siklus **pasaran** lima hari untuk hari pasar, dan kalender **Hijriah** yang membuat Ramadhan dan Lebaran bergeser melewati musim. Tanpa instalasi: buka link, main, dan tetap bisa main saat offline.
 
 ## Rencana fitur
 - Tampilan HD-2D: dunia 3D low-poly dengan karakter sprite pixel-art (Three.js, WebGL2)

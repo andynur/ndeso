@@ -1,6 +1,6 @@
 # AGENTS.md — rules for every AI coding agent
 
-Balé: open-source HD-2D farming sim (Harvest Moon-like, Indonesian culture) for web + mobile browsers.
+Balé: open-source HD-2D farming sim for web + mobile browsers, set in **Baledono, Purworejo, Jawa Tengah** — a real place. You take over your grandfather Mbah Hita's ground and make it *asri, nyaman, tenang*. The scoreboard is the quality of the place, not the money.
 Stack: **Bun 1.4 (pinned) · TypeScript strict · Three.js (WebGL2) · Preact · Zod · inkjs**. Monorepo with Bun workspaces.
 
 ## Read on demand (don't preload everything)
@@ -11,6 +11,7 @@ Stack: **Bun 1.4 (pinned) · TypeScript strict · Three.js (WebGL2) · Preact ·
 | touch structure/imports/loop/save | `docs/ARCHITECTURE.md` |
 | add UI, art, audio, colors | `docs/DESIGN.md` |
 | add text, dialog, content | `docs/I18N.md` + `docs/CULTURE_GUIDE.md` |
+| name or build a location | `docs/PLACES.md` (**the naming policy is binding**) |
 | add deps or tools | `docs/TECH_STACK.md` |
 | worry about fps/size | `docs/PERFORMANCE_BUDGET.md` |
 | finish a task | `docs/TESTING.md` §3 (Definition of Done) |
@@ -23,7 +24,7 @@ Stack: **Bun 1.4 (pinned) · TypeScript strict · Three.js (WebGL2) · Preact ·
 5. **Don't change Accepted ADRs or GDD numbers silently.** Propose the change in the PR (and a new ADR for architecture).
 6. **Run `bun run check` before every commit.** Fix failures; never skip or disable checks/tests to pass.
 7. **Placeholders, not final art.** Never fetch copyrighted or unclear-license assets. Open an `art-needed` issue instead.
-8. **Culture:** follow CULTURE_GUIDE. No sacred items as loot, no stereotypes.
+8. **Culture:** follow CULTURE_GUIDE. No sacred items as loot, no stereotypes, **no worship scored or gated**, and real place names follow the tiers in PLACES §1.
 9. **Never commit secrets**, `.env*`, build outputs, or generated assets.
 10. Update `docs/STATUS.md` (Now + Log entry) at the end of the session.
 
