@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-04 done.
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-05 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-05 (input abstraction → `Command`s, GDD §12). It must take over the stopgap `bindCameraKeys` in `main.ts` (Q/E turn, wheel/± zoom) and add touch rotate/zoom; the camera is view state, so it stays a direct `scene.camera` call, not a sim `Command`. Sprite facing is picked per frame from a world heading via `CameraRig.screenFacing`.
+- **Next task:** M1-06 (player movement in sim + tile collision grid; render follows; walk anim by direction). The `commands` system it adds is the first consumer of `ctx.commands`: `move {x, z}` is a **held** world-space intent (sent only on change, `{0,0}` = stop), so the sim must keep it in state between ticks. Replace the scene's placeholder walker with the player as the camera's follow target.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
-- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. Shell size is 127 KB brotli of a 350 KB budget.
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. `Command`s are queued but no system reads them until M1-06. No menu or gamepad input yet (GDD §12 Esc/I, gamepad column) — add them with the task that needs them. Shell size is 129 KB brotli of a 350 KB budget.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M1-05 · claude/friendly-curie-r6bxqk
+- Done: `sim/commands.ts` — `Command` union (`move` world-space held intent, `interact`, `selectSlot`, `cycleSlot`) + `sanitizeCommand`; `SimContext.commands`. `game.submit()` queues sanitized commands for the next tick. `platform/input/` — keyboard by `event.code`, floating stick in the left 40 % (DESIGN §5), two-finger swipe turns / pinch zooms, mouse click = interact; one `InputFrame` per frame. `game/commands.ts` maps it through the camera yaw (`screenToWorld`, the inverse of `screenFacing`). `ui/touch-controls.tsx` — stick ring, Use (72 dp) and turn (48 dp) buttons, hidden where the primary pointer is a mouse.
+- Tests: `bun run check` green (288 tests); build + `check:size` ok (shell 129 KB). Headless Chromium: touch stick draws and releases, buttons shown on touch / hidden on desktop, no console errors.
+- Notes/decisions: camera turn keys are **Q / R** per GDD §12 (E is interact), replacing the M1-04 Q/E stopgap. Wheel switches tools (GDD); zoom is − / +, Ctrl-wheel (trackpad pinch), and touch pinch. Camera stays view state, never a `Command`.
+- Next: M1-06.
+
 ### 2026-09-27 · M1-04 · claude/friendly-curie-r6bxqk
 - Done: `render/camera/camera-rig.ts` — pure (no `three`) rig: critically damped follow (0.15 s) with a 0.5-unit dead zone, 4 yaw angles eased over 250 ms (mid-turn presses continue from the current angle), zoom clamped 10–18 and eased, `pose()` into a scratch object, `screenFacing()` maps world heading → down/up/side for the current yaw. Loop hands `frame()` a clamped real dt; the camera runs on real time. Scene follows the walker; all placeholder sprites pick their tag from a world heading.
 - Tests: `bun run check` green (254 tests); build + `check:size` ok (shell 127 KB). No headless screenshot this session (Playwright not installed).
@@ -94,19 +100,3 @@
   - **Shell-safety rules are written down now** because each already cost something: a denied path inside an `&&` chain kills the whole command (that is how stale `build.ts` reached `main` in M0-07), and `sed -i` fails silently where `Edit` fails loudly.
   - **`slugify` bug caught by testing the gate itself.** The first version collapsed whitespace runs with `\s+`, but GitHub emits one hyphen per space — so a dropped em dash yields `--`. It would have rejected working links. Pinned by a named regression test.
 - Next: M1-01.
-
-### 2026-09-27 · concept · docs/konsep-bale
-- Done: the concept rewrite. `docs/PLACES.md` (new), `ADR-0007` (new), `packages/content/data/calendar/mangsa.json5` (new), and rewrites of GDD, PRD, CULTURE_GUIDE, ROADMAP M1–M4, both READMEs, AGENTS.
-- Notes/decisions:
-  - **Real place, not a fictional island.** Baledono, Purworejo. That is the whole source of the game's texture and also its main liability, so `PLACES.md §1` sets a binding three-tier naming policy: public geography real, private businesses fictionalised, the starting venue needs its owners' blessing. No real living person becomes an NPC; no map data or imagery copied from any service.
-  - **The goal is the place, not the money.** *Asri / nyaman / tenang* (GDD §5) is computed spatially from what is actually on the ground, so it cannot be topped up like a counter. Farming is the means. This is the one mechanic that makes it not a Stardew reskin, and it came straight out of what `jannah` literally means — a garden.
-  - **Three calendars, one integer** (ADR-0007). Pranata mangsa gives twelve flavours of year instead of four invented seasons; the tabular Hijri calendar makes Ramadan and Lebaran drift 4 days per year, which is free long-save variety no farm sim has. Chose **tabular over astronomical** hisab to keep the sim pure and deterministic; ±1 day is inside the spread Indonesia itself sees.
-  - **The crop table needed no rebalancing.** Crops stay tagged by `musim`, a derived label over groups of mangsa, and musim hujan is 54 days — longer than the 28-day season the numbers were first tuned against.
-  - **Corrected a factual error carried since the first draft:** the irrigation system was modelled on Balinese *subak*. Purworejo is Javanese; the right institution is the **ulu-ulu**. Subak stays in the glossary as a distinct thing, no longer as our model.
-  - **`season` removed from the save `meta`.** It is derivable from `day`, and storing it would let a save disagree with itself after a data fix.
-  - **Religious depiction is fenced explicitly** (CULTURE_GUIDE §3): the character is Muslim, worship is never scored or gated, prayer times are a *clock display*, Ramadan changes the town and not the player, and `jannah` is framed as one man's aspiration rather than a claim. §3.3 also names the contested Javanese practices (slametan, weton) and says to show them without staging a fiqh debate — objections get answered from the guide, not by quietly editing content.
-  - **Mbah Hita is alive and does not die.** Recorded in GDD §2 as non-negotiable so nobody "improves" it later. He is also the *asri* readout before any UI meter exists, which is why he is budgeted three NPCs' worth of writing.
-  - **Two tasks moved up into M2:** the *Kamus* glossary (M2-21) because the first Javanese word in dialog needs its gloss shipping with it, and *asri* (M2-22). The kawasan **building** system stays in M3 as a closed ~10-structure list, deliberately not a free-form editor — every public building is a content multiplier, and an empty one is worse than none.
-  - **Caught in review, all fixed before merge:** ARCHITECTURE §3.2/§3.3 still emitted `seasonChanged` and stored `clock.season` — exactly the stale shape M1-01 would have implemented; `I18N.md` still passed `season` into `format.gameDate`; `GLOSSARY.md` still defined the 28-day season with pancaroba as a sub-phase; the `sign` prose I put in `mangsa.json5` broke `.claude/rules/content-i18n.md` (content data holds ids and numbers, not prose — the pertanda now lives in GDD §3.1 and becomes `calendar:mangsa.<id>.sign` in both locales at M1-01); and the crop tag `both` became ambiguous once pancaroba was promoted to a first-class musim, so it is now `semua`.
-  - **Two human tasks added to M1** (M1-11, M1-12) because CULTURE_GUIDE §1.5 now demands a cultural review *before* M2 writing and the roadmap had no task for it, and because the art direction is blocked on reference photography that does not exist online.
-- Next: M1-01, written against ADR-0007 rather than the old two-season model.

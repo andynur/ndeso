@@ -4,6 +4,8 @@
  * The full `GameState` grows task by task; M0 only needs the parts a system touches.
  */
 
+import type { Command } from './commands.ts';
+
 /** Events a system emits for render, UI, and audio to react to. Systems never call them back. */
 export interface SimEvent {
   readonly type: string;
@@ -14,6 +16,8 @@ export interface SimEvent {
 export interface SimContext {
   /** Ticks elapsed in this step; always 1 for the fixed-step loop, >1 when catching up. */
   readonly ticks: number;
+  /** This step's player commands, already sanitized, in the order they were issued. */
+  readonly commands: readonly Command[];
   emit(event: SimEvent): void;
 }
 
@@ -21,10 +25,14 @@ export interface SimContext {
 export type System<TState> = (state: TState, ctx: SimContext) => void;
 
 /** Collects events during one step. Deterministic: order of emission is preserved. */
-export function createContext(ticks = 1): SimContext & { readonly events: SimEvent[] } {
+export function createContext(
+  ticks = 1,
+  commands: readonly Command[] = [],
+): SimContext & { readonly events: SimEvent[] } {
   const events: SimEvent[] = [];
   return {
     ticks,
+    commands,
     events,
     emit(event) {
       events.push(event);

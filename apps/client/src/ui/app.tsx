@@ -1,5 +1,6 @@
 import { type QualityPreset, SUPPORTED_LOCALES } from '@bale/shared';
 import { format, locale, setLocale, t } from '../i18n/index.ts';
+import { TouchControls, type TouchControlsProps } from './touch-controls.tsx';
 
 export interface RenderStats {
   readonly preset: QualityPreset;
@@ -9,6 +10,8 @@ export interface RenderStats {
 export interface AppProps {
   /** Only set under `?debug=perf` (PERFORMANCE_BUDGET §6). */
   readonly stats?: RenderStats | undefined;
+  /** On-screen stick, context button, and camera buttons (GDD §12). */
+  readonly controls?: TouchControlsProps | undefined;
 }
 
 /** M0-04 acceptance criterion: picking a locale re-renders every string below. */
@@ -40,7 +43,16 @@ function LocalePicker() {
  * comes from the locale bundles, and the locale can be switched live. The HUD from
  * DESIGN §4 replaces it in M2.
  */
-export function App({ stats }: AppProps) {
+export function App({ stats, controls }: AppProps) {
+  return (
+    <>
+      <Panel stats={stats} />
+      {controls ? <TouchControls {...controls} /> : null}
+    </>
+  );
+}
+
+function Panel({ stats }: Pick<AppProps, 'stats'>) {
   return (
     <div class="panel">
       <p class="panel__greeting">{t('boot.hello')}</p>
