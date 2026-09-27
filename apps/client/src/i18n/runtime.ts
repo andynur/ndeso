@@ -13,7 +13,7 @@ import {
   type MessageValues,
   resolveLocale,
   SOURCE_LOCALE,
-} from '@ndeso/shared';
+} from '@bale/shared';
 import { computed, type ReadonlySignal, signal } from '@preact/signals';
 import { createNumberFormats, type NumberFormats } from './format.ts';
 import { DEFAULT_NAMESPACE, splitKey } from './keys.ts';
@@ -47,7 +47,7 @@ export interface I18n<K extends string = string> {
   loadNamespace(namespace: string): Promise<void>;
 }
 
-export const LOCALE_STORAGE_KEY = 'ndeso.locale';
+export const LOCALE_STORAGE_KEY = 'bale.locale';
 
 export function createI18n<K extends string = string>(options: I18nOptions): I18n<K> {
   const { bundles, storage, dev, onMissingKey } = options;

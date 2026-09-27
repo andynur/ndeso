@@ -1,16 +1,16 @@
-# 🌾 Ndeso
+# 🌾 Balé
 
 **An open-source HD-2D farming and life sim inspired by Indonesian village life.**
 
-Ndeso is a browser-first game set on a fictional Indonesian island. It combines a low-poly 3D world with 2D sprite characters, a cozy farming loop, and systems grounded in local culture: *sawah* terraces, *gotong royong*, market days, festivals, and a *pasaran*-inspired calendar.
+Balé is a browser-first game set on a fictional Indonesian island. It combines a low-poly 3D world with 2D sprite characters, a cozy farming loop, and systems grounded in local culture: *sawah* terraces, *gotong royong*, market days, festivals, and a *pasaran*-inspired calendar.
 
-> 🚧 **Early development:** Ndeso is currently in the M0 bootstrap phase. There is no playable release yet. Follow the [roadmap](docs/ROADMAP.md) for progress.
+> 🚧 **Early development:** Balé is currently in the M0 bootstrap phase. There is no playable release yet. Follow the [roadmap](docs/ROADMAP.md) for progress.
 
 English · [Bahasa Indonesia](README.id.md) · [Issues](https://github.com/andynur/ndeso/issues)
 
 ## Vision
 
-Open a link and, in under 15 seconds, be standing in your *sawah* at dawn. Ndeso is designed to be:
+Open a link and, in under 15 seconds, be standing in your *sawah* at dawn. Balé is designed to be:
 
 - **Cozy and grounded:** a relaxing daily rhythm with meaningful seasons and community life.
 - **Authentically Indonesian:** culture expressed through systems and stories, not decorative stereotypes.
@@ -118,4 +118,4 @@ Please report vulnerabilities privately through [GitHub Security Advisories](htt
 
 ## Acknowledgements
 
-Ndeso is inspired by the farming and life-sim genre, including *Harvest Moon: Back to Nature* and *Coral Island*. It is an independent project and is not affiliated with or endorsed by those titles or their rights holders.
+Balé is inspired by the farming and life-sim genre, including *Harvest Moon: Back to Nature* and *Coral Island*. It is an independent project and is not affiliated with or endorsed by those titles or their rights holders.

@@ -1,6 +1,6 @@
 # AGENTS.md — rules for every AI coding agent
 
-Ndeso: open-source HD-2D farming sim (Harvest Moon-like, Indonesian culture) for web + mobile browsers.
+Balé: open-source HD-2D farming sim (Harvest Moon-like, Indonesian culture) for web + mobile browsers.
 Stack: **Bun 1.4 (pinned) · TypeScript strict · Three.js (WebGL2) · Preact · Zod · inkjs**. Monorepo with Bun workspaces.
 
 ## Read on demand (don't preload everything)

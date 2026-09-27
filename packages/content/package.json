@@ -1,5 +1,5 @@
 {
-  "name": "@ndeso/content",
+  "name": "@bale/content",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,6 @@
     "./locales/*": "./locales/*"
   },
   "dependencies": {
-    "@ndeso/shared": "workspace:*"
+    "@bale/shared": "workspace:*"
   }
 }

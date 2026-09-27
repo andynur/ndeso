@@ -12,10 +12,10 @@ import { type ImportRef, scanImports } from './scan.ts';
 
 /** Workspace package name → the directory it resolves to. */
 export const WORKSPACE_PACKAGES: Readonly<Record<string, string>> = {
-  '@ndeso/shared': 'packages/shared',
-  '@ndeso/sim': 'packages/sim',
-  '@ndeso/content': 'packages/content',
-  '@ndeso/client': 'apps/client',
+  '@bale/shared': 'packages/shared',
+  '@bale/sim': 'packages/sim',
+  '@bale/content': 'packages/content',
+  '@bale/client': 'apps/client',
 };
 
 /**

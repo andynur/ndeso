@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TICKS_PER_SECOND } from '@ndeso/shared';
+import { TICKS_PER_SECOND } from '@bale/shared';
 import { createContext } from '../types.ts';
 import { createHelloState, hello } from './hello.ts';
 

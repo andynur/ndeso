@@ -29,7 +29,7 @@ function lanAddresses(): string[] {
     .map((entry) => entry.address);
 }
 
-console.log(`\n  Ndeso dev server — HMR on, port ${server.port}\n`);
+console.log(`\n  Balé dev server — HMR on, port ${server.port}\n`);
 console.log(`  local    http://localhost:${server.port}`);
 for (const address of lanAddresses()) {
   console.log(`  network  http://${address}:${server.port}`);

@@ -1,5 +1,5 @@
 {
-  "name": "@ndeso/sim",
+  "name": "@bale/sim",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,6 +8,6 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@ndeso/shared": "workspace:*"
+    "@bale/shared": "workspace:*"
   }
 }

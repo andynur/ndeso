@@ -3,8 +3,8 @@
  * locale registry and to `localStorage`. Import `t` from here, never `createI18n`.
  */
 
-import type { I18nKey } from '@ndeso/content/i18n';
-import { LOCALE_BUNDLES } from '@ndeso/content/i18n';
+import type { I18nKey } from '@bale/content/i18n';
+import { LOCALE_BUNDLES } from '@bale/content/i18n';
 import { DEV } from '../platform/env.ts';
 import { localSettings } from '../platform/settings.ts';
 import { createI18n } from './runtime.ts';

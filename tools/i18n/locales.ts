@@ -10,7 +10,7 @@ import {
   type LocaleId,
   type LocaleNamespace,
   SUPPORTED_LOCALES,
-} from '@ndeso/shared';
+} from '@bale/shared';
 
 export const LOCALES_DIR = join(import.meta.dir, '../../packages/content/locales');
 

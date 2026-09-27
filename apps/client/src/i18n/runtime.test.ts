@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { LocaleId } from '@ndeso/shared';
+import type { LocaleId } from '@bale/shared';
 import {
   type BundleRegistry,
   createI18n,

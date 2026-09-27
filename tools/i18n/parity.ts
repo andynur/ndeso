@@ -3,7 +3,7 @@
  * so every rule below is unit-testable without fixtures on disk.
  */
 
-import { messagePlaceholders } from '@ndeso/shared';
+import { messagePlaceholders } from '@bale/shared';
 
 export type Bundle = Readonly<Record<string, unknown>>;
 

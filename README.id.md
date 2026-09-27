@@ -1,4 +1,4 @@
-# 🌾 Ndeso*
+# 🌾 Balé*
 
 **Game simulasi bertani bergaya HD-2D berlatar sebuah pulau di Indonesia. Open source, langsung main di browser, di laptop maupun HP Android kelas menengah ke bawah.**
 

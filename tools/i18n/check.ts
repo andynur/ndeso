@@ -11,7 +11,7 @@
  * and that the committed `i18n.generated.ts` still matches the locale files.
  */
 
-import { SOURCE_LOCALE } from '@ndeso/shared';
+import { SOURCE_LOCALE } from '@bale/shared';
 import { GENERATED_PATH, renderGeneratedModule } from './gen-types.ts';
 import { LOCALE_IDS, presentNamespaces, readBundle, unknownFiles } from './locales.ts';
 import { compareNamespace, compareNamespaceSets, type Problem, validateBundle } from './parity.ts';

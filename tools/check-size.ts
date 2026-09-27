@@ -14,7 +14,7 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { brotliCompressSync, constants } from 'node:zlib';
-import { LOCALE_NAMESPACES, SUPPORTED_LOCALES } from '@ndeso/shared';
+import { LOCALE_NAMESPACES, SUPPORTED_LOCALES } from '@bale/shared';
 import {
   BUDGETS,
   type Budget,
