@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { build } from './build.ts';
+import { build, parseArgs } from './build.ts';
 
 const OUTDIR = join(import.meta.dir, '../../.cache/build-test');
 
@@ -14,6 +14,33 @@ interface Manifest {
 // would cost seconds for no extra coverage.
 const result = await build({ outdir: OUTDIR, minify: false, publicPath: '/' });
 const manifest = (await Bun.file(join(OUTDIR, 'precache-manifest.json')).json()) as Manifest;
+
+describe('parseArgs', () => {
+  test('defaults to the domain root', () => {
+    expect(parseArgs([]).publicPath).toBe('/');
+  });
+
+  test('takes --public-path for a project site served from a sub-path', () => {
+    expect(parseArgs(['--public-path', '/ndeso/']).publicPath).toBe('/ndeso/');
+  });
+
+  // Bun concatenates publicPath directly onto the file name, so a missing trailing slash
+  // silently produces `/ndesoindex-abc123.js`. A build that passes every check and 404s in
+  // the browser is the exact failure this normalisation exists to prevent.
+  test('appends the trailing slash Bun requires', () => {
+    expect(parseArgs(['--public-path', '/ndeso']).publicPath).toBe('/ndeso/');
+  });
+
+  test('falls back to the root when the flag has no value', () => {
+    expect(parseArgs(['--public-path']).publicPath).toBe('/');
+  });
+
+  test('still parses --outdir and --no-minify alongside it', () => {
+    const options = parseArgs(['--public-path', '/x/', '--outdir', 'dist/preview', '--no-minify']);
+    expect(options.minify).toBe(false);
+    expect(options.outdir.endsWith('dist/preview')).toBe(true);
+  });
+});
 
 describe('build', () => {
   test('emits an unhashed index.html — ARCHITECTURE §7 serves it no-cache', () => {

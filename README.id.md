@@ -4,7 +4,9 @@
 
 *English: [README.md](README.md)*
 
-> Status: **pra-alfa, tahap perencanaan dan bootstrap** (lihat [docs/STATUS.md](docs/STATUS.md)).
+> Status: **pra-alfa, tahap M1 tech spike** (lihat [docs/STATUS.md](docs/STATUS.md)).
+>
+> **[Buka build terbaru](https://andynur.github.io/ndeso/)** — tiap merge ke `main` terbit di situ. Sekarang isinya masih placeholder yang berputar, belum game. Bisa jalan-jalan mulai M1-09; bisa dimainkan mulai M2.
 
 ## Ceritanya
 Kamu pulang dari Jakarta ke Purworejo, mengambil alih sebidang tanah dari kakekmu, **Mbah Hita** — masih ada, sudah sepuh, sudah tidak kuat menggarap. Mbah Hita punya cita-cita yang belum selesai: menjadikan tanah itu **asri, nyaman, tenang**. Karena itu namanya **Balé Al Jannah**.

@@ -11,6 +11,7 @@
  *
  *   bun run build
  *   bun apps/client/build.ts --outdir dist/preview --no-minify
+ *   bun apps/client/build.ts --public-path /ndeso/      # GitHub Pages project site
  */
 
 import { existsSync } from 'node:fs';
@@ -43,9 +44,20 @@ export interface BuildResult {
   readonly durationMs: number;
 }
 
-function parseArgs(argv: readonly string[]): BuildOptions {
+/**
+ * `--public-path` is the URL prefix the browser will request assets under. It is `/` for
+ * the dev server and for any deploy that owns its domain root, but GitHub Pages serves a
+ * project site from `/<repo>/`, so the built HTML must reference `/ndeso/index-<hash>.js`
+ * rather than `/index-<hash>.js` or every asset 404s.
+ *
+ * Exported for the tests: this is the one build option whose wrong value produces a build
+ * that passes every check and is still completely broken in a browser.
+ */
+export function parseArgs(argv: readonly string[]): BuildOptions {
   const outdirIndex = argv.indexOf('--outdir');
   const requested = outdirIndex === -1 ? undefined : (argv[outdirIndex + 1] as string);
+  const publicPathIndex = argv.indexOf('--public-path');
+  const publicPath = publicPathIndex === -1 ? '/' : (argv[publicPathIndex + 1] ?? '/');
   return {
     outdir:
       requested === undefined
@@ -54,7 +66,8 @@ function parseArgs(argv: readonly string[]): BuildOptions {
           ? requested
           : join(REPO_ROOT, requested),
     minify: !argv.includes('--no-minify'),
-    publicPath: '/',
+    // A trailing slash is required — Bun concatenates it directly onto the file name.
+    publicPath: publicPath.endsWith('/') ? publicPath : `${publicPath}/`,
   };
 }
 
@@ -119,7 +132,11 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
 
   // The core shell only, never the area chunks (ARCHITECTURE §7). One definition of "shell"
   // for the whole repo: index.html plus exactly what it links, shared with `check:size`.
-  const shell = shellFiles(await Bun.file(join(options.outdir, 'index.html')).text());
+  const shell = shellFiles(
+    await Bun.file(join(options.outdir, 'index.html')).text(),
+    'index.html',
+    options.publicPath,
+  );
   const shellFingerprint = shell.map((path) => {
     const file = files.find((entry) => entry.path === path);
     if (file === undefined) throw new Error(`index.html references a missing file: ${path}`);
@@ -131,7 +148,12 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
       {
         // The SW of M2-15 compares this to decide what to precache on install.
         revision: Bun.hash(shellFingerprint.join('\n')).toString(16),
-        shell: shell.map((path) => `/${path}`),
+        // Recorded so a later reader can turn the URLs below back into paths on disk
+        // without being told how the build was invoked — `check:size` relies on it.
+        publicPath: options.publicPath,
+        // URLs as the browser will request them, so the prefix goes back on: the service
+        // worker of M2-15 precaches by URL, not by path on disk.
+        shell: shell.map((path) => `${options.publicPath}${path}`),
       },
       null,
       2,

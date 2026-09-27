@@ -52,7 +52,14 @@ async function measureShell(): Promise<Measurement> {
   if (!(await html.exists())) {
     throw new Error('no dist/index.html — run `bun run build` before `bun run check:size`');
   }
-  const files = shellFiles(await html.text());
+  // A build for a project site stamps a URL prefix onto every reference, so the HTML says
+  // `/ndeso/index-abc.js` where the file is `index-abc.js`. The build records which prefix
+  // it used; without reading it back, this would look for files that do not exist.
+  const manifest = Bun.file(join(DIST, 'precache-manifest.json'));
+  const publicPath = (await manifest.exists())
+    ? (((await manifest.json()) as { publicPath?: string }).publicPath ?? '/')
+    : '/';
+  const files = shellFiles(await html.text(), 'index.html', publicPath);
   let total = 0;
   for (const path of files) {
     total += brotliSize(new Uint8Array(await Bun.file(join(DIST, path)).arrayBuffer()));
