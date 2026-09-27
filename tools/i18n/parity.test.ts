@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { todoAllowed } from './check.ts';
 import {
   compareNamespace,
   compareNamespaceSets,
@@ -118,5 +119,18 @@ describe('compareNamespaceSets', () => {
   test('flags a namespace file with no source counterpart', () => {
     const [problem] = compareNamespaceSets('en', ['ui'], 'id', ['ui', 'npcs']);
     expect(problem?.message).toContain('no counterpart');
+  });
+});
+
+describe('todoAllowed', () => {
+  test('a release tag is the only place [TODO-ID] fails (I18N §1 rule 3)', () => {
+    expect(todoAllowed('refs/tags/v1.0.0')).toBe(false);
+  });
+
+  test('branches and main only warn, so a merged needs-translation PR cannot redden main', () => {
+    expect(todoAllowed('refs/heads/main')).toBe(true);
+    expect(todoAllowed('refs/pull/4/merge')).toBe(true);
+    expect(todoAllowed('refs/heads/feat/M0-06-workflow')).toBe(true);
+    expect(todoAllowed('')).toBe(true);
   });
 });

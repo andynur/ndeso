@@ -16,16 +16,22 @@ import { GENERATED_PATH, renderGeneratedModule } from './gen-types.ts';
 import { LOCALE_IDS, presentNamespaces, readBundle, unknownFiles } from './locales.ts';
 import { compareNamespace, compareNamespaceSets, type Problem, validateBundle } from './parity.ts';
 
-/** I18N §1 rule 3: translation markers are a branch-only affordance. */
-function todoAllowed(): boolean {
-  const { GITHUB_REF } = process.env;
-  const ref = GITHUB_REF ?? '';
-  return !(ref === 'refs/heads/main' || ref.startsWith('refs/tags/'));
+/**
+ * I18N §1 rule 3: `[TODO-ID]` is a warning everywhere except a release tag.
+ *
+ * It deliberately does *not* fail on `main`. AGENTS rule 3 lets a PR merge with `[TODO-ID]`
+ * plus a `needs-translation` label, so failing on `main` would only turn the default branch
+ * red *after* the merge that was allowed — an alarm nobody can act on in time. A release tag
+ * is the point where untranslated strings must not ship.
+ */
+export function todoAllowed(ref: string): boolean {
+  return !ref.startsWith('refs/tags/');
 }
 
 async function main(): Promise<number> {
   const problems: Problem[] = [];
-  const allowTodo = todoAllowed();
+  const { GITHUB_REF } = process.env;
+  const allowTodo = todoAllowed(GITHUB_REF ?? '');
   const sourceNamespaces = presentNamespaces(SOURCE_LOCALE);
 
   for (const locale of LOCALE_IDS) {
