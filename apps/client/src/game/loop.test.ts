@@ -64,6 +64,16 @@ describe('createLoop', () => {
     expect(alphas.every((a) => a >= 0 && a < 1)).toBe(true);
   });
 
+  test('hands the frame its clamped real dt', () => {
+    const clock = fakeScheduler();
+    const dts: number[] = [];
+    const loop = createLoop({ step: () => {}, frame: (_, dt) => dts.push(dt) }, clock.scheduler);
+    loop.start();
+    clock.flush(16);
+    clock.flush(5016);
+    expect(dts).toEqual([16, MAX_FRAME_MS]);
+  });
+
   test('stop cancels the frame; start does not bill the time spent stopped', () => {
     const clock = fakeScheduler();
     let steps = 0;

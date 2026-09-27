@@ -21,8 +21,12 @@ export interface FrameScheduler {
 export interface LoopHooks {
   /** Advance the sim by exactly one tick. */
   step(): void;
-  /** Draw once; `alpha` ∈ [0, 1) is how far real time is into the next tick. */
-  frame(alpha: number): void;
+  /**
+   * Draw once; `alpha` ∈ [0, 1) is how far real time is into the next tick, and
+   * `realDtMs` the wall-clock time since the last frame (clamped like the sim's), for
+   * things that animate on real time rather than sim time, such as the camera.
+   */
+  frame(alpha: number, realDtMs: number): void;
 }
 
 export interface Loop {
@@ -55,11 +59,12 @@ export function createLoop(hooks: LoopHooks, scheduler: FrameScheduler): Loop {
 
   function tick(now: number): void {
     handle = scheduler.request(tick);
-    const result = advance(accumulator, now - last);
+    const realDtMs = Math.min(Math.max(now - last, 0), MAX_FRAME_MS);
+    const result = advance(accumulator, realDtMs);
     last = now;
     accumulator = result.accumulator;
     for (let i = 0; i < result.steps; i++) hooks.step();
-    hooks.frame(accumulator / TICK_MS);
+    hooks.frame(accumulator / TICK_MS, realDtMs);
   }
 
   return {

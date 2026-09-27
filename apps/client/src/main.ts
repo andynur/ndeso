@@ -4,7 +4,7 @@ import { createGame } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { initI18n, locale, t } from './i18n/index.ts';
 import { guessPreset } from './render/quality/presets.ts';
-import { createScene, type ScenePalette } from './render/scene.ts';
+import { type CameraControls, createScene, type ScenePalette } from './render/scene.ts';
 import { mountOverlay } from './ui/mount.ts';
 import { colorHex } from './ui/tokens.ts';
 
@@ -38,6 +38,39 @@ const BROWSER_FRAMES: FrameScheduler = {
   now: () => performance.now(),
 };
 
+/** World units per wheel notch or +/- press. */
+const ZOOM_STEP = 1;
+
+/**
+ * Stopgap camera bindings for desktop testing: Q/E turn, wheel and -/+ zoom. M1-05's input
+ * layer replaces this and adds the touch controls; the camera is view state, not a sim
+ * `Command`, so it will stay a direct call there too.
+ */
+function bindCameraKeys(camera: CameraControls): void {
+  window.addEventListener('keydown', (event) => {
+    if (event.repeat) return;
+    switch (event.key) {
+      case 'q':
+      case 'Q':
+        camera.rotate(1);
+        break;
+      case 'e':
+      case 'E':
+        camera.rotate(-1);
+        break;
+      case '-':
+        camera.zoomBy(ZOOM_STEP);
+        break;
+      case '+':
+      case '=':
+        camera.zoomBy(-ZOOM_STEP);
+    }
+  });
+  window.addEventListener('wheel', (event) => camera.zoomBy(Math.sign(event.deltaY) * ZOOM_STEP), {
+    passive: true,
+  });
+}
+
 async function boot(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#stage');
   const overlay = document.querySelector<HTMLElement>('#overlay');
@@ -67,14 +100,16 @@ async function boot(): Promise<void> {
   const loop = createLoop(
     {
       step: game.step,
-      frame(alpha) {
-        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000);
+      frame(alpha, realDtMs) {
+        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000);
         // Nothing listens yet; the HUD clock (M1-08) is the first `ui.sync` consumer.
         game.drainEvents();
       },
     },
     BROWSER_FRAMES,
   );
+
+  bindCameraKeys(scene.camera);
 
   // ARCHITECTURE §4.1: pause the sim and the renderer while hidden, so the game clock does
   // not run on in a background tab and the battery is spared. Saving first joins here once
