@@ -18,6 +18,11 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · README · docs
+- Done: Reworked the English README for GitHub onboarding, project status, repository structure, contribution flow, security, and licensing.
+- Tests: Documentation-only change; runtime checks are not available before M0-01.
+- Notes/decisions: Kept the README explicit that the project is not playable yet and linked the Indonesian README.
+- Next: M0-01
 ### 2026-09-26 · setup · docs
 - Done: PRD, GDD, DESIGN, architecture docs, AI harness (CLAUDE.md, AGENTS.md, .claude/, .mcp.json)
 - Next: M0-01
