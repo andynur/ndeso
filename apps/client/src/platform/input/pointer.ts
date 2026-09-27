@@ -135,7 +135,9 @@ export function createPointerSource(onStick: (view: StickView | null) => void): 
     }
     if (id === stickId) releaseStick();
     // Lifting one of two fingers ends the gesture; the other finger does not become a stick.
-    if (contacts.size < 2) gesture = null;
+    // Back to two from three (a stray palm), the remaining pair starts a fresh gesture.
+    if (contacts.size === 2) startGesture();
+    else gesture = null;
   }
 
   return {
@@ -144,6 +146,11 @@ export function createPointerSource(onStick: (view: StickView | null) => void): 
       if (contacts.size === 2) {
         releaseStick();
         startGesture();
+        return;
+      }
+      // A third finger pauses the gesture until the count is back to two.
+      if (contacts.size > 2) {
+        gesture = null;
         return;
       }
       if (contacts.size === 1 && kind !== 'mouse' && x < viewportWidth * STICK_ZONE) {

@@ -83,7 +83,10 @@ async function boot(): Promise<void> {
         const frame = input.sample();
         // The camera is view state (DESIGN §1.1), so it answers input directly; the sim only
         // hears world-space `Command`s, queued for the next tick.
-        if (frame.rotate !== 0) scene.camera.rotate(frame.rotate > 0 ? 1 : -1);
+        // One quarter turn per edge: a key and a button in the same frame are two turns.
+        for (let i = 0; i < Math.abs(frame.rotate); i++) {
+          scene.camera.rotate(frame.rotate > 0 ? 1 : -1);
+        }
         if (frame.zoom !== 0) scene.camera.zoomBy(frame.zoom);
         commands.map(frame, scene.camera.yaw, game.submit);
         scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000);

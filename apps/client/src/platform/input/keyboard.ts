@@ -51,7 +51,7 @@ export interface KeyboardSource {
   keyUp(code: string): void;
   /** `deltaY` sign only: one notch per event, whatever the device's scroll units. */
   wheel(deltaY: number, ctrlKey: boolean): void;
-  /** Drops every held key, e.g. when the window loses focus mid-press. */
+  /** Drops every held key and unsampled press, e.g. when the window loses focus mid-press. */
   releaseAll(): void;
   /** Adds this source's movement and edges into `frame`, then clears the edges. */
   sample(frame: InputFrame): void;
@@ -101,6 +101,12 @@ export function createKeyboardSource(): KeyboardSource {
     },
     releaseAll() {
       held.clear();
+      // A press from before the blur must not fire on the first frame after refocus.
+      interact = false;
+      slot = -1;
+      cycle = 0;
+      rotate = 0;
+      zoom = 0;
     },
     sample(frame) {
       let right = 0;

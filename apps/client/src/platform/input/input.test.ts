@@ -54,11 +54,13 @@ describe('keyboard', () => {
     expect(sampleOf(keys).moveX).toBe(-1);
   });
 
-  test('releaseAll drops held movement (window blur)', () => {
+  test('releaseAll drops held movement and unsampled presses (window blur)', () => {
     const keys = createKeyboardSource();
     keys.keyDown('KeyW', false);
+    keys.keyDown('KeyQ', false);
+    keys.keyDown('KeyE', false);
     keys.releaseAll();
-    expect(sampleOf(keys).moveY).toBe(0);
+    expect(sampleOf(keys)).toMatchObject({ moveY: 0, rotate: 0, interact: false });
   });
 
   test('edges fire once and ignore autorepeat', () => {
@@ -146,6 +148,20 @@ describe('pointer', () => {
     const frame = sampleOf(source);
     expect(frame.rotate).toBe(-1);
     expect(frame.moveX).toBe(0);
+  });
+
+  test('a third finger pauses the gesture; lifting it resumes with the remaining pair', () => {
+    const { source } = tracked();
+    source.down(1, 'touch', 400, 500, WIDTH);
+    source.down(2, 'touch', 600, 500, WIDTH);
+    source.down(3, 'touch', 500, 300, WIDTH);
+    source.move(1, 400 + SWIPE_TURN_PX * 2, 500);
+    source.move(2, 600 + SWIPE_TURN_PX * 2, 500);
+    expect(sampleOf(source).rotate).toBe(0);
+    source.up(3);
+    source.move(1, 400 + SWIPE_TURN_PX * 4, 500);
+    source.move(2, 600 + SWIPE_TURN_PX * 4, 500);
+    expect(sampleOf(source).rotate).toBe(-1);
   });
 
   test('a left swipe turns the other way', () => {
