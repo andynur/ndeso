@@ -155,6 +155,18 @@ export function messagePlaceholders(pattern: string): ReadonlySet<string> {
 /** Parsing the same handful of HUD strings every frame is wasteful; the AST is immutable. */
 const CACHE = new Map<string, readonly MessageNode[]>();
 
+/** `Intl.PluralRules` construction is not free and there are only ever a few locales. */
+const PLURAL_RULES = new Map<string, Intl.PluralRules>();
+
+function pluralRules(locale: string): Intl.PluralRules {
+  let rules = PLURAL_RULES.get(locale);
+  if (rules === undefined) {
+    rules = new Intl.PluralRules(locale);
+    PLURAL_RULES.set(locale, rules);
+  }
+  return rules;
+}
+
 function parseCached(pattern: string): readonly MessageNode[] {
   let nodes = CACHE.get(pattern);
   if (nodes === undefined) {
@@ -165,7 +177,7 @@ function parseCached(pattern: string): readonly MessageNode[] {
 }
 
 export function formatMessage(locale: string, pattern: string, values: MessageValues = {}): string {
-  const plurals = new Intl.PluralRules(locale);
+  const plurals = pluralRules(locale);
 
   const render = (nodes: readonly MessageNode[], hash: number | undefined): string => {
     let out = '';

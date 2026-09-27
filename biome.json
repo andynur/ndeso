@@ -52,9 +52,6 @@
       },
       "style": {
         "noDefaultExport": "error"
-      },
-      "complexity": {
-        "useLiteralKeys": "off"
       }
     }
   },
@@ -65,6 +62,16 @@
         "rules": {
           "suspicious": {
             "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/shared/src/message.ts", "apps/client/src/platform/env.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "useLiteralKeys": "off"
           }
         }
       }

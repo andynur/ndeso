@@ -26,13 +26,12 @@ async function boot(): Promise<void> {
   if (!canvas || !overlay) throw new Error('index.html is missing #stage or #overlay');
 
   await initI18n(navigator.languages);
-  // `locale` is a signal, so the document metadata follows a live switch too.
-  const applyDocumentLocale = (): void => {
+  // `subscribe` fires immediately and again on every switch, so this covers both the
+  // initial paint and a live locale change.
+  locale.subscribe(() => {
     document.documentElement.lang = locale.value;
     document.title = t('app.title');
-  };
-  applyDocumentLocale();
-  locale.subscribe(applyDocumentLocale);
+  });
 
   const preset = guessPreset({
     deviceMemoryGb: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
