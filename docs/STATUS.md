@@ -20,6 +20,17 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · ci · ci/pages-deploy
+- Done: every merge to `main` now publishes the built client to <https://andynur.github.io/ndeso/>. `apps/client/build.ts` gained `--public-path`; `shellFiles`, the precache manifest and `check:size` learned about it.
+- Tests: `bun run check` green — **173 pass** (9 new). Verified the real artefact, not just the flags: built with `--public-path /ndeso/` and confirmed the emitted HTML references `/ndeso/index-<hash>.js` and the manifest lists prefixed URLs; then confirmed `check:size` still measures correctly for both a root build and a project-site build.
+- Notes/decisions:
+  - **Without this there was no way to look at anything.** Cloud sessions are disposable and their dev server is unreachable from a phone. M1-09 would have landed the Balé terrain with the owner unable to see it. This also makes M1-10's device test nearly free.
+  - **A real bug surfaced during the work, and the M0-07 design caught it.** `shellFiles` assumed `publicPath === '/'`, so the first project-site build threw `index.html references a missing file: ndeso/index-…js` instead of writing a silently wrong precache manifest. Fixed by threading the prefix through; pinned with four tests including the exact failing case.
+  - **The build records its own `publicPath` in `precache-manifest.json`** so `check:size` reads it back rather than being told out of band. Otherwise running `check:size` after a project-site build would look for files that do not exist — a footgun left for whoever hit it next.
+  - **`configure-pages` runs with `enablement: true`**, so no manual repo setting is needed. The Pages REST endpoint is blocked by this environment's proxy, so it could not be enabled from the session; the workflow does it on its first run instead.
+  - Deploy is a **second job in `ci.yml`, `needs: check`**, not a separate workflow: nothing broken can reach the URL, and the build command lives in one place. `pages: write` / `id-token: write` are scoped to that job so `check` stays read-only.
+- Next: M1 scope decisions + the cultural review pack, then M1-01.
+
 ### 2026-09-27 · harness · chore/trust-workspace
 - Done: `scripts/cloud-env-setup.sh` now marks the workspace trusted, so the permission allow-list added in the previous PR is actually honoured. Documented in AI_WORKFLOW §3 and SETUP_AI_AGENT.
 - Tests: verified end to end — before, `claude -p` printed `Ignoring 34 permissions.allow entries … this workspace has not been trusted`; after, the warning is gone. The Python block was separately tested for merging into an existing config without clobbering it, and for refusing (exit 1, file untouched) on a corrupt `~/.claude.json`.

@@ -15,6 +15,8 @@
 
 `bun run check` runs everything except `check:size`. `bun run ci` = `check` + `build` + `check:size` + `smoke`.
 
+**Seeing it run.** A merge to `main` publishes the built client to <https://andynur.github.io/ndeso/> (the `deploy` job in `.github/workflows/ci.yml`, gated on `check`). Cloud agent sessions are disposable and their dev server is unreachable, so that URL is how a change gets looked at on a real phone — and it is what makes M1-10's device test cheap. A project site is served from `/<repo>/`, so that build passes `--public-path`; see `apps/client/build.ts`.
+
 ## 2. Test types
 
 | Type | Where | Tool | Notes |
