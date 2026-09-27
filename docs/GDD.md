@@ -297,7 +297,7 @@ Marriage candidates are **M4**, not v1. Do not add them to the slice cast.
 | When | Festival | Mechanic |
 |---|---|---|
 | Kasadasa (after harvest) | **Sedekah Bumi** ★ | Village thanksgiving for the harvest. Contribute to the shared *tumpeng*. **The flagship festival** — it grows directly out of the core loop, and it happens at the balé the player built |
-| Hijri: Ramadan (30 days) | **Ramadan** | **The world changes, not the player.** Pasar opens ~03:00 for sahur; midday is empty and hot; takjil stalls appear before maghrib; ngabuburit crowds; tarawih at the musholla. Thirty days of a different town |
+| Hijri: Ramadan (10 game days; 30 in life) | **Ramadan** | **The world changes, not the player.** Pasar opens ~03:00 for sahur; midday is empty and hot; takjil stalls appear before maghrib; ngabuburit crowds; tarawih at the musholla. A whole month of a different town |
 | Hijri: 1 Syawal | **Lebaran** | **Mudik** — the kampung empties, then fills. NPCs who left come home. Sungkeman, ketupat, halal bihalal. After a year of building relationships, this is the payoff |
 | Kanem (durian season) | **Festival Durian** | Grow one over years, enter your best fruit. Comedy and competition |
 | Kemarau | **Dolalak** | Purworejo's own dance. Visual set piece; a rhythm minigame is P2 |

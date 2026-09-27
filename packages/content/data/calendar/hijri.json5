@@ -1,0 +1,22 @@
+// The tabular (arithmetic) Hijri calendar, scaled to the 120-day game year
+// (ADR-0007). No hisab, no rukyat: a pure function of the day counter.
+//
+// The real calendar has 12 months of 29/30 days (354) plus 11 leap days in
+// every 30-year cycle. Scaled by 120/365, the months become 9 or 10 days and
+// the common year 116 days, so the Hijri year walks ~4 days earlier against
+// the mangsa every game year, as Ramadan does in life. Leap years add one day
+// to month 12 (Dzulhijjah), exactly where the real calendar adds it.
+//
+// Month lengths are spread evenly (floor(116·m/12) steps), so Ramadan (month
+// 9) is 10 days. GDD §10's "30 days" is the real-world length, not game days.
+//
+// `epoch` is the Hijri date of game day 0 (the arrival). Chosen so the first
+// Ramadan lands in musim hujan of year 1; it is a design knob, not a fact.
+{
+  monthDays: [9, 10, 10, 9, 10, 10, 9, 10, 10, 9, 10, 10],
+  cycleYears: 30,
+  // Positions within the 30-year cycle that are leap years (the most common
+  // tabular variant; others move the 15th/16th-year leap by one).
+  leapYears: [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29],
+  epoch: { year: 1448, month: 1, day: 1 },
+}

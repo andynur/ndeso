@@ -5,6 +5,7 @@
 
 import type { I18nKey } from '@bale/content/i18n';
 import { LOCALE_BUNDLES } from '@bale/content/i18n';
+import type { PasaranId, WeekdayId } from '@bale/shared';
 import { DEV } from '../platform/env.ts';
 import { localSettings } from '../platform/settings.ts';
 import { createI18n } from './runtime.ts';
@@ -30,12 +31,13 @@ export const { locale, format, t, setLocale, loadNamespace } = i18n;
 export const initI18n = i18n.init;
 
 /**
- * Domain literals for the date line. M1-01 owns the real clock and moves these into
- * `packages/shared`; they are here so the formatter can be typed before that lands.
+ * Domain literals for the date line. Weekday and pasaran are the shared calendar ids
+ * (M1-01). `Season` is the pre-ADR-0007 two-season model: M1-08 replaces this whole line
+ * with the GDD §3.2 HUD clock (mangsa, not season) and removes it.
  */
 export type Season = 'hujan' | 'kemarau';
-export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
-export type Pasaran = 'legi' | 'pahing' | 'pon' | 'wage' | 'kliwon';
+export type Weekday = WeekdayId;
+export type Pasaran = PasaranId;
 
 export interface GameDate {
   readonly day: number;

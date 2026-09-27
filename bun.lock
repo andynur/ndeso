@@ -5,8 +5,8 @@
     "": {
       "name": "ndeso",
       "devDependencies": {
-        "@biomejs/biome": "2.3.14",
         "@bale/shared": "workspace:*",
+        "@biomejs/biome": "2.3.14",
         "@types/three": "~0.186.0",
         "bun-types": "1.4.1",
         "typescript": "5.9.3",
@@ -40,9 +40,20 @@
       "dependencies": {
         "@bale/shared": "workspace:*",
       },
+      "devDependencies": {
+        "@bale/content": "workspace:*",
+      },
     },
   },
   "packages": {
+    "@bale/client": ["@bale/client@workspace:apps/client"],
+
+    "@bale/content": ["@bale/content@workspace:packages/content"],
+
+    "@bale/shared": ["@bale/shared@workspace:packages/shared"],
+
+    "@bale/sim": ["@bale/sim@workspace:packages/sim"],
+
     "@biomejs/biome": ["@biomejs/biome@2.3.14", "", { "optionalDependencies": { "@biomejs/cli-darwin-arm64": "2.3.14", "@biomejs/cli-darwin-x64": "2.3.14", "@biomejs/cli-linux-arm64": "2.3.14", "@biomejs/cli-linux-arm64-musl": "2.3.14", "@biomejs/cli-linux-x64": "2.3.14", "@biomejs/cli-linux-x64-musl": "2.3.14", "@biomejs/cli-win32-arm64": "2.3.14", "@biomejs/cli-win32-x64": "2.3.14" }, "bin": { "biome": "bin/biome" } }, "sha512-QMT6QviX0WqXJCaiqVMiBUCr5WRQ1iFSjvOLoTk6auKukJMvnMzWucXpwZB0e8F00/1/BsS9DzcKgWH+CLqVuA=="],
 
     "@biomejs/cli-darwin-arm64": ["@biomejs/cli-darwin-arm64@2.3.14", "", { "os": "darwin", "cpu": "arm64" }, "sha512-UJGPpvWJMkLxSRtpCAKfKh41Q4JJXisvxZL8ChN1eNW3m/WlPFJ6EFDCE7YfUb4XS8ZFi3C1dFpxUJ0Ety5n+A=="],
@@ -62,14 +73,6 @@
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.3.14", "", { "os": "win32", "cpu": "x64" }, "sha512-oizCjdyQ3WJEswpb3Chdngeat56rIdSYK12JI3iI11Mt5T5EXcZ7WLuowzEaFPNJ3zmOQFliMN8QY1Pi+qsfdQ=="],
 
     "@dimforge/rapier3d-compat": ["@dimforge/rapier3d-compat@0.12.0", "", {}, "sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow=="],
-
-    "@bale/client": ["@bale/client@workspace:apps/client"],
-
-    "@bale/content": ["@bale/content@workspace:packages/content"],
-
-    "@bale/shared": ["@bale/shared@workspace:packages/shared"],
-
-    "@bale/sim": ["@bale/sim@workspace:packages/sim"],
 
     "@preact/signals": ["@preact/signals@2.11.2", "", { "dependencies": { "@preact/signals-core": "^1.14.4" }, "peerDependencies": { "preact": ">= 10.25.0 || >=11.0.0-0" } }, "sha512-rVTRTt/T0HIRgbugwS5FigbfF/kfdEFYFtiqxa+lbpqTajepqnR0firuAS2iNdHyejWB7Yc9p9QePkVNBtTAwg=="],
 

@@ -73,6 +73,13 @@ describe('packages/sim', () => {
     ]);
   });
 
+  test('a sim test may load content data as a fixture', () => {
+    const golden = 'packages/sim/test/golden/calendar.test.ts';
+    expect(checkSource(golden, "import { calendarData } from '@bale/content/calendar';")).toEqual(
+      [],
+    );
+  });
+
   test('the client is out of reach', () => {
     expect(messages(file, "import { boot } from '../../../apps/client/src/main.ts';")).toHaveLength(
       1,
