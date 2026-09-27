@@ -1,0 +1,31 @@
+{
+  "name": "ndeso",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "packageManager": "bun@1.4.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun tools/todo.ts M0-03 'dev server with HMR'",
+    "build": "bun tools/todo.ts M0-07 'production build'",
+    "check": "bun run check:types && bun run check:lint && bun run check:deps && bun run check:i18n && bun run check:content && bun run test",
+    "check:types": "tsc -b --noEmit",
+    "check:lint": "biome check .",
+    "check:deps": "bun tools/todo.ts M0-05 'import boundary check'",
+    "check:i18n": "bun tools/todo.ts M0-04 'locale parity check'",
+    "check:content": "bun tools/todo.ts M2-01 'content schema check'",
+    "check:size": "bun tools/todo.ts M0-07 'size budget report'",
+    "smoke": "bun tools/todo.ts M2-19 'Bun.WebView smoke test'",
+    "test": "bun test",
+    "fmt": "biome check --write .",
+    "ci": "bun run check && bun run build && bun run check:size && bun run smoke"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.14",
+    "bun-types": "1.4.1",
+    "typescript": "5.9.3"
+  }
+}

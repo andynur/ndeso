@@ -1,0 +1,7 @@
+# Reproducible installs: bun.lock pins exact versions (TECH_STACK §4).
+[install]
+exact = true
+
+[test]
+# Coverage is collected on CI only (CI=true); locally it just slows the loop down.
+coverage = false

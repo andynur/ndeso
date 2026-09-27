@@ -32,7 +32,10 @@ if (/^packages\/sim\/.*\.(ts|tsx)$/.test(rel)) {
     [/\b(window|document|localStorage|navigator)\s*\./, 'uses a DOM/browser global'],
     [/\bMath\.random\s*\(/, 'uses Math.random (use the seeded rng in state)'],
     [/\b(Date\.now|performance\.now)\s*\(/, 'reads wall-clock time (use sim ticks)'],
-    [/\b(setTimeout|setInterval|requestAnimationFrame)\s*\(/, 'uses timers (sim is stepped externally)'],
+    [
+      /\b(setTimeout|setInterval|requestAnimationFrame)\s*\(/,
+      'uses timers (sim is stepped externally)',
+    ],
   ];
   const hits = rules.filter(([re]) => re.test(src)).map(([, why]) => why);
   if (hits.length > 0) {

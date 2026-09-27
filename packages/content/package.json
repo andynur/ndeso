@@ -1,0 +1,13 @@
+{
+  "name": "@ndeso/content",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./locales/*": "./locales/*"
+  },
+  "dependencies": {
+    "@ndeso/shared": "workspace:*"
+  }
+}

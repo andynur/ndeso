@@ -23,11 +23,7 @@
       "mcp__serena",
       "mcp__context-mode"
     ],
-    "ask": [
-      "Bash(git push:*)",
-      "Bash(bun add:*)",
-      "Bash(bun remove:*)"
-    ],
+    "ask": ["Bash(git push:*)", "Bash(bun add:*)", "Bash(bun remove:*)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
