@@ -38,6 +38,7 @@
 | `@biomejs/biome` | dev | Lint + format in one fast binary (Bun has neither) |
 | `typescript` | dev | Type checking only |
 | `bun-types` | dev | Bun runtime + `bun:test` typings for `tsconfig.base.json` `types` (§4); types only, never bundled |
+| `@types/three` | dev | Three.js ships no `.d.ts`; DefinitelyTyped pinned to the same minor as `three`. Types only, never bundled |
 
 **Explicitly not used:** Vite, Webpack, React, Redux, Howler (use a Web Audio wrapper), Dexie (idb-keyval is enough), Tailwind (use CSS modules + tokens), lodash, moment/dayjs (`Intl` is enough), i18next (our own ~2 KB runtime, see I18N).
 
