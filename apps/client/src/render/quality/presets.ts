@@ -1,8 +1,9 @@
 /**
  * Quality presets and the device-pixel-ratio cap (PERFORMANCE_BUDGET §4).
  *
- * Pure on purpose: the real capability probe lives in `platform/device.ts` (M1-08),
- * this module only turns already-measured numbers into a preset so it stays testable.
+ * Pure on purpose: the capability probe itself lives in `platform/device.ts` (M1-08);
+ * this module only turns already-measured numbers into a preset, so it stays testable
+ * without a DOM.
  */
 
 export const QUALITY_PRESETS = ['low', 'medium', 'high'] as const;

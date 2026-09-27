@@ -1,6 +1,7 @@
 import {
   AmbientLight,
   BoxGeometry,
+  Color,
   CylinderGeometry,
   DirectionalLight,
   Fog,
@@ -12,13 +13,22 @@ import {
   Scene,
   WebGLRenderer,
 } from 'three';
-import { clampPixelRatio, type QualityPreset } from '../platform/quality.ts';
-import { colorHex } from '../ui/tokens.ts';
+import { clampPixelRatio, type QualityPreset } from './quality/presets.ts';
 
 /** Camera rig constants, DESIGN §1.1. The full rig (follow, yaw snap, zoom) is M1-04. */
 const FOV_DEG = 30;
 const PITCH_DEG = 38;
 const DISTANCE = 14;
+
+/**
+ * Noon keyframe from the DESIGN §1.3 lighting table. Those are lighting values, not
+ * §2 palette tokens, so they are not in `ui/tokens.ts`; M1-07 moves the whole table
+ * into `content/data/lighting.json5` and interpolates it from the game clock.
+ * DESIGN fixes the ambient intensity at 0.7 but not the sun's — 2.5 reads correctly
+ * under Three.js' physically-based light units.
+ */
+const NOON_SUN = { color: 0xfff4e0, intensity: 2.5 };
+const NOON_AMBIENT = { color: 0xa8c4e0, intensity: 0.7 };
 
 const GROUND_SIZE = 40;
 /** One full turn every 8 s, slow enough to read on a 30 fps phone. */
@@ -26,49 +36,61 @@ const SPIN_RAD_PER_SECOND = (Math.PI * 2) / 8;
 /** ARCHITECTURE §4.1: never integrate more than 250 ms of real time in one frame. */
 const MAX_FRAME_MS = 250;
 
+/**
+ * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
+ * forbids `render/` from importing `ui/`, so `main.ts` reads `ui/tokens.ts` and hands
+ * the values down.
+ */
+export interface ScenePalette {
+  readonly ground: number;
+  readonly wall: number;
+  readonly roof: number;
+  readonly marker: number;
+  readonly fog: number;
+}
+
+export interface SceneOptions {
+  readonly canvas: HTMLCanvasElement;
+  readonly preset: QualityPreset;
+  readonly palette: ScenePalette;
+}
+
 export interface SceneHandle {
+  /** Current render scale; re-clamped whenever the canvas resizes onto another screen. */
   readonly pixelRatio: number;
   start(): void;
   stop(): void;
   dispose(): void;
 }
 
-export interface SceneOptions {
-  readonly canvas: HTMLCanvasElement;
-  readonly preset: QualityPreset;
-}
-
 /**
  * M0-03 walking skeleton: a ground plane and a rotating low-poly placeholder, enough to
- * prove WebGL2 + the camera framing on a real phone. Sprites (M1-03), area streaming and
- * day/night lighting (M1-07) replace the contents; the renderer plumbing here stays.
+ * prove WebGL2 and the camera framing on a real phone. Sprites (M1-03), area streaming
+ * and day/night lighting (M1-07) replace the contents; the plumbing here stays.
  */
-export function createScene({ canvas, preset }: SceneOptions): SceneHandle {
-  const pixelRatio = clampPixelRatio(preset, globalThis.devicePixelRatio ?? 1);
-
+export function createScene({ canvas, preset, palette }: SceneOptions): SceneHandle {
   const renderer = new WebGLRenderer({
     canvas,
     antialias: false,
     powerPreference: 'default',
   });
-  renderer.setPixelRatio(pixelRatio);
 
   const scene = new Scene();
-  scene.fog = new Fog(colorHex('indigo700'), DISTANCE, DISTANCE * 3);
+  scene.background = new Color(palette.fog);
+  scene.fog = new Fog(palette.fog, DISTANCE, DISTANCE * 3);
 
   const camera = new PerspectiveCamera(FOV_DEG, 1, 0.1, 200);
   const pitch = (PITCH_DEG * Math.PI) / 180;
   camera.position.set(0, Math.sin(pitch) * DISTANCE, Math.cos(pitch) * DISTANCE);
   camera.lookAt(0, 1.2, 0);
 
-  // Noon keyframe from DESIGN §1.3. Driven by the game clock from M1-07 onwards.
-  const sun = new DirectionalLight(colorHex('kapur50'), 2.2);
+  const sun = new DirectionalLight(NOON_SUN.color, NOON_SUN.intensity);
   sun.position.set(6, 10, 4);
-  scene.add(sun, new AmbientLight(colorHex('hujan400'), 1.4));
+  scene.add(sun, new AmbientLight(NOON_AMBIENT.color, NOON_AMBIENT.intensity));
 
   const ground = new Mesh(
     new PlaneGeometry(GROUND_SIZE, GROUND_SIZE),
-    new MeshLambertMaterial({ color: colorHex('sawah500') }),
+    new MeshLambertMaterial({ color: palette.ground }),
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
@@ -76,12 +98,12 @@ export function createScene({ canvas, preset }: SceneOptions): SceneHandle {
   // Placeholder "house": a terracotta-roofed block. Replaced by real art in M1-09.
   const placeholder = new Mesh(
     new BoxGeometry(2, 2, 2),
-    new MeshLambertMaterial({ color: colorHex('kayu500') }),
+    new MeshLambertMaterial({ color: palette.wall }),
   );
   placeholder.position.y = 1;
   const roof = new Mesh(
     new CylinderGeometry(0, 1.9, 1.4, 4),
-    new MeshLambertMaterial({ color: colorHex('terakota500'), flatShading: true }),
+    new MeshLambertMaterial({ color: palette.roof, flatShading: true }),
   );
   roof.position.y = 1.7;
   roof.rotation.y = Math.PI / 4;
@@ -89,15 +111,23 @@ export function createScene({ canvas, preset }: SceneOptions): SceneHandle {
 
   const marker = new Mesh(
     new IcosahedronGeometry(0.4, 0),
-    new MeshLambertMaterial({ color: colorHex('kunyit400'), flatShading: true }),
+    new MeshLambertMaterial({ color: palette.marker, flatShading: true }),
   );
   marker.position.set(0, 2.9, 0);
   placeholder.add(marker);
   scene.add(placeholder);
 
+  let pixelRatio = 0;
+
   function resize(): void {
     const width = canvas.clientWidth || 1;
     const height = canvas.clientHeight || 1;
+    // Re-read the DPR here: dragging a window between screens changes it.
+    const next = clampPixelRatio(preset, globalThis.devicePixelRatio ?? 1);
+    if (next !== pixelRatio) {
+      pixelRatio = next;
+      renderer.setPixelRatio(pixelRatio);
+    }
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
@@ -160,5 +190,12 @@ export function createScene({ canvas, preset }: SceneOptions): SceneHandle {
     renderer.dispose();
   }
 
-  return { pixelRatio, start, stop, dispose };
+  return {
+    get pixelRatio() {
+      return pixelRatio;
+    },
+    start,
+    stop,
+    dispose,
+  };
 }

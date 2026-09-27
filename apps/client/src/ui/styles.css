@@ -48,6 +48,8 @@ body {
   display: block;
   width: 100%;
   height: 100%;
+  /* PERFORMANCE_BUDGET §5: the canvas owns every gesture — no pull-to-refresh, no pan. */
+  touch-action: none;
 }
 
 #overlay {
@@ -82,7 +84,13 @@ body {
   color: var(--ink-500);
 }
 
-.panel__meta {
+.panel__note {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-500);
+  font-size: 0.875rem;
+}
+
+.panel__stats {
   margin: var(--space-2) 0 0;
   color: var(--ink-500);
   font-size: 0.875rem;

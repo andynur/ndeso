@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { clampPixelRatio, guessPreset, isQualityPreset, MAX_DPR } from './quality.ts';
+import { clampPixelRatio, guessPreset, isQualityPreset, MAX_DPR } from './presets.ts';
 
 describe('clampPixelRatio', () => {
   test('caps at the preset budget (PERF §4)', () => {

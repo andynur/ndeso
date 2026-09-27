@@ -1,7 +1,8 @@
 import { createBootI18n } from './i18n/boot.ts';
-import { guessPreset } from './platform/quality.ts';
-import { createScene } from './render/scene.ts';
+import { guessPreset } from './render/quality/presets.ts';
+import { createScene, type ScenePalette } from './render/scene.ts';
 import { mountOverlay } from './ui/mount.ts';
+import { colorHex } from './ui/tokens.ts';
 
 /** `tools/smoke.ts` (M2-19) waits for this before screenshotting. */
 declare global {
@@ -9,6 +10,15 @@ declare global {
     __GAME_READY__?: true;
   }
 }
+
+/** ARCHITECTURE §2: `render/` may not import `ui/`, so the boot layer hands colours down. */
+const PALETTE: ScenePalette = {
+  ground: colorHex('sawah500'),
+  wall: colorHex('kayu500'),
+  roof: colorHex('terakota500'),
+  marker: colorHex('kunyit400'),
+  fog: colorHex('indigo700'),
+};
 
 function boot(): void {
   const canvas = document.querySelector<HTMLCanvasElement>('#stage');
@@ -25,8 +35,14 @@ function boot(): void {
     touch: matchMedia('(pointer: coarse)').matches,
   });
 
-  const scene = createScene({ canvas, preset });
-  mountOverlay(overlay, { i18n, preset, pixelRatio: scene.pixelRatio });
+  const scene = createScene({ canvas, preset, palette: PALETTE });
+
+  // PERFORMANCE_BUDGET §6: render telemetry belongs behind `?debug=perf`.
+  const debug = new URLSearchParams(location.search).get('debug') === 'perf';
+  mountOverlay(overlay, {
+    i18n,
+    ...(debug ? { stats: { preset, pixelRatio: scene.pixelRatio } } : {}),
+  });
 
   // ARCHITECTURE §4.1: stop burning battery (and the frame budget) while hidden.
   document.addEventListener('visibilitychange', () => {
