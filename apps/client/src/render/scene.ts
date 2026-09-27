@@ -1,3 +1,4 @@
+import type { QualityPreset } from '@ndeso/shared';
 import {
   AmbientLight,
   BoxGeometry,
@@ -13,7 +14,7 @@ import {
   Scene,
   WebGLRenderer,
 } from 'three';
-import { clampPixelRatio, type QualityPreset } from './quality/presets.ts';
+import { clampPixelRatio } from './quality/presets.ts';
 
 /** Camera rig constants, DESIGN §1.1. The full rig (follow, yaw snap, zoom) is M1-04. */
 const FOV_DEG = 30;

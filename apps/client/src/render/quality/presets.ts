@@ -1,13 +1,15 @@
 /**
- * Quality presets and the device-pixel-ratio cap (PERFORMANCE_BUDGET §4).
+ * What a quality preset means for the renderer (PERFORMANCE_BUDGET §4).
+ *
+ * The preset *names* are in `@ndeso/shared` because settings and the save file use them too;
+ * the numbers below are render's business alone.
  *
  * Pure on purpose: the capability probe itself lives in `platform/device.ts` (M1-08);
  * this module only turns already-measured numbers into a preset, so it stays testable
  * without a DOM.
  */
 
-export const QUALITY_PRESETS = ['low', 'medium', 'high'] as const;
-export type QualityPreset = (typeof QUALITY_PRESETS)[number];
+import type { QualityPreset } from '@ndeso/shared';
 
 /** PERFORMANCE_BUDGET §4: render resolution cap per preset. */
 export const MAX_DPR: Record<QualityPreset, number> = {
@@ -15,10 +17,6 @@ export const MAX_DPR: Record<QualityPreset, number> = {
   medium: 1.5,
   high: 2,
 };
-
-export function isQualityPreset(value: string): value is QualityPreset {
-  return (QUALITY_PRESETS as readonly string[]).includes(value);
-}
 
 /** Never render above the preset cap, and never below 1 even on odd DPR reports. */
 export function clampPixelRatio(preset: QualityPreset, devicePixelRatio: number): number {

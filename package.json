@@ -14,7 +14,7 @@
     "check": "bun run check:types && bun run check:lint && bun run check:deps && bun run check:i18n && bun run check:content && bun run test",
     "check:types": "tsc -b --noEmit && tsc -b apps/client --noEmit",
     "check:lint": "biome check .",
-    "check:deps": "bun tools/todo.ts M0-05 'import boundary check'",
+    "check:deps": "bun tools/check-deps.ts",
     "check:i18n": "bun tools/i18n/check.ts",
     "check:content": "bun tools/todo.ts M2-01 'content schema check'",
     "check:size": "bun tools/todo.ts M0-07 'size budget report'",

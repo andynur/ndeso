@@ -1,12 +1,15 @@
 #!/usr/bin/env bun
 /**
  * PostToolUse hook for Edit|Write|MultiEdit.
- * 1. Blocks (exit 2 → feedback to Claude) forbidden APIs/imports in packages/sim (ADR-0003).
+ * 1. Blocks (exit 2 → feedback to Claude) edits that break an ARCHITECTURE §2 boundary,
+ *    using the very rules `bun run check:deps` runs in CI — so the hook can never drift
+ *    from the gate.
  * 2. Formats the edited file with Biome when it is installed (keeps diffs clean, saves review tokens).
  * Must stay fast (< 300 ms) and silent on success.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { relative } from 'node:path';
+import { checkSource } from '../../tools/deps/rules.ts';
 
 type HookInput = { tool_input?: { file_path?: string }; cwd?: string };
 
@@ -24,24 +27,14 @@ if (!file || !existsSync(file)) process.exit(0);
 const root = process.env.CLAUDE_PROJECT_DIR ?? input.cwd ?? process.cwd();
 const rel = relative(root, file).replaceAll('\\', '/');
 
-// ── 1. Sim purity guard ────────────────────────────────────────────────
-if (/^packages\/sim\/.*\.(ts|tsx)$/.test(rel)) {
-  const src = readFileSync(file, 'utf8');
-  const rules: Array<[RegExp, string]> = [
-    [/from\s+['"](three|preact|@preact\/[^'"]+)['"]/, 'imports three/preact'],
-    [/\b(window|document|localStorage|navigator)\s*\./, 'uses a DOM/browser global'],
-    [/\bMath\.random\s*\(/, 'uses Math.random (use the seeded rng in state)'],
-    [/\b(Date\.now|performance\.now)\s*\(/, 'reads wall-clock time (use sim ticks)'],
-    [
-      /\b(setTimeout|setInterval|requestAnimationFrame)\s*\(/,
-      'uses timers (sim is stepped externally)',
-    ],
-  ];
-  const hits = rules.filter(([re]) => re.test(src)).map(([, why]) => why);
-  if (hits.length > 0) {
+// ── 1. Boundary guard ─────────────────────────────────────────────────
+if (/\.(ts|tsx)$/.test(rel)) {
+  const violations = checkSource(rel, readFileSync(file, 'utf8'));
+  if (violations.length > 0) {
+    const lines = violations.map((v) => `  ${rel}:${v.line}: ${v.message}`).join('\n');
     console.error(
-      `✖ ${rel} ${hits.join('; ')}.\n` +
-        'packages/sim must stay pure and deterministic (docs/adr/0003-deterministic-sim.md). Move this to apps/client or pass it in via commands/ctx.',
+      `✖ ${rel} breaks an import boundary:\n${lines}\n` +
+        'The rules are the table in docs/ARCHITECTURE.md §2; `bun run check:deps` runs the same check.',
     );
     process.exit(2);
   }
