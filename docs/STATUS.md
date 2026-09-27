@@ -4,10 +4,11 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M0 — Bootstrap **complete**. Next up: M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB).
-- **Next task:** M1-01 (sim clock: ticks, minutes, days, seasons, pasaran, events; golden test for 56 days — GDD §3)
-- **Blockers:** none. M0's exit criteria are met: `bun run check` is green in CI and the Three.js scene loads on a phone over the LAN dev server.
-- **Open decisions:** final game title (PRD §12)
+- **Milestone:** M0 complete. **Concept pivoted and documented** (see the 2026-09-27 entries). Next up: M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB).
+- **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
+- **Next task:** M1-01 (sim clock — **all three calendars**: pranata mangsa 12×/120-day year, pasaran, tabular Hijri; golden test over 3 years — GDD §3, ADR-0007)
+- **Blockers:** none.
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2, blocks release not development) · rename the GitHub repo? (§12.3) · mangsa day-lengths marked `verified: false` (§12.6)
 - **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Shell size is 120 KB brotli of a 350 KB budget, but that is three.js and Preact only; no art has landed yet.
 
 ## Log
@@ -18,6 +19,22 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · concept · docs/konsep-bale
+- Done: the concept rewrite. `docs/PLACES.md` (new), `ADR-0007` (new), `packages/content/data/calendar/mangsa.json5` (new), and rewrites of GDD, PRD, CULTURE_GUIDE, ROADMAP M1–M4, both READMEs, AGENTS.
+- Notes/decisions:
+  - **Real place, not a fictional island.** Baledono, Purworejo. That is the whole source of the game's texture and also its main liability, so `PLACES.md §1` sets a binding three-tier naming policy: public geography real, private businesses fictionalised, the starting venue needs its owners' blessing. No real living person becomes an NPC; no map data or imagery copied from any service.
+  - **The goal is the place, not the money.** *Asri / nyaman / tenang* (GDD §5) is computed spatially from what is actually on the ground, so it cannot be topped up like a counter. Farming is the means. This is the one mechanic that makes it not a Stardew reskin, and it came straight out of what `jannah` literally means — a garden.
+  - **Three calendars, one integer** (ADR-0007). Pranata mangsa gives twelve flavours of year instead of four invented seasons; the tabular Hijri calendar makes Ramadan and Lebaran drift 4 days per year, which is free long-save variety no farm sim has. Chose **tabular over astronomical** hisab to keep the sim pure and deterministic; ±1 day is inside the spread Indonesia itself sees.
+  - **The crop table needed no rebalancing.** Crops stay tagged by `musim`, a derived label over groups of mangsa, and musim hujan is 54 days — longer than the 28-day season the numbers were first tuned against.
+  - **Corrected a factual error carried since the first draft:** the irrigation system was modelled on Balinese *subak*. Purworejo is Javanese; the right institution is the **ulu-ulu**. Subak stays in the glossary as a distinct thing, no longer as our model.
+  - **`season` removed from the save `meta`.** It is derivable from `day`, and storing it would let a save disagree with itself after a data fix.
+  - **Religious depiction is fenced explicitly** (CULTURE_GUIDE §3): the character is Muslim, worship is never scored or gated, prayer times are a *clock display*, Ramadan changes the town and not the player, and `jannah` is framed as one man's aspiration rather than a claim. §3.3 also names the contested Javanese practices (slametan, weton) and says to show them without staging a fiqh debate — objections get answered from the guide, not by quietly editing content.
+  - **Mbah Hita is alive and does not die.** Recorded in GDD §2 as non-negotiable so nobody "improves" it later. He is also the *asri* readout before any UI meter exists, which is why he is budgeted three NPCs' worth of writing.
+  - **Two tasks moved up into M2:** the *Kamus* glossary (M2-21) because the first Javanese word in dialog needs its gloss shipping with it, and *asri* (M2-22). The kawasan **building** system stays in M3 as a closed ~10-structure list, deliberately not a free-form editor — every public building is a content multiplier, and an empty one is worse than none.
+  - **Caught in review, all fixed before merge:** ARCHITECTURE §3.2/§3.3 still emitted `seasonChanged` and stored `clock.season` — exactly the stale shape M1-01 would have implemented; `I18N.md` still passed `season` into `format.gameDate`; `GLOSSARY.md` still defined the 28-day season with pancaroba as a sub-phase; the `sign` prose I put in `mangsa.json5` broke `.claude/rules/content-i18n.md` (content data holds ids and numbers, not prose — the pertanda now lives in GDD §3.1 and becomes `calendar:mangsa.<id>.sign` in both locales at M1-01); and the crop tag `both` became ambiguous once pancaroba was promoted to a first-class musim, so it is now `semua`.
+  - **Two human tasks added to M1** (M1-11, M1-12) because CULTURE_GUIDE §1.5 now demands a cultural review *before* M2 writing and the roadmap had no task for it, and because the art direction is blocked on reference photography that does not exist online.
+- Next: M1-01, written against ADR-0007 rather than the old two-season model.
+
 ### 2026-09-27 · M0-07 · feat/M0-07-production-build
 - Done: `apps/client/build.ts` (Bun.build from `index.html`, split, minified, content-hashed, linked sourcemaps, `public/` copied as-is, `precache-manifest.json` for M2-15) and the real `tools/check-size.ts`. `bun run build` and `bun run check:size` replaced their `tools/todo.ts` stubs, which completes `bun run ci`.
 - Tests: `bun run check` green; 140 tests across 15 files (12 new for the shell definition and the budget table). `bun run ci` green end to end. Verified the *built* bundle, not just its emission: served `dist/` and drove it in headless Chromium — `__GAME_READY__` true, WebGL2 context live, overlay localized, one hashed module script, no page errors.

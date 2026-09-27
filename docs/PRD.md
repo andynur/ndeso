@@ -5,28 +5,33 @@
 | Status | Draft v0.1 |
 | Last updated | 2026-09-26 |
 | Owner | Project maintainer |
-| Related | [GDD](GDD.md) · [DESIGN](DESIGN.md) · [ARCHITECTURE](ARCHITECTURE.md) · [ROADMAP](ROADMAP.md) |
+| Related | [GDD](GDD.md) · [PLACES](PLACES.md) · [DESIGN](DESIGN.md) · [ARCHITECTURE](ARCHITECTURE.md) · [ROADMAP](ROADMAP.md) |
 
 ## 1. Summary
 
-Balé is an open-source, browser-based farming and life sim in the spirit of *Harvest Moon: Back to Nature* and *Coral Island*, set on a fictional Indonesian island. It uses an **HD-2D** look (low-poly 3D world + 2D sprite characters) and runs instantly from a link on desktop and **low-to-mid-range Android phones**, with no store install required. It is playable offline as a PWA and ships in **English and Bahasa Indonesia** from day one.
+Balé is an open-source, browser-based farming and life sim set in **Baledono, Purworejo, Central Java** — a real Javanese kelurahan, compressed and fictionalised where needed. An adult leaves Jakarta to take over a patch of ground from their grandfather, **Mbah Hita**, who is still alive and no longer strong enough to work it. Mbah Hita's unfinished ambition is to make the ground *asri, nyaman, tenang* — which is why he named it **Balé Al Jannah**.
+
+Farming pays for the work; the goal is the **quality of the place**, not the size of the bank balance. It uses an **HD-2D** look (low-poly 3D world + 2D sprite characters) and runs instantly from a link on desktop and **low-to-mid-range Android phones**, with no store install required. It is playable offline as a PWA and ships in **English and Bahasa Indonesia** from day one.
 
 ## 2. Problem & opportunity
 
-- Popular farming sims are Western- or Japanese-themed. There are few games in which Indonesian players see their own village life: *sawah* terraces, *gotong royong*, *pasar* on *pasaran* days, monsoon seasons.
+- Popular farming sims are Western- or Japanese-themed. There are few games in which Indonesian players see their own village life: *sawah*, *gotong royong*, *pasar* on *pasaran* days, the monsoon.
+- Those that do exist are almost all set in a **generic or invented** Indonesia. A specific, real, ordinary town — named, walked, and photographed — is rarer still and much harder to fake.
+- Every farming sim measures the player in money. **None measures the place.** *Asri, nyaman, tenang* is a goal the genre has not used.
 - Most Indonesian players are on Android phones with 3–4 GB RAM and limited mobile data. Big store downloads (Steam or Play Store builds of 500 MB+) are a barrier.
 - Shareable web links (WhatsApp groups, TikTok bios) are a strong distribution channel in Indonesia, but most web games are shallow. A deep, cozy sim that loads in seconds would fill that gap.
 
 ## 3. Vision
 
-> "Open a link and in under 15 seconds you are standing in your *sawah* at dawn, with rain clouds on the hills and the *kentongan* sounding from the village."
+> "Open a link and in under 15 seconds you are standing on Mbah Hita's ground at maghrib — grass to the knee, a joglo with no roof, a dry channel across the dirt, and the adzan from the musholla next door."
 
 Pillars (every feature must serve at least one):
 
-1. **Cozy & grounded.** Relaxing daily rhythm, no fail states, seasons that matter.
-2. **Authentically Indonesian.** Culture expressed through *systems* (irrigation sharing, market cycles, festivals), not just skins. See [CULTURE_GUIDE](CULTURE_GUIDE.md).
-3. **Instant & light.** Link to play, small downloads, runs on a cheap phone, works offline.
-4. **Open.** Open source, moddable data, community contributions, including cultural review.
+1. **Cozy & grounded.** Relaxing daily rhythm, no fail states, no villain, no combat.
+2. **The place is the point.** The player is graded on *asri, nyaman, tenang* — how the ground feels — not on wealth. Money is the means (GDD §5).
+3. **Authentically Indonesian, and specifically Javanese.** Culture expressed through *systems* — the pranata mangsa, the pasaran market day, the water schedule, the Hijri festivals — not through skins. A real town, handled by the rules in [PLACES §1](PLACES.md) and [CULTURE_GUIDE](CULTURE_GUIDE.md).
+4. **Instant & light.** Link to play, small downloads, runs on a cheap phone, works offline.
+5. **Open.** Open source, moddable data, community contributions, including cultural review.
 
 ## 4. Target users
 
@@ -40,7 +45,8 @@ Pillars (every feature must serve at least one):
 ## 5. Goals & non-goals
 
 ### Goals (v1.0)
-- G1: A complete one-year (two-season) farming loop with crops, animals, market, 8+ NPCs, and 4 festivals.
+- G1: A complete 120-day year across all 12 *mangsa*, with crops, animals, the pasar, 8+ NPCs, and 4 festivals including Lebaran.
+- G1b: The *asri / nyaman / tenang* system readable and reactive, and Mbah Hita's plan completable to Act 3 (he moves back).
 - G2: Runs at 30 fps on reference low-end Android devices ([PERFORMANCE_BUDGET](PERFORMANCE_BUDGET.md)).
 - G3: First playable frame reached with ≤ 10 MB downloaded; fully playable offline after the first visit.
 - G4: Full EN and ID localization, with the architecture ready for more locales (jv, su, ms).
@@ -58,10 +64,10 @@ Pillars (every feature must serve at least one):
 | Release | Scope | Exit criteria |
 |---|---|---|
 | **M0 Bootstrap** | Monorepo, tooling, CI, harness, empty scene | `bun run check` green in CI; dev server shows a Three.js scene on a phone |
-| **M1 Tech spike** | Terrain plot, billboard sprite walking, day/night cycle, touch + keyboard input | 30 fps on a reference device; initial download ≤ 5 MB |
-| **M2 Vertical slice** | 3 crops, clock and seasons, 2 NPCs, save/load, PWA offline, EN/ID | A tester plays 7 in-game days on a phone without help |
-| **M3 Alpha** | Full farm and village map, 10 crops, chickens and cows, market with pasaran, 6 NPCs, 1 festival | Closed test with 30 players; crash-free sessions ≥ 99% |
-| **M4 Beta** | All v1 content, irrigation/subak system, 4 festivals, accessibility options, cloud save (optional) | Public link; D1 retention ≥ 30% |
+| **M1 Tech spike** | Terrain plot, billboard sprite walking, the three calendars, day/night cycle, touch + keyboard input | 30 fps on a reference device; initial download ≤ 5 MB |
+| **M2 Vertical slice** | Balé + Pasar Baledono, 3 crops, the three calendars, 3 NPCs incl. Mbah Hita, *asri* readout, save/load, PWA offline, EN/ID | A tester plays 7 in-game days on a phone without help and can say what Mbah Hita wants |
+| **M3 Alpha** | Town areas, 10 crops, Etawa goats and chickens, pasar with pasaran, 6 NPCs, the **kawasan building system**, Sedekah Bumi | Closed test with 30 players; crash-free sessions ≥ 99% |
+| **M4 Beta** | All v1 content, the kalen/ulu-ulu water system, 4 festivals incl. Ramadan and Lebaran, marriage, accessibility, cloud save (optional) | Public link; D1 retention ≥ 30% |
 | **v1.0** | Polish, performance, community-reviewed cultural content | All NFRs met on reference devices |
 
 Details and task IDs: [ROADMAP](ROADMAP.md).
@@ -82,26 +88,36 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 ### 7.2 Time & calendar
 | ID | Requirement | Pri |
 |---|---|---|
-| FR-010 | Game clock runs 06:00–02:00. One in-game minute equals ~0.7 s real time (tunable). Passing out at 02:00 costs money and stamina. | P0 |
-| FR-011 | Two seasons, *Musim Hujan* and *Musim Kemarau*, of 28 days each. The last 7 days of each form a *pancaroba* transition with mixed weather. | P0 |
-| FR-012 | Seven-day week combined with the Javanese five-day *pasaran* cycle (Legi, Pahing, Pon, Wage, Kliwon). The market opens on its *pasaran* day. | P1 |
-| FR-013 | Calendar UI shows festivals, NPC birthdays, and market days. | P1 |
+| FR-010 | Game clock runs 05:00–01:00. One in-game minute equals ~0.7 s real time (tunable). Passing out at 01:00 costs money and stamina. | P0 |
+| FR-011 | The year is **120 days across the 12 *mangsa*** of the pranata mangsa, with the real proportions preserved. *Musim* (hujan / kemarau / pancaroba) is a derived label. Lengths are data, not code. ([ADR-0007](adr/0007-three-calendars.md)) | P0 |
+| FR-012 | Seven-day week combined with the Javanese five-day *pasaran* cycle (Legi, Pahing, Pon, Wage, Kliwon). Pasar Baledono is busiest on its *pasaran* day. | P0 |
+| FR-013 | **Tabular Hijri calendar** projected from the same day counter, so Ramadan, Lebaran and Idul Adha drift ~4 days per game year against the mangsa. No astronomical hisab. | P1 |
+| FR-014 | The HUD shows the clock **and the prayer-time band** it falls in (`15:40 · Ashar`), plus mangsa, day-in-mangsa and pasaran. A display only: it gates nothing and scores nothing (CULTURE_GUIDE §3.1). | P0 |
+| FR-015 | Calendar UI shows festivals, NPC birthdays and *weton*, and pasaran days. | P1 |
 
 ### 7.3 Farming
 | ID | Requirement | Pri |
 |---|---|---|
 | FR-020 | Tile-based farm plots: hoe → plant → water → grow → harvest. | P0 |
 | FR-021 | Crops have season, growth days, regrowth, sell price, and water need (see [GDD §4](GDD.md#4-farming)). | P0 |
-| FR-022 | Wet-rice paddy (*sawah*) plots need flooding via irrigation channels, a separate plot type. | P1 |
-| FR-023 | Irrigation sharing (*subak*-inspired): water allocation schedule negotiated at village meetings affects which days your paddies get water. | P1 |
-| FR-024 | Pests (e.g. *wereng*) and crop disease, prevented by crop rotation and natural remedies. | P2 |
+| FR-022 | Wet-rice paddy (*sawah*) plots need flooding via the *kalen* (irrigation channel), a separate plot type. | P1 |
+| FR-023 | Water sharing, Javanese model: the **ulu-ulu** sets which days each plot gets water. Helping maintain the channels improves your slots. Taking water out of turn is possible and costs standing, never a hard fail. | P1 |
+| FR-024 | Pests (e.g. *wereng*) and crop disease, prevented by crop rotation and natural remedies. Pest pressure varies by mangsa. | P2 |
 | FR-025 | Tool upgrades (hoe, watering can, sickle, axe) at the *pandai besi* (blacksmith). | P1 |
+
+### 7.3b Kawasan (the place itself)
+| ID | Requirement | Pri |
+|---|---|---|
+| FR-026 | Each area has **asri / nyaman / tenang** qualities computed spatially from what is on the ground — canopy, flowing water, shade over paths, seating in reach, distance from the road, clutter. Never a counter the player can top up. (GDD §5) | P0 (*asri* only in the slice) |
+| FR-027 | Neglected ground **reverts**: scrub returns, paths mud over, the channel silts. | P1 |
+| FR-028 | Restoring the **kalen** segment by segment is the long-term build project: it unlocks sawah, removes the walk to the well, and feeds the planting that raises *asri*. | P1 |
+| FR-029 | **Kawasan building** from Mbah Hita's closed list of ~10 structures (gudang, joglo, paths, pond, pendopo, musholla …). Not a free-form editor. Larger structures need a permit from the kelurahan. Each structure ships only with people and a reason to use it. | P1 (M3) |
 
 ### 7.4 Animals
 | ID | Requirement | Pri |
 |---|---|---|
 | FR-030 | Chickens (*ayam kampung*): feed, eggs, affection. | P0 (1 chicken) / P1 |
-| FR-031 | Cows or *kerbau*: milk (cows); *kerbau* can plow paddies faster. | P1 |
+| FR-031 | **Kambing Etawa** (the Kaligesing breed): milk, and an artisan chain (kefir, soap). Cows and *kerbau* after. | P1 |
 | FR-032 | Ducks herded to paddies (*bebek angon*) eat pests and produce eggs. | P2 |
 | FR-033 | Fish pond / *mina padi* (fish in paddy water). | P2 |
 
@@ -109,27 +125,32 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 | ID | Requirement | Pri |
 |---|---|---|
 | FR-040 | Shipping box (*keranjang setoran*) pays overnight at base price. | P0 |
-| FR-041 | Market (*pasar*) on its *pasaran* day pays more, with daily price fluctuation per item. | P1 |
-| FR-042 | Shops: seeds (*toko tani*), general store (*warung*), blacksmith, carpenter. | P0 (seed shop) / P1 |
-| FR-043 | Currency is Rupiah (Rp) with realistic-feeling but gamified values (see GDD §6). | P0 |
-| FR-044 | Middleman (*tengkulak*) story arc: pays instantly at low prices, which creates a moral/economic choice. | P2 |
+| FR-041 | **Pasar Baledono:** cheaper to buy from, buys your harvest, haggling works, best on its *pasaran* day, and **shuts by late morning**. | P0 |
+| FR-042 | **Swalayan** (fictionalised name): fixed higher prices, open 08:30–20:30, does not buy produce. The pasar/swalayan choice is a **time-and-relationship** trade, never a moral one — no evil corporation. | P1 |
+| FR-043 | Shops: seeds and produce at the pasar, *warung*, *pandai besi*, carpenter. | P0 (seeds) / P1 |
+| FR-044 | Currency is Rupiah (Rp) with realistic-feeling but gamified values (see GDD §7). | P0 |
+| FR-045 | Middleman (*tengkulak*) arc: pays instantly at low prices; a *koperasi* story unlocks a fair-price channel. | P2 |
 
 ### 7.6 NPCs & social
 | ID | Requirement | Pri |
 |---|---|---|
-| FR-050 | NPCs follow daily schedules that depend on weekday, weather, and season. | P0 (2 NPCs) |
-| FR-051 | Dialog via Ink scripts, with branching based on friendship and flags. | P0 |
-| FR-052 | Friendship levels (0–10 hearts). Gifts, with liked/disliked items per NPC. | P1 |
-| FR-053 | Marriage candidates (4+) with heart events. Culturally appropriate courtship (*lamaran*). | P1 |
-| FR-054 | *Gotong royong* community events (village clean-up, repairing an irrigation dam) raise the reputation of the whole village. | P1 |
+| FR-050 | NPCs follow daily schedules that depend on weekday, weather, and mangsa. | P0 (3 NPCs) |
+| FR-051 | Dialog via Ink scripts, with branching based on friendship and flags. Speech level (ngoko/krama) correct per relationship. | P0 |
+| FR-052 | **Mbah Hita** is present, talks, comments on the ground as it changes, and is the readout for *asri / nyaman / tenang* before any UI meter exists. His plan drives the build order. He **does not die**. | P0 |
+| FR-053 | Friendship levels (0–10 hearts). Gifts, with liked/disliked items per NPC. Birthday and *weton* gifts ×3. | P1 |
+| FR-054 | **Pak Darma**, the land agent: a standing offer to buy the ground that rises each year. Polite, reasonable, refusable, never a villain. | P1 |
+| FR-055 | *Gotong royong* events (kampung clean-up, clearing the kalen) raise standing across the whole neighbourhood. | P1 |
+| FR-056 | Marriage candidates with heart events. Culturally appropriate courtship (*lamaran*). | P2 (M4) |
 
 ### 7.7 Festivals & minigames
 | ID | Requirement | Pri |
 |---|---|---|
-| FR-060 | *Sedekah Bumi* (harvest thanksgiving) at the end of Musim Hujan. | P1 |
-| FR-061 | *Tujuhbelasan* (Independence Day) with minigames: *balap karung*, *makan kerupuk*, *panjat pinang*. | P1 |
-| FR-062 | *Pasar Malam* night market with food stalls and a ferris wheel. | P1 |
-| FR-063 | *Lomba Layang-layang* (kite festival) in Musim Kemarau. | P2 |
+| FR-060 | ***Sedekah Bumi*** (harvest thanksgiving) — the flagship festival, hosted at the balé the player built. | P1 |
+| FR-061 | **Ramadan (30 days):** the *town* changes — pasar opens ~03:00, midday empties, takjil stalls before maghrib, tarawih at the musholla. The player's own fasting is **never modelled, rewarded, or penalised**. | P1 |
+| FR-062 | **Lebaran:** *mudik* — the kampung empties then fills; NPCs who left come home; sungkeman and ketupat. The emotional peak of the year. | P1 |
+| FR-063 | **Festival Durian** in the durian mangsa: grow one over years, enter your best fruit. | P2 |
+| FR-064 | ***Dolalak*** — Purworejo's own dance, as a visual set piece; rhythm minigame later. | P2 |
+| FR-065 | *Tujuhbelasan* with *balap karung*, *makan kerupuk*, *panjat pinang*. Apolitical. | P2 |
 
 ### 7.8 Persistence
 | ID | Requirement | Pri |
@@ -196,6 +217,9 @@ Full budget: [PERFORMANCE_BUDGET](PERFORMANCE_BUDGET.md).
 | In-app browsers (WA/IG) kill WebGL or storage | High | Detect in-app browser and show an "Open in Chrome" hint; autosave often; test each release |
 | iOS Safari quirks (audio unlock, storage eviction) | Medium | Audio unlock on first touch; request persistent storage; export-save feature |
 | Cultural misrepresentation | High (reputation) | [CULTURE_GUIDE](CULTURE_GUIDE.md), community reviewers, "culture feedback" issue template |
+| **Religious depiction taken badly** | High | Worship is never scored or gated (CULTURE_GUIDE §3.1); *jannah* framed as one man's aspiration, never a claim (§3.2); contested Javanese practices shown as what the village does, with no fiqh debate and no verdict (§3.3). Objections are answered from the guide, not by quietly editing content |
+| **Using a real town and real businesses** | High (legal + goodwill) | Tiered naming policy in [PLACES §1](PLACES.md): public geography real, private businesses fictionalised, the starting venue needs its owners' blessing. No real living person as an NPC. No map data or imagery copied from any mapping service |
+| **Reference art bottleneck** — almost nothing of Baledono is online at usable quality | Medium | Contributor photography trips (PLACES §5); placeholder-first until then |
 | Scope creep | High | Strict milestone exit criteria; P2 items stay out until v1 |
 | Bun 1.4 regressions (new Rust rewrite) | Medium | Pin version in `.bun-version`; upgrade only via PR with green CI |
 | Asset production bottleneck | Medium | Low-poly style, reusable kits, CC-licensed contributions, placeholder-first workflow |
@@ -208,7 +232,9 @@ Full budget: [PERFORMANCE_BUDGET](PERFORMANCE_BUDGET.md).
 
 ## 12. Open questions
 
-1. Final game title and island name (check trademark and domain availability).
-2. Is cloud save worth the operational cost for v1, or should we ship export/import only?
-3. Which regional festivals beyond the Javanese/Balinese core? Needs community input.
-4. Keep the Play Store TWA as a post-v1 experiment?
+1. ~~Final game title~~ — **resolved: Balé** (display `Balé`, identifier `bale`). Domain and trademark still unchecked.
+2. **Permission for Balé Al Jannah.** It is a real venue in Krajan, Baledono. Either its owners bless the use of the name, or the in-game place gets a name of its own ([PLACES §1](PLACES.md)). **Blocks any public release, not development.**
+3. Should the GitHub repository itself be renamed from `ndeso` to `bale`? Owner's call; GitHub redirects the old URL.
+4. Is cloud save worth the operational cost for v1, or should we ship export/import only?
+5. Keep the Play Store TWA as a post-v1 experiment?
+6. The mangsa day-lengths in `packages/content/data/calendar/mangsa.json5` are transcribed from secondary sources and marked `verified: false`. Confirm all twelve against a Javanese-calendar reference before v1.

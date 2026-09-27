@@ -5,13 +5,17 @@
 
 | Term | Meaning in code |
 |---|---|
-| **Area** | A streamed world region/scene (`farm`, `village`, …). `AreaId` type |
+| **Area** | A streamed world region/scene (`bale`, `pasar`, `kampung`, …). `AreaId` type. See [PLACES](PLACES.md) |
 | **Tile** | 1×1 world-unit cell. `TileKey = "area:x,z"` |
 | **Plot type** | `tegalan` (dry), `sawah` (wet paddy), `kebun` (orchard) |
 | **Tick** | One fixed sim step (100 ms real time) |
-| **Game minute** | Derived from ticks via `time.minutesPerTick`; day = 06:00→02:00 |
-| **Season** | `'hujan' \| 'kemarau'`; `pancaroba` is a *phase* flag (days 22–28), not a season |
+| **Game minute** | Derived from ticks via `time.minutesPerTick`; day = 05:00→01:00 |
+| **Day** | The **only** stored time value. Mangsa, musim, pasaran, weton and the Hijri date are pure projections of it ([ADR-0007](adr/0007-three-calendars.md)) |
+| **Mangsa** | One of the 12 pranata-mangsa seasons; unequal lengths from `content/data/calendar/mangsa.json5`, summing to the 120-day year |
+| **Musim** | Derived coarse label over groups of mangsa: `'hujan' \| 'kemarau' \| 'pancaroba'`. **Crops are tagged by musim, not by mangsa** |
 | **Pasaran** | `'legi' \| 'pahing' \| 'pon' \| 'wage' \| 'kliwon'`, `(dayIndex) % 5` |
+| **Kawasan** | The area-scale game: what the player builds and grows, as opposed to the tile-scale farming (GDD §1.1, §5) |
+| **Quality** | `asri \| nyaman \| tenang` — computed **spatially** per area from what is on the ground. Never a counter (GDD §5) |
 | **Command** | Input intent sent into the sim (`{ type: 'useTool', … }`) |
 | **Event** | Fact emitted by the sim (`cropHarvested`, `dayStarted`) |
 | **View** | Read-only projection of sim state consumed by render/UI |
@@ -20,4 +24,4 @@
 | **Key** (i18n) | `namespace:dotted.key`, e.g. `items:crop.cabai.name` |
 | **Preset** | Graphics quality level `low \| medium \| high` |
 | **Golden test** | Seeded multi-day sim run compared to a snapshot |
-| **Slice** | The M2 vertical slice scope (GDD §12) |
+| **Slice** | The M2 vertical slice scope (GDD §13) |

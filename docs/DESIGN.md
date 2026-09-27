@@ -33,10 +33,11 @@
 ### 1.3 Lighting per time of day
 | Time | Sun color | Ambient | Notes |
 |---|---|---|---|
-| 06:00 dawn | `#FFB27A` | `#6B7AA8` 0.5 | Mist particles on sawah (Med/High) |
-| 12:00 noon | `#FFF4E0` | `#A8C4E0` 0.7 | |
-| 17:30 golden | `#FF9A4D` | `#8A6FA0` 0.55 | Long shadows |
-| 20:00+ night | moon `#9DB4FF` | `#1E2A4A` 0.35 | Lamp *(pelita)* point lights, max 4 active |
+| 05:00 subuh | `#5C6B96` | `#3A4670` 0.4 | Still blue, before the sun. Adzan ambience |
+| 06:00 dawn | `#FFB27A` | `#6B7AA8` 0.5 | Mist over the fields (Med/High) |
+| 12:00 noon | `#FFF4E0` | `#A8C4E0` 0.7 | Harsh and flat; midday is for staying indoors |
+| **17:30 maghrib** | `#FF9A4D` | `#8A6FA0` 0.55 | **The signature hour.** Long shadows, warm haze, adzan. Get this one right before any other |
+| 19:00+ night | moon `#9DB4FF` | `#1E2A4A` 0.35 | Warung and teras lamps as point lights, max 4 active |
 | Rain | ×0.6 intensity, desaturate 30% | | Rain particles + puddle decals |
 
 Interpolate between keyframes using the game clock. Implemented as data (`content/data/lighting.json5`).
@@ -140,9 +141,11 @@ Every component must accept only i18n keys or already-translated strings, never 
 
 - Use traditional **public-domain** motifs: *kawung*, *truntum*, *mega mendung*, *ceplok*. Credit the region in the asset metadata.
 - **Parang** motifs historically carried royal restrictions in the Yogyakarta and Surakarta courts. Avoid them on commoner NPC clothing and keep them for respectful ceremonial contexts only.
-- Architecture references: Javanese *joglo*/*limasan*, Balinese *bale* and *candi bentar* gates, Minang *rumah gadang* (for Nadia's family photo, not buildings in the village).
-- See [CULTURE_GUIDE](CULTURE_GUIDE.md) before designing any NPC, festival, clothing, or religious element.
+- Architecture references are **Javanese and local**: *joglo* and *limasan*, the open *saung* / pendopo of the starting location, kampung houses with their terraces and pagar, warung fronts, and the Dutch-colonial town plan of Purworejo (alun-alun, masjid agung, pendopo kabupaten). Do not import Balinese or Minang architecture into Baledono — the wrong vernacular reads as fake to anyone from the region.
+- Dolalak costume (colonial-style jacket, dark glasses, *sampur*, *kupluk*) is Purworejo's own visual signature. Credit it to the regency.
+- See [CULTURE_GUIDE](CULTURE_GUIDE.md) and [PLACES](PLACES.md) before designing any NPC, location, festival, clothing, or religious element.
+- ⚠️ **Reference photography is the bottleneck.** Almost nothing of Baledono exists online at usable quality; the art direction has to come from a contributor's own photographs (PLACES §5), not from image search.
 
 ## 11. Asset naming
 
-`<area|category>_<name>_<variant>.<ext>`, lowercase snake_case, e.g. `farm_house_lvl1.glb`, `crop_cabai_stage2.png`, `npc_sari_walk.png`, `sfx_hoe_soil_01.ogg`. Every asset has an entry in `assets/CREDITS.md` (author, license, source). Details: [ASSET_PIPELINE](ASSET_PIPELINE.md).
+`<area|category>_<name>_<variant>.<ext>`, lowercase snake_case, e.g. `bale_joglo_lvl1.glb`, `crop_cabai_stage2.png`, `npc_mbah_hita_walk.png`, `sfx_hoe_soil_01.ogg`. Every asset has an entry in `assets/CREDITS.md` (author, license, source). Details: [ASSET_PIPELINE](ASSET_PIPELINE.md).

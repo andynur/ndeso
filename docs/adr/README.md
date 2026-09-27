@@ -12,3 +12,4 @@ Agents: **never change an Accepted ADR's decision silently.** Write a new ADR th
 | 0004 | Custom lightweight i18n, EN source + ID | Accepted |
 | 0005 | Licensing: MIT code, CC BY-SA 4.0 assets | Accepted |
 | 0006 | AI agent harness & token strategy | Accepted |
+| 0007 | Three overlapping calendars from one day counter | Accepted |

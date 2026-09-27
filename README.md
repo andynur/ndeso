@@ -1,8 +1,10 @@
 # 🌾 Balé
 
-**An open-source HD-2D farming and life sim inspired by Indonesian village life.**
+**An open-source HD-2D farming and life sim set in a real Javanese town.**
 
-Balé is a browser-first game set on a fictional Indonesian island. It combines a low-poly 3D world with 2D sprite characters, a cozy farming loop, and systems grounded in local culture: *sawah* terraces, *gotong royong*, market days, festivals, and a *pasaran*-inspired calendar.
+Balé is a browser-first game set in **Baledono, Purworejo, Central Java**. You leave Jakarta to take over a patch of ground from your grandfather, **Mbah Hita** — still alive, no longer strong enough to work it, and carrying an unfinished ambition: to make the place *asri, nyaman, tenang*. That is why he named it **Balé Al Jannah**.
+
+Farming pays for the work. The goal is not the size of your bank balance but **the quality of the place** — how green it is, how comfortable to be in, how quiet. A low-poly 3D world with 2D sprite characters, a cozy daily rhythm, and systems drawn from how the year actually runs there: the twelve *mangsa* of the Javanese farming calendar, the five-day *pasaran* market cycle, and the lunar calendar that walks Ramadan and Lebaran through the seasons.
 
 > 🚧 **Early development:** Balé is currently in the M0 bootstrap phase. There is no playable release yet. Follow the [roadmap](docs/ROADMAP.md) for progress.
 
@@ -10,10 +12,11 @@ English · [Bahasa Indonesia](README.id.md) · [Issues](https://github.com/andyn
 
 ## Vision
 
-Open a link and, in under 15 seconds, be standing in your *sawah* at dawn. Balé is designed to be:
+Open a link and, in under 15 seconds, be standing on Mbah Hita's ground at maghrib — grass to the knee, a joglo with no roof, a dry channel across the dirt, and the adzan from the musholla next door. Balé is designed to be:
 
-- **Cozy and grounded:** a relaxing daily rhythm with meaningful seasons and community life.
-- **Authentically Indonesian:** culture expressed through systems and stories, not decorative stereotypes.
+- **Cozy and grounded:** a relaxing daily rhythm. No combat, no villain, no fail state.
+- **Measured by the place, not the profit:** *asri, nyaman, tenang* is the scoreboard, and it is computed from what you actually put on the ground.
+- **Authentically Indonesian, and specifically Javanese:** culture expressed through systems — the *pranata mangsa*, the market day, the water schedule — not decorative stereotypes. A real town, handled by a [naming policy](docs/PLACES.md) and a [culture guide](docs/CULTURE_GUIDE.md).
 - **Instant and lightweight:** playable in a browser, offline after the first visit, and designed for low-to-mid-range Android phones.
 - **Open and moddable:** data-driven content and welcoming contribution paths for code, art, music, translation, and cultural knowledge.
 
