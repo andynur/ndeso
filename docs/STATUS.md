@@ -9,7 +9,7 @@
 - **Next task:** M1-02 (fixed-step game loop with render interpolation and pause on hide — ARCH §4.1). It wires `createTimeSystem(cal)` from `@bale/sim` into the client loop.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · **GDD §10 says "Ramadan (30 days)", but ADR-0007's scaled Hijri makes every month 9–10 game days** — Ramadan is ~10 days in the build; GDD §10 needs the owner's call (keep ~10, or a Ramadan-specific rule).
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
 - **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19); the calendar data is already validated by `bun test`. Shell size is 120 KB brotli of a 350 KB budget (three.js + Preact; no art yet).
 
 ## Log
@@ -20,6 +20,10 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M1-01 follow-up · claude/cool-albattani-s1w499
+- Done: settled the open GDD §10 question. The owner chose **proportional** Hijri months, so Ramadan stays 9–10 game days (30 in life), as the build already does. There is no Ramadan-specific rule. GDD §10 is updated.
+- Notes: this branch had a second, independent M1-01 implementation. It was dropped in favour of the one merged in PR #14, and only this decision was carried over.
+
 ### 2026-09-27 · M1-01 · claude/brave-ramanujan-rkivah
 - Done: `time` system + pure calendar projections in `packages/sim` (mangsa, musim, pasaran, weekday, tabular Hijri, prayer band); calendar schema/validator in `packages/shared`; `clock.json5` + `prayer-times.json5`; `calendar` locale namespace with the 12 mangsa names and pertanda in EN + ID. `hello` system deleted.
 - Tests: `bun run check` green — **211 pass**, incl. a 3-year golden (mangsa boundaries, Ramadan/Lebaran/Idul Adha dates) and a check that the system's events agree with the projections over all 360 days. Hijri arithmetic cross-checked ad hoc against ICU `islamic-civil` over ~1,400 years.
