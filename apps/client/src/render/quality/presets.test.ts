@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { clampPixelRatio, guessPreset, isQualityPreset, MAX_DPR } from './presets.ts';
+import { QUALITY_PRESETS } from '@ndeso/shared';
+import { clampPixelRatio, guessPreset, MAX_DPR } from './presets.ts';
 
 describe('clampPixelRatio', () => {
   test('caps at the preset budget (PERF §4)', () => {
@@ -39,11 +40,9 @@ describe('guessPreset', () => {
 });
 
 describe('preset table', () => {
-  test('every preset has a DPR cap and is recognised by the guard', () => {
-    for (const [preset, dpr] of Object.entries(MAX_DPR)) {
-      expect(isQualityPreset(preset)).toBe(true);
-      expect(dpr).toBeGreaterThanOrEqual(1);
+  test('every shared preset has a DPR cap of at least 1', () => {
+    for (const preset of QUALITY_PRESETS) {
+      expect(MAX_DPR[preset]).toBeGreaterThanOrEqual(1);
     }
-    expect(isQualityPreset('ultra')).toBe(false);
   });
 });

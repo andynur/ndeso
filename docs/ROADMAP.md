@@ -10,7 +10,7 @@
 - [x] **M0-02** Create `packages/shared` and `packages/sim` with a `hello` system plus a test; `packages/content` with the locale seed files already in the repo. *AC:* `bun test` passes.
 - [x] **M0-03** `apps/client`: `index.html` + `main.ts`, Bun dev server with HMR (`tools/dev.ts`), Three.js renderer showing a rotating low-poly placeholder on a ground plane, Preact overlay "Hello / Halo". *AC:* `bun run dev` serves on LAN; loads on a phone.
 - [x] **M0-04** i18n runtime skeleton (`t`, `format.money`, locale detect/switch) plus `tools/i18n/check.ts` (parity) and `gen-types.ts`. *AC:* switching locale updates the overlay; `check:i18n` catches a removed key.
-- [ ] **M0-05** `tools/check-deps.ts` enforcing ARCHITECTURE §2. *AC:* importing `three` inside `packages/sim` fails the check.
+- [x] **M0-05** `tools/check-deps.ts` enforcing ARCHITECTURE §2. *AC:* importing `three` inside `packages/sim` fails the check.
 - [ ] **M0-06** CI workflow green (install, check, build). *AC:* PR shows passing checks.
 - [ ] **M0-07** Production build `apps/client/build.ts` + `tools/check-size.ts`. *AC:* `bun run build` outputs hashed files; the size report prints.
 

@@ -1,6 +1,5 @@
-import { SUPPORTED_LOCALES } from '@ndeso/shared';
+import { type QualityPreset, SUPPORTED_LOCALES } from '@ndeso/shared';
 import { format, locale, setLocale, t } from '../i18n/index.ts';
-import type { QualityPreset } from '../render/quality/presets.ts';
 
 export interface RenderStats {
   readonly preset: QualityPreset;

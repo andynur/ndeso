@@ -5,10 +5,10 @@
 
 ## Now
 - **Milestone:** M0 — Bootstrap
-- **Next task:** M0-05 (`tools/check-deps.ts` enforcing the ARCHITECTURE §2 import table)
+- **Next task:** M0-06 (CI workflow green: install, check, build)
 - **Blockers:** none
 - **Open decisions:** final game title (PRD §12)
-- **Known issues:** unimplemented `bun run` scripts are `tools/todo.ts` stubs that print `TODO <task-id>` and exit 0 (deps M0-05, content M2-01, build/size M0-07, smoke M2-19). `check:deps` is still a stub, so ARCHITECTURE §2 import boundaries are only enforced by the PostToolUse hook.
+- **Known issues:** unimplemented `bun run` scripts are `tools/todo.ts` stubs that print `TODO <task-id>` and exit 0 (content M2-01, build/size M0-07, smoke M2-19).
 
 ## Log
 <!-- Newest first. Format:
@@ -18,6 +18,18 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M0-05 · feat/M0-05-check-deps
+- Done: real `check:deps`. `tools/check-deps.ts` walks every source file in `packages/` and `apps/` and applies the ARCHITECTURE §2 table, which now lives as data in `tools/deps/rules.ts`; `tools/deps/scan.ts` is a small tokenizer that finds import specifiers, and `tools/deps/purity.ts` holds the `packages/sim` API rules. `scripts/hooks/post-edit.ts` was rewritten to call the same `checkSource`, so the edit hook and the CI gate cannot drift.
+- Tests: `bun run check` green; 118 tests across 12 files (36 new). AC verified live — adding `import { Vector3 } from 'three'` to `packages/sim/src/index.ts` makes `bun run check:deps` exit 1 and the PostToolUse hook exit 2 with the same message.
+- Notes/decisions:
+  - **The gate found a real violation on `main`:** `ui/app.tsx` imported `QualityPreset` from `render/quality/presets.ts`. Fixed by moving the preset *names* (`QUALITY_PRESETS`, `QualityPreset`, `isQualityPreset`) to `packages/shared/src/quality.ts` — settings (M2-16) and the save schema need the same vocabulary, so shared is where it belongs. `render/quality/presets.ts` keeps `MAX_DPR`, `clampPixelRatio` and `guessPreset`.
+  - Type-only imports are **not** a general escape hatch. The one place ARCHITECTURE §2 allows them is the `sim → content` row ("content types only"), so `import type` is honoured there and nowhere else; `ui/` importing a type from `render/` still fails.
+  - Rules the table implies but does not spell out, added deliberately: no zone of the client bundle may import `tools/` or `scripts/`, and `packages/shared`, `packages/sim` and `apps/client/**` may not import `node:*`/`bun:*` (a colocated `*.test.ts` may import `bun:test`). `packages/content` may, because its loaders read locale files from disk for tools and tests.
+  - A tokenizer rather than a regex: the checker must not fire on a commented-out import or the word `import` inside a string, and the sim purity rules must not fire on prose that mentions `Math.random`. It handles regex literals, template literals and a shebang line; `scan.test.ts` pins each of those.
+  - No new dependency — no `dependency-cruiser`, no `madge`. The rules are ~15 lines of data and the scanner is ~230 lines, against a tool that would need its own TypeScript resolver config to say the same thing.
+  - Review fix: the tokenizer originally masked a whole template literal, so `` `seed-${Math.random()}` `` or `` `${await import('three')}` `` inside `packages/sim` was invisible to both halves of the check. `${…}` spans are now re-tokenized as code with brace-depth tracking (nesting included); only the literal text between them is blanked.
+  - `apps/client/build.ts` is registered as build-time code so M0-07 can use `Bun.build`, `node:*` and `tools/` helpers without a carve-out mid-task; the bundle may not import it.
+- Next: M0-06
 ### 2026-09-27 · M0-04 · feat/M0-04-i18n-runtime
 - Done: i18n runtime in `apps/client/src/i18n/` (`t`, lazy namespaces, signal-backed locale switch, `createNumberFormats` for money/number/clock, `formatGameDate`), the ICU subset of I18N §3 as `packages/shared/src/message.ts`, a locale picker in the overlay, and the real `check:i18n` (`tools/i18n/check.ts`) plus `tools/i18n/gen-types.ts`.
 - Tests: `bun run check` green; 82 tests across 9 files (56 new: message formatter, parity rules, key parsing, number formats, and the runtime itself — fallback chain, dev/prod missing-key behaviour, lazy namespaces, hot switch, hostile storage). Verified live over CDP — clicking *Bahasa Indonesia* re-renders every overlay string, switches `Rp12,500` → `Rp12.500`, updates `<html lang>` and persists the choice. `check:i18n` exits 1 on a removed key and on a placeholder mismatch.
