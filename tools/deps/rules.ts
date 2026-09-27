@@ -23,6 +23,8 @@ export const WORKSPACE_PACKAGES: Readonly<Record<string, string>> = {
  * to turn a path into the row of the ARCHITECTURE §2 table it belongs to.
  */
 export const REGION_PREFIXES: readonly string[] = [
+  // A build script, not part of the bundle: it may use Bun, node: and tools/ (M0-07).
+  'apps/client/build.ts',
   'apps/client/src/render',
   'apps/client/src/ui',
   'apps/client/src/game',
@@ -71,14 +73,21 @@ export interface ZoneRule {
   readonly checkPurity?: boolean;
 }
 
-const NO_TOOLS: readonly RegionDeny[] = [
+const NO_BUILD_TIME: readonly RegionDeny[] = [
   { region: 'tools', reason: 'tools/ is build-time only and never ships in a bundle' },
   { region: 'scripts', reason: 'scripts/ is build-time only and never ships in a bundle' },
+  {
+    region: 'apps/client/build.ts',
+    reason: 'build.ts is the bundler entry, not a module the bundle may import',
+  },
 ];
 
 const BROWSER_ONLY = 'apps/client is bundled for the browser';
 
-/** ARCHITECTURE §2, one entry per constrained row. Regions without an entry are unconstrained. */
+/**
+ * ARCHITECTURE §2, one entry per constrained row. Regions without an entry — `tools`,
+ * `scripts`, `apps/client/build.ts` — are build-time code and unconstrained.
+ */
 export const ZONE_RULES: readonly ZoneRule[] = [
   {
     region: 'packages/shared',
@@ -108,7 +117,7 @@ export const ZONE_RULES: readonly ZoneRule[] = [
         region: 'apps/client/src/ui',
         reason: 'render/ must not import ui/ — pass what it needs in as options',
       },
-      ...NO_TOOLS,
+      ...NO_BUILD_TIME,
     ],
     denyPackages: [
       { match: 'preact', reason: 'render/ is Three.js only; the overlay owns Preact' },
@@ -123,29 +132,29 @@ export const ZONE_RULES: readonly ZoneRule[] = [
         region: 'apps/client/src/render',
         reason: 'ui/ must not import render/ — read sim views, not the renderer',
       },
-      ...NO_TOOLS,
+      ...NO_BUILD_TIME,
     ],
     denyPackages: [{ match: 'three', reason: 'ui/ is a DOM overlay; Three.js belongs to render/' }],
     allowRuntimeBuiltins: false,
   },
   {
     region: 'apps/client/src/game',
-    denyRegions: [...NO_TOOLS],
+    denyRegions: [...NO_BUILD_TIME],
     allowRuntimeBuiltins: false,
   },
   {
     region: 'apps/client/src/platform',
-    denyRegions: [...NO_TOOLS],
+    denyRegions: [...NO_BUILD_TIME],
     allowRuntimeBuiltins: false,
   },
   {
     region: 'apps/client/src/i18n',
-    denyRegions: [...NO_TOOLS],
+    denyRegions: [...NO_BUILD_TIME],
     allowRuntimeBuiltins: false,
   },
   {
     region: 'apps/client',
-    denyRegions: [...NO_TOOLS],
+    denyRegions: [...NO_BUILD_TIME],
     allowRuntimeBuiltins: false,
   },
 ];

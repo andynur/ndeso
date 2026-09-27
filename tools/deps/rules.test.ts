@@ -120,6 +120,40 @@ describe('packages/shared', () => {
   });
 });
 
+describe('packages/content', () => {
+  const file = 'packages/content/src/index.ts';
+
+  test('its loaders may read from disk — the one zone where that is allowed', () => {
+    expect(messages(file, "import { join } from 'node:path';")).toEqual([]);
+    expect(messages(file, "import { z } from 'zod';")).toEqual([]);
+    expect(messages(file, "import type { LocaleId } from '@ndeso/shared';")).toEqual([]);
+  });
+
+  test('it is data, so it may not reach runtime code or arbitrary packages', () => {
+    expect(messages(file, "import { step } from '@ndeso/sim';")).toHaveLength(1);
+    expect(messages(file, "import { Scene } from 'three';")).toEqual([
+      "imports 'three' — packages/content may import only zod",
+    ]);
+  });
+});
+
+describe('apps/client/build.ts', () => {
+  test('the bundler entry is build-time code, so it is unconstrained (M0-07)', () => {
+    expect(
+      messages(
+        'apps/client/build.ts',
+        "import { join } from 'node:path';\nimport { x } from '../../tools/dev.ts';",
+      ),
+    ).toEqual([]);
+  });
+
+  test('but the bundle may not import it', () => {
+    expect(messages('apps/client/src/main.ts', "import { build } from '../build.ts';")).toEqual([
+      "imports '../build.ts' — build.ts is the bundler entry, not a module the bundle may import",
+    ]);
+  });
+});
+
 describe('apps/client/src/render', () => {
   const file = 'apps/client/src/render/scene.ts';
 

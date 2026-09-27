@@ -19,6 +19,9 @@ const SOURCE_GLOBS = [
   'apps/*/src/**/*.ts',
   'apps/*/src/**/*.tsx',
   'apps/*/*.ts',
+  // Golden and property suites (TESTING §2) live outside src/ and are checked too.
+  'packages/*/test/**/*.ts',
+  'apps/*/test/**/*.ts',
 ];
 
 async function sourceFiles(): Promise<string[]> {

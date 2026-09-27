@@ -81,14 +81,35 @@ describe('scanImports', () => {
     expect(specifiers(source)).toEqual([]);
   });
 
+  test('sees through a template interpolation', () => {
+    // A masked-over `${…}` would hide exactly what this tool exists to catch.
+    const source = 'const x = `${await import("three")}`;';
+    expect(specifiers(source)).toEqual(['three']);
+  });
+
+  test('sees through a nested template interpolation', () => {
+    const source = 'const x = `a${`b${await import("three")}`}c`;';
+    expect(specifiers(source)).toEqual(['three']);
+  });
+
+  test('tracks braces inside an interpolation', () => {
+    const source = ['const x = `${ {k: 1}.k }`;', "import { real } from './real.ts';"].join('\n');
+    expect(specifiers(source)).toEqual(['./real.ts']);
+  });
+
   test('skips a computed dynamic import', () => {
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder is the fixture.
     const source = 'const m = await import(`./locales/${id}.json`);';
     expect(specifiers(source)).toEqual([]);
   });
 });
 
 describe('maskLiterals', () => {
+  test('blanks template text but leaves its interpolations as code', () => {
+    const masked = maskLiterals('const id = `seed-${Math.random()}`;');
+    expect(masked).toContain('Math.random()');
+    expect(masked).not.toContain('seed-');
+  });
+
   test('blanks comments and literal contents but keeps the line layout', () => {
     const source = ["const a = 'Math.random()'; // Math.random()", 'const b = Math.random();'].join(
       '\n',

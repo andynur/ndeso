@@ -15,7 +15,11 @@ export type TokenKind = 'word' | 'punct' | 'string' | 'template';
 
 export interface Token {
   readonly kind: TokenKind;
-  /** For strings and templates: the raw text between the quotes. */
+  /**
+   * For strings: the raw text between the quotes. A `template` token carries no value —
+   * its literal parts are masked and its `${…}` interpolations are tokenized as ordinary code,
+   * so nothing can hide inside one.
+   */
   readonly value: string;
   /** 1-based. */
   readonly line: number;
@@ -79,6 +83,9 @@ export function scanSource(source: string): ScanResult {
   const length = source.length;
   let index = 0;
   let line = 1;
+  /** One entry per template literal we are inside; the counter tracks `{}` nesting in `${…}`. */
+  const templates: { braceDepth: number }[] = [];
+  let inTemplateText = false;
 
   // `#!/usr/bin/env bun` is not JavaScript; the `/` would otherwise open a regex literal.
   if (source.startsWith('#!')) {
@@ -86,6 +93,34 @@ export function scanSource(source: string): ScanResult {
   }
 
   while (index < length) {
+    // Inside the literal part of a template: blank it, and stop at the end or at a `${`.
+    if (inTemplateText) {
+      const start = index;
+      while (index < length) {
+        const current = source[index];
+        if (current === '\\') {
+          index += 2;
+          continue;
+        }
+        if (current === '`') break;
+        if (current === '$' && source[index + 1] === '{') break;
+        if (current === '\n') line += 1;
+        index += 1;
+      }
+      blank(start, Math.min(index, length));
+      if (index >= length) break;
+      if (source[index] === '`') {
+        index += 1;
+        templates.pop();
+        inTemplateText = false;
+        continue;
+      }
+      // `${` — back to real code until the matching `}`.
+      index += 2;
+      inTemplateText = false;
+      continue;
+    }
+
     const char = source[index] as string;
 
     if (char === '\n') {
@@ -159,18 +194,10 @@ export function scanSource(source: string): ScanResult {
     }
 
     if (char === '`') {
-      const startLine = line;
-      const contentStart = index + 1;
+      templates.push({ braceDepth: 0 });
+      inTemplateText = true;
+      tokens.push({ kind: 'template', value: '', line });
       index += 1;
-      while (index < length && source[index] !== '`') {
-        if (source[index] === '\\') index += 1;
-        else if (source[index] === '\n') line += 1;
-        index += 1;
-      }
-      const value = source.slice(contentStart, index);
-      blank(contentStart, index);
-      index += 1;
-      tokens.push({ kind: 'template', value, line: startLine });
       continue;
     }
 
@@ -179,6 +206,20 @@ export function scanSource(source: string): ScanResult {
       while (index < length && WORD_PART.test(source[index] as string)) index += 1;
       tokens.push({ kind: 'word', value: source.slice(start, index), line });
       continue;
+    }
+
+    // A `}` that closes an interpolation returns us to the template's literal text.
+    const template = templates.at(-1);
+    if (template !== undefined) {
+      if (char === '{') template.braceDepth += 1;
+      else if (char === '}') {
+        if (template.braceDepth === 0) {
+          inTemplateText = true;
+          index += 1;
+          continue;
+        }
+        template.braceDepth -= 1;
+      }
     }
 
     tokens.push({ kind: 'punct', value: char, line });

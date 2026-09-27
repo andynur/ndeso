@@ -49,7 +49,7 @@ apps/server ──▶ packages/sim, packages/shared, packages/content
 | `apps/client/src/render` | `three`, `sim` (read-only views) | `preact`, `ui/` |
 | `apps/client/src/ui` | `preact`, `i18n`, sim **views** | `three`, `render/` |
 
-`import type` is not a general escape hatch: it only relaxes the `packages/sim` → `packages/content` row, which is types-only by design. Three rules the table implies are enforced too: nothing in the client bundle may import `tools/` or `scripts/`; `packages/shared`, `packages/sim` and `apps/client/**` may not import `node:*` or `bun:*` (a colocated `*.test.ts` may import `bun:test`); and `packages/sim` may not use DOM globals, `Date.now`, `Math.random` or timers.
+`import type` is not a general escape hatch: it only relaxes the `packages/sim` → `packages/content` row, which is types-only by design. Three rules the table implies are enforced too: nothing in the client bundle may import `tools/` or `scripts/`; `packages/shared`, `packages/sim` and `apps/client/**` may not import `node:*` or `bun:*` (a colocated `*.test.ts` may import `bun:test`); and `packages/sim` may not touch a DOM global (`window`, `document`, `localStorage`, `sessionStorage`, `navigator`), read wall-clock time (`Date.now`, `performance.now`, `new Date`), call `Math.random`, or use a timer (`setTimeout`, `setInterval`, `requestAnimationFrame`, `queueMicrotask`).
 
 The table lives as data in `tools/deps/rules.ts`. A PostToolUse hook (`scripts/hooks/post-edit.ts`) runs the same check on every edit, so the agent gets the failure before CI does.
 

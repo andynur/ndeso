@@ -75,6 +75,16 @@
           }
         }
       }
+    },
+    {
+      "includes": ["tools/deps/scan.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
     }
   ]
 }

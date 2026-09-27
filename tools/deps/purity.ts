@@ -20,8 +20,14 @@ export interface PurityViolation {
   readonly message: string;
 }
 
+/**
+ * Best-effort by design: these match source text, so an alias (`const r = Math.random; r()`)
+ * or a destructure slips past. They are a fast guard rail against the accident, not a sandbox —
+ * the golden tests in ARCHITECTURE §3.4 are what actually prove determinism.
+ */
 export const SIM_PURITY_RULES: readonly PurityRule[] = [
   {
+    // Member or index access only, so a bare `typeof window` feature probe is not flagged.
     pattern: /\b(window|document|localStorage|sessionStorage|navigator)\s*[.[]/,
     message: 'uses a DOM/browser global — the sim runs without a document',
   },
