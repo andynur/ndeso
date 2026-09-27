@@ -39,6 +39,8 @@ BASH_MAX_TIMEOUT_MS=600000
 Tentang setup script ini:
 - Script memasang **Bun 1.4.1** (VM cloud bawaannya masih Bun 1.3.x). Itu saja — proyek ini tidak memakai MCP server ([ADR-0008](../adr/0008-drop-serena-context-mode.md)).
 - Script **gagal keras** kalau instalasi tidak berhasil. Versi sebelumnya menelan semua error, dan itu sebabnya dua MCP server sempat terdaftar tapi tidak pernah benar-benar terpasang selama dua milestone.
+- Script juga menandai workspace sebagai **trusted**. Tanpa ini Claude Code mencetak `Ignoring N permissions.allow entries … this workspace has not been trusted` dan tetap menanyakan izin untuk tiap perintah, jadi allow-list di `.claude/settings.json` jadi percuma. Ini tidak memberi izin apa pun di luar yang sudah tertulis di file itu — deny-list tetap berlaku, dan `git push`, `curl`, `wget`, serta perubahan dependency tetap *ask*.
+- ⚠️ Hasil setup script di-cache ~7 hari. Perubahan pada script baru berlaku setelah cache kedaluwarsa atau environment dibuat ulang. Untuk menerapkannya sekarang juga di container yang sedang jalan, minta Claude menjalankan `bash scripts/cloud-env-setup.sh`.
 - Hasilnya di-cache sekitar 7 hari, jadi sesi berikutnya langsung siap.
 - `bun install` untuk repo dijalankan otomatis oleh hook SessionStart (`scripts/hooks/session-start.sh`).
 - Pemasangan Bun lewat npm sudah diuji berjalan di balik proxy cloud.

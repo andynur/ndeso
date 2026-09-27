@@ -20,6 +20,15 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · harness · chore/trust-workspace
+- Done: `scripts/cloud-env-setup.sh` now marks the workspace trusted, so the permission allow-list added in the previous PR is actually honoured. Documented in AI_WORKFLOW §3 and SETUP_AI_AGENT.
+- Tests: verified end to end — before, `claude -p` printed `Ignoring 34 permissions.allow entries … this workspace has not been trusted`; after, the warning is gone. The Python block was separately tested for merging into an existing config without clobbering it, and for refusing (exit 1, file untouched) on a corrupt `~/.claude.json`.
+- Notes/decisions:
+  - **The allow-list was decorative.** All 34 entries added in `chore/harness-slim` were being ignored. Worth remembering: adding permissions to `.claude/settings.json` does nothing until the workspace is trusted.
+  - **Deliberately NOT shipped: removing the `session-start-hook` user skill.** I offered it and it was approved, but it does not survive contact with reality — the setup script runs *before* Claude Code creates `~/.claude/skills/`, so an `rm` there is a no-op, and the alternative (the SessionStart hook) would only take effect from the following session. It saves ~5 KB. Shipping a line I cannot demonstrate working is exactly what ADR-0008 was written about, so it was left out rather than added on faith.
+  - **The larger prize remains out of repo reach.** Roughly 30 skills load per turn (`docx`, `pptx`, `xlsx`, `google-workspace`, `morning`, `computer-use`, two browser skills …) and none are relevant here. Investigated properly: `claude plugin list` reports none installed, `claude plugin marketplace list` reports none configured, and `anthropic-skills:` is hardcoded in the binary as the namespace for *synced* skills pushed from the claude.ai account. `claude plugin disable <name>@builtin` prints "Successfully disabled" **and has no effect** — verified by listing skills in a fresh session afterwards. Neither `@builtin` nor `@claude-code-plugins` ids worked from `/etc/claude-code/managed-settings.json` either. The lever is account settings on claude.ai, not anything in this repo.
+- Next: M1-01.
+
 ### 2026-09-27 · harness · chore/harness-slim
 - Done: removed the Serena and context-mode MCP servers and everything that referenced them; added `tools/gh.ts` and `tools/check-links.ts` (wired into `bun run check`); rewrote the CLAUDE.md token-discipline and shell-safety sections; widened the permission allow-list; made the cloud setup script fail loudly. [ADR-0008](adr/0008-drop-serena-context-mode.md) supersedes ADR-0006 items 5 and 7.
 - Tests: `bun run check` green — **164 pass** (17 new for the link checker). `check:links` verified to actually fail on a missing file and a bad anchor before being trusted.

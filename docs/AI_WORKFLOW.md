@@ -34,6 +34,7 @@ That asymmetry is the trap this harness already fell into: a tool that exists on
 4. **Keep large output out of context.** `| tail -n 40`, `| grep`, or an `awk` one-liner that prints the single number wanted. `BASH_MAX_OUTPUT_LENGTH=20000` is a backstop, not a budget.
 5. **Delegate breadth to subagents — deliberately.** `scout` (Haiku) reads 20 files in *its own* context and returns 15 lines. But a subagent starts cold: one `reviewer` pass on a 16-file docs PR measured **90 555 tokens**. Required above 5 files or in `packages/sim`; skipped for one-file PRs.
 6. **Deny-list junk reads.** `bun.lock`, `dist/`, assets and `node_modules` are denied in settings.
+   ⚠️ The allow-list only applies to a **trusted** workspace. Untrusted, Claude Code prints `Ignoring N permissions.allow entries … this workspace has not been trusted` and asks for everything anyway. `scripts/cloud-env-setup.sh` sets `projects["<workspace>"].hasTrustDialogAccepted` so the list in `.claude/settings.json` is effective rather than decorative.
 7. **Hooks do deterministic work.** Formatting and purity checks cost zero model tokens and catch mistakes before a CI round trip.
 8. **Terse chat output.** The `terse` skill for conversation. **Never** for code, docs, or dialog.
 9. **Right model per job.** Main session on the strongest model for design and implementation. `scout` on Haiku. Reviewers on Sonnet.
