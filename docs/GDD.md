@@ -127,6 +127,11 @@ is how people there actually tell the time:
   15:40 · Ashar          Mangsa Kapat · hari 3/8 · Kliwon
 ```
 
+Prayer times come from a **fixed table that varies only by mangsa**, not from a latitude
+and a date. Computing them is astronomy, and it would cost `packages/sim` its purity and
+determinism to buy precision the game never uses — the same reasoning ADR-0007 applied to
+the Hijri calendar. The clock lands in M1-01; the HUD that shows it, in M1-08.
+
 ⚠️ **This is a time display and nothing else.** Prayer times never gate an
 action, never score anything, and are never required. The player character is
 Muslim and Javanese as *characterisation*; the game does not check whether they

@@ -16,17 +16,20 @@
 
 ## M1 — Tech spike (exit: 30 fps on a Low device; first frame ≤ 5 MB)
 
-- [ ] **M1-01** Sim clock: ticks, minutes, days, and **all three calendars** projected from one day counter — pranata mangsa (12 mangsa, 120-day year, lengths from `content/data/calendar/mangsa.json5`), pasaran, and the tabular Hijri calendar. Prayer-time bands. Golden test snapshotting **3 full years** of mangsa boundaries, pasaran and festival dates. (GDD §3, [ADR-0007](adr/0007-three-calendars.md))
+- [ ] **M1-01** Sim clock: ticks, minutes, days, and **all three calendars** projected from one day counter — pranata mangsa (12 mangsa, 120-day year, lengths from `content/data/calendar/mangsa.json5`), pasaran, and the tabular Hijri calendar. Golden test snapshotting **3 full years** of mangsa boundaries, pasaran and festival dates. (GDD §3, [ADR-0007](adr/0007-three-calendars.md)) Also in scope, decided before the task began:
+  - **Prayer-time bands come from a fixed table**, varying only by mangsa — not computed from latitude and date. Astronomy would break sim purity and determinism to buy an accuracy the game cannot use, exactly as ADR-0007 argued for the Hijri calendar.
+  - **A narrow validator for the calendar data** (`gameDays` sums to `gameYearDays`, ids unique, musim tags known). Not the full `check:content`, which stays M2-01 — but the task that consumes a data file is the task that validates it, and M2-01 is 20+ tasks away.
+  - **Locale keys for the mangsa names and pertanda** in **both** `en` and `id` (`calendar:mangsa.<id>.name` / `.sign`), from the GDD §3.1 table. Unused until M1-08 shows them; they ship here because AGENTS rule 3 binds the task that introduces the vocabulary.
 - [ ] **M1-02** Fixed-step game loop with render interpolation and pause on hide. (ARCH §4.1)
 - [ ] **M1-03** Billboard sprite system (instanced, atlas UV, animation by tag) with a placeholder character atlas. (DESIGN §1.2)
 - [ ] **M1-04** Camera rig: follow, 4-angle rotation, zoom limits. (DESIGN §1.1)
 - [ ] **M1-05** Input abstraction: keyboard + virtual joystick + context button → `Command`s. (GDD §12)
 - [ ] **M1-06** Player movement in sim with a tile collision grid; render follows. Walk anim by direction.
 - [ ] **M1-07** Day/night lighting from `lighting.json5` keyframes driven by the clock. Maghrib is the signature hour — get it right first. (DESIGN §1.3)
-- [ ] **M1-08** Quality presets + DPR cap + perf overlay (`?debug=perf`). (PERF §4, §6)
+- [ ] **M1-08** Quality presets + DPR cap + perf overlay (`?debug=perf`), plus the **HUD clock** from GDD §3.2 — `15:40 · Ashar · Mangsa Kapat hari 3/8 · Kliwon`, consuming the locale keys M1-01 landed. It rides here because this is the first task that owns a persistent on-screen readout. (PERF §4, §6, GDD §3.2)
 - [ ] **M1-09** Placeholder **Balé** terrain — the field, the half-built joglo, the dry *kalen* — with the asset pipeline minimum: gltf-transform meshopt + manifest. (ASSET_PIPELINE, [PLACES](PLACES.md))
 - [ ] **M1-10** Device test on a Low phone plus WhatsApp in-app browser; record in `docs/perf-log.md`. **Human task**, agent prepares the checklist.
-- [ ] **M1-11** **Community cultural review round, before any M2 dialog is written** (CULTURE_GUIDE §1.5). The setting is a real kelurahan, so this cannot wait for M4: get the concept, the NPC cast, the festival list and the religious-depiction rules in front of at least one reviewer from Purworejo, and seek the owners' position on the name "Balé Al Jannah" (PRD §12.2). **Human task**, agent prepares the review pack and the questions.
+- [ ] **M1-11** **Community cultural review round, before any M2 dialog is written** (CULTURE_GUIDE §1.5). The setting is a real kelurahan, so this cannot wait for M4. **The pack and the questions are written** — [`docs/culture-review/`](culture-review/README.md) — so what remains is the part only a human can do: find two or three readers from Purworejo, send it, and record the answers as `round-01-<date>.md`. Includes seeking the owners' position on the name "Balé Al Jannah" (PRD §12.2). **Start now, in parallel** — a review round takes weeks and it blocks all M2 writing.
 - [ ] **M1-12** **Reference photography trip** ([PLACES §5](PLACES.md)): Pasar Baledono at 06:00, the main road after rain and at night, the climb up Geger Menjangan and the view, Balé Al Jannah from several angles, and ordinary textures (warung fronts, kalen, pagar, paving). Almost none of this exists online at usable quality and the art direction is blocked on it. **Human task**, agent prepares the shot list.
 
 ## M2 — Vertical slice (exit: GDD §13 "Done when")
