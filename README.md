@@ -6,7 +6,9 @@ Balé is a browser-first game set in **Baledono, Purworejo, Central Java**. You 
 
 Farming pays for the work. The goal is not the size of your bank balance but **the quality of the place** — how green it is, how comfortable to be in, how quiet. A low-poly 3D world with 2D sprite characters, a cozy daily rhythm, and systems drawn from how the year actually runs there: the twelve *mangsa* of the Javanese farming calendar, the five-day *pasaran* market cycle, and the lunar calendar that walks Ramadan and Lebaran through the seasons.
 
-> 🚧 **Early development:** Balé is in the M1 tech spike. **[Open the latest build](https://andynur.github.io/ndeso/)** — every merge to `main` publishes there, so right now it is a rotating placeholder, not a game. Walking around arrives at M1-09; an actually playable slice at M2. Follow the [roadmap](docs/ROADMAP.md).
+> 🚧 **Early development:** Balé is in the M1 tech spike. Every merge to `main` publishes the build to **<https://andynur.github.io/ndeso/>** — right now a rotating placeholder, not a game. Walking around arrives at M1-09; an actually playable slice at M2. Follow the [roadmap](docs/ROADMAP.md).
+>
+> *Publishing is pending a one-time repository setting — see [TESTING §1](docs/TESTING.md).*
 
 English · [Bahasa Indonesia](README.id.md) · [Issues](https://github.com/andynur/ndeso/issues)
 

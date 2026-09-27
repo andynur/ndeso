@@ -70,10 +70,21 @@ jobs:
   #
   # A second job rather than a second workflow: `needs: check` guarantees nothing broken
   # ever reaches the URL, and there is one place where the build command lives.
+  #
+  # ONE-TIME SETUP, both by a repository admin — until then this job is skipped, not failed:
+  #   1. Settings -> Pages -> Source: "GitHub Actions"
+  #   2. Settings -> Secrets and variables -> Actions -> Variables -> DEPLOY_PAGES = true
+  #
+  # The variable exists because step 1 cannot be automated: `configure-pages` has an
+  # `enablement` option, but turning Pages on needs repository-administration rights that
+  # a `permissions:` block cannot grant to GITHUB_TOKEN. Without the gate the job fails on
+  # every push to main until someone notices, and a permanently red main teaches everyone
+  # to ignore the colour. Skipping states the prerequisite instead of hiding it, and once
+  # the variable is set a failure here means a real deploy failure again.
   deploy:
     name: deploy
     needs: check
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_PAGES == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Scoped to this job so the `check` job keeps read-only credentials.
@@ -104,12 +115,10 @@ jobs:
       - name: Disable Jekyll
         run: touch dist/.nojekyll
 
-      # `enablement` turns Pages on for the repository on the first run, so this needs no
-      # manual setup. If it ever fails, the fallback is Settings -> Pages -> Source:
-      # "GitHub Actions".
+      # No `enablement: true` — see the setup note on this job. It needs repository
+      # administration rights, which GITHUB_TOKEN does not have, and it failed on the
+      # first run here.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
