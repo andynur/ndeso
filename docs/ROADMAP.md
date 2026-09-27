@@ -16,7 +16,7 @@
 
 ## M1 — Tech spike (exit: 30 fps on a Low device; first frame ≤ 5 MB)
 
-- [ ] **M1-01** Sim clock: ticks, minutes, days, and **all three calendars** projected from one day counter — pranata mangsa (12 mangsa, 120-day year, lengths from `content/data/calendar/mangsa.json5`), pasaran, and the tabular Hijri calendar. Golden test snapshotting **3 full years** of mangsa boundaries, pasaran and festival dates. (GDD §3, [ADR-0007](adr/0007-three-calendars.md)) Also in scope, decided before the task began:
+- [x] **M1-01** Sim clock: ticks, minutes, days, and **all three calendars** projected from one day counter — pranata mangsa (12 mangsa, 120-day year, lengths from `content/data/calendar/mangsa.json5`), pasaran, and the tabular Hijri calendar. Golden test snapshotting **3 full years** of mangsa boundaries, pasaran and festival dates. (GDD §3, [ADR-0007](adr/0007-three-calendars.md)) Also in scope, decided before the task began:
   - **Prayer-time bands come from a fixed table**, varying only by mangsa — not computed from latitude and date. Astronomy would break sim purity and determinism to buy an accuracy the game cannot use, exactly as ADR-0007 argued for the Hijri calendar.
   - **A narrow validator for the calendar data** (`gameDays` sums to `gameYearDays`, ids unique, musim tags known). Not the full `check:content`, which stays M2-01 — but the task that consumes a data file is the task that validates it, and M2-01 is 20+ tasks away.
   - **Locale keys for the mangsa names and pertanda** in **both** `en` and `id` (`calendar:mangsa.<id>.name` / `.sign`), from the GDD §3.1 table. Unused until M1-08 shows them; they ship here because AGENTS rule 3 binds the task that introduces the vocabulary.

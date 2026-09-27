@@ -3,6 +3,32 @@
 
 import type { LocaleId } from '@bale/shared';
 
+export type CalendarKey =
+  | 'mangsa.dhesta.name'
+  | 'mangsa.dhesta.sign'
+  | 'mangsa.kalima.name'
+  | 'mangsa.kalima.sign'
+  | 'mangsa.kanem.name'
+  | 'mangsa.kanem.sign'
+  | 'mangsa.kapat.name'
+  | 'mangsa.kapat.sign'
+  | 'mangsa.kapitu.name'
+  | 'mangsa.kapitu.sign'
+  | 'mangsa.karo.name'
+  | 'mangsa.karo.sign'
+  | 'mangsa.kasa.name'
+  | 'mangsa.kasa.sign'
+  | 'mangsa.kasadasa.name'
+  | 'mangsa.kasadasa.sign'
+  | 'mangsa.kasanga.name'
+  | 'mangsa.kasanga.sign'
+  | 'mangsa.katelu.name'
+  | 'mangsa.katelu.sign'
+  | 'mangsa.kawolu.name'
+  | 'mangsa.kawolu.sign'
+  | 'mangsa.sadha.name'
+  | 'mangsa.sadha.sign';
+
 export type GlossaryKey =
   | 'gotong_royong.def'
   | 'gotong_royong.term'
@@ -66,9 +92,9 @@ export type UiKey =
   | 'weekday.wed';
 
 /** Every key a caller may pass to `t()`: `ui` keys bare, and all keys namespaced. */
-export type I18nKey = UiKey | `glossary:${GlossaryKey}` | `ui:${UiKey}`;
+export type I18nKey = UiKey | `calendar:${CalendarKey}` | `glossary:${GlossaryKey}` | `ui:${UiKey}`;
 
-export const GENERATED_NAMESPACES = ['glossary', 'ui'] as const;
+export const GENERATED_NAMESPACES = ['calendar', 'glossary', 'ui'] as const;
 export type GeneratedNamespace = (typeof GENERATED_NAMESPACES)[number];
 
 export type BundleLoader = () => Promise<{ readonly default: Readonly<Record<string, string>> }>;
@@ -78,10 +104,12 @@ export const LOCALE_BUNDLES: Readonly<
   Record<LocaleId, Readonly<Record<GeneratedNamespace, BundleLoader>>>
 > = {
   en: {
+    calendar: () => import('../locales/en/calendar.json'),
     glossary: () => import('../locales/en/glossary.json'),
     ui: () => import('../locales/en/ui.json'),
   },
   id: {
+    calendar: () => import('../locales/id/calendar.json'),
     glossary: () => import('../locales/id/glossary.json'),
     ui: () => import('../locales/id/ui.json'),
   },

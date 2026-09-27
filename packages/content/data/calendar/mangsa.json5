@@ -3,7 +3,8 @@
 // `realDays` is the traditional length. `gameDays` compresses the 365-day year
 // to a 120-day game year while preserving each mangsa's proportion, so Kasa and
 // Kanem stay the long ones and Karo and Dhesta stay the short ones. gameDays
-// must sum to exactly 120; `bun run check:content` (M2-01) will assert it.
+// must sum to exactly 120; the calendar schema in packages/shared asserts it
+// (M1-01), and a failing data edit fails `bun test`.
 //
 // verified: false — the lengths below are transcribed from secondary sources.
 // Kasa, Karo, Katelu, Kapat, Kalima, Kanem, Kapitu, Kawolu, Kasanga and Dhesta
@@ -13,9 +14,8 @@
 //
 // No prose here, per .claude/rules/content-i18n.md: ids, numbers and enum tags
 // only. Each mangsa's name and its *pertanda* (natural sign) are player-facing
-// text and become `calendar:mangsa.<id>.name` / `.sign` in BOTH locales in the
-// task that first surfaces them (M1-01). The design intent for each sign is
-// recorded in GDD §3.1, which is documentation and may hold prose.
+// text and live in `calendar:mangsa.<id>.name` / `.sign` in BOTH locales. The
+// design intent for each sign is recorded in GDD §3.1, which may hold prose.
 {
   verified: false,
   realYearDays: 365,
