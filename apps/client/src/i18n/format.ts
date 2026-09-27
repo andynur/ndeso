@@ -4,7 +4,7 @@
  * `runtime.ts`, next to `t()`.
  */
 
-import { type LocaleId, localeInfo } from '@ndeso/shared';
+import { type LocaleId, localeInfo } from '@bale/shared';
 
 export interface NumberFormats {
   /** IDR with no decimals: `Rp12.500` in `id`, `Rp12,500` in `en` (I18N §7). */

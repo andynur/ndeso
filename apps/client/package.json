@@ -1,11 +1,11 @@
 {
-  "name": "@ndeso/client",
+  "name": "@bale/client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@ndeso/content": "workspace:*",
-    "@ndeso/shared": "workspace:*",
+    "@bale/content": "workspace:*",
+    "@bale/shared": "workspace:*",
     "@preact/signals": "2.11.2",
     "preact": "10.29.8",
     "three": "0.186.1"

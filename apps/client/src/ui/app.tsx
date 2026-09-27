@@ -1,4 +1,4 @@
-import { type QualityPreset, SUPPORTED_LOCALES } from '@ndeso/shared';
+import { type QualityPreset, SUPPORTED_LOCALES } from '@bale/shared';
 import { format, locale, setLocale, t } from '../i18n/index.ts';
 
 export interface RenderStats {

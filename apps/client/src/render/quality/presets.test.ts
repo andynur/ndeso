@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { QUALITY_PRESETS } from '@ndeso/shared';
+import { QUALITY_PRESETS } from '@bale/shared';
 import { clampPixelRatio, guessPreset, MAX_DPR } from './presets.ts';
 
 describe('clampPixelRatio', () => {

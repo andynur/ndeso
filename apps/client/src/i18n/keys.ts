@@ -3,7 +3,7 @@
  * everything here is pure and depends only on the generated namespace list.
  */
 
-import { GENERATED_NAMESPACES, type GeneratedNamespace } from '@ndeso/content/i18n';
+import { GENERATED_NAMESPACES, type GeneratedNamespace } from '@bale/content/i18n';
 
 /** I18N §2: `ui` is the default namespace, so `t('hud.money')` needs no prefix. */
 export const DEFAULT_NAMESPACE: GeneratedNamespace = 'ui';

@@ -1,6 +1,6 @@
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { LocaleId, LocaleNamespace } from '@ndeso/shared';
+import type { LocaleId, LocaleNamespace } from '@bale/shared';
 
 /** Absolute path of this package, so tools and tests can find data without cwd guessing. */
 export const CONTENT_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));

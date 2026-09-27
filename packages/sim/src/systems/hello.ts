@@ -1,4 +1,4 @@
-import { TICKS_PER_SECOND } from '@ndeso/shared';
+import { TICKS_PER_SECOND } from '@bale/shared';
 import type { System } from '../types.ts';
 
 /**

@@ -1,4 +1,4 @@
-# PRD — Ndeso
+# PRD — Balé
 
 | Field | Value |
 |---|---|
@@ -9,7 +9,7 @@
 
 ## 1. Summary
 
-Ndeso is an open-source, browser-based farming and life sim in the spirit of *Harvest Moon: Back to Nature* and *Coral Island*, set on a fictional Indonesian island. It uses an **HD-2D** look (low-poly 3D world + 2D sprite characters) and runs instantly from a link on desktop and **low-to-mid-range Android phones**, with no store install required. It is playable offline as a PWA and ships in **English and Bahasa Indonesia** from day one.
+Balé is an open-source, browser-based farming and life sim in the spirit of *Harvest Moon: Back to Nature* and *Coral Island*, set on a fictional Indonesian island. It uses an **HD-2D** look (low-poly 3D world + 2D sprite characters) and runs instantly from a link on desktop and **low-to-mid-range Android phones**, with no store install required. It is playable offline as a PWA and ships in **English and Bahasa Indonesia** from day one.
 
 ## 2. Problem & opportunity
 

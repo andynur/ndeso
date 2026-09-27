@@ -28,7 +28,7 @@ describe('resolveSpecifier', () => {
   });
 
   test('maps a workspace package to its directory, subpath included', () => {
-    expect(resolveSpecifier('packages/sim/src/index.ts', '@ndeso/content/i18n')).toEqual({
+    expect(resolveSpecifier('packages/sim/src/index.ts', '@bale/content/i18n')).toEqual({
       kind: 'region',
       path: 'packages/content/i18n',
       region: 'packages/content',
@@ -63,13 +63,13 @@ describe('packages/sim', () => {
   });
 
   test('shared is allowed', () => {
-    expect(messages(file, "import { TICK_MS } from '@ndeso/shared';")).toEqual([]);
+    expect(messages(file, "import { TICK_MS } from '@bale/shared';")).toEqual([]);
   });
 
   test('content is types only', () => {
-    expect(messages(file, "import type { CropId } from '@ndeso/content';")).toEqual([]);
-    expect(messages(file, "import { CROPS } from '@ndeso/content';")).toEqual([
-      "imports '@ndeso/content' as a value — packages/sim may only import types from packages/content",
+    expect(messages(file, "import type { CropId } from '@bale/content';")).toEqual([]);
+    expect(messages(file, "import { CROPS } from '@bale/content';")).toEqual([
+      "imports '@bale/content' as a value — packages/sim may only import types from packages/content",
     ]);
   });
 
@@ -115,8 +115,8 @@ describe('packages/shared', () => {
   });
 
   test('it may not reach back into the repo', () => {
-    expect(messages(file, "import { step } from '@ndeso/sim';")).toHaveLength(1);
-    expect(messages(file, "import { CONTENT_ROOT } from '@ndeso/content';")).toHaveLength(1);
+    expect(messages(file, "import { step } from '@bale/sim';")).toHaveLength(1);
+    expect(messages(file, "import { CONTENT_ROOT } from '@bale/content';")).toHaveLength(1);
   });
 });
 
@@ -126,11 +126,11 @@ describe('packages/content', () => {
   test('its loaders may read from disk — the one zone where that is allowed', () => {
     expect(messages(file, "import { join } from 'node:path';")).toEqual([]);
     expect(messages(file, "import { z } from 'zod';")).toEqual([]);
-    expect(messages(file, "import type { LocaleId } from '@ndeso/shared';")).toEqual([]);
+    expect(messages(file, "import type { LocaleId } from '@bale/shared';")).toEqual([]);
   });
 
   test('it is data, so it may not reach runtime code or arbitrary packages', () => {
-    expect(messages(file, "import { step } from '@ndeso/sim';")).toHaveLength(1);
+    expect(messages(file, "import { step } from '@bale/sim';")).toHaveLength(1);
     expect(messages(file, "import { Scene } from 'three';")).toEqual([
       "imports 'three' — packages/content may import only zod",
     ]);
@@ -159,7 +159,7 @@ describe('apps/client/src/render', () => {
 
   test('three and the sim are its business', () => {
     expect(messages(file, "import { Scene } from 'three';")).toEqual([]);
-    expect(messages(file, "import type { GameState } from '@ndeso/sim';")).toEqual([]);
+    expect(messages(file, "import type { GameState } from '@bale/sim';")).toEqual([]);
   });
 
   test('it must not import the overlay, not even a type', () => {

@@ -1,7 +1,7 @@
 /**
  * What a quality preset means for the renderer (PERFORMANCE_BUDGET §4).
  *
- * The preset *names* are in `@ndeso/shared` because settings and the save file use them too;
+ * The preset *names* are in `@bale/shared` because settings and the save file use them too;
  * the numbers below are render's business alone.
  *
  * Pure on purpose: the capability probe itself lives in `platform/device.ts` (M1-08);
@@ -9,7 +9,7 @@
  * without a DOM.
  */
 
-import type { QualityPreset } from '@ndeso/shared';
+import type { QualityPreset } from '@bale/shared';
 
 /** PERFORMANCE_BUDGET §4: render resolution cap per preset. */
 export const MAX_DPR: Record<QualityPreset, number> = {

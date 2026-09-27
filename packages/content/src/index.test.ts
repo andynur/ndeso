@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { SOURCE_LOCALE, SUPPORTED_LOCALES } from '@ndeso/shared';
+import { SOURCE_LOCALE, SUPPORTED_LOCALES } from '@bale/shared';
 import { loadLocaleBundle, localeFile } from './index.ts';
 
 /**

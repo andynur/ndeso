@@ -8,4 +8,4 @@ export const TICK_MS = 1000 / TICKS_PER_SECOND;
 export const SAVE_VERSION = 1;
 
 /** Magic string stored in every save file so a foreign JSON is rejected early. */
-export const SAVE_FORMAT = 'ndeso-save';
+export const SAVE_FORMAT = 'bale-save';

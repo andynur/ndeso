@@ -1,4 +1,4 @@
-import type { QualityPreset } from '@ndeso/shared';
+import type { QualityPreset } from '@bale/shared';
 import {
   AmbientLight,
   BoxGeometry,

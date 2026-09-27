@@ -1,4 +1,4 @@
-# MASTER PROMPT — Ndeso
+# MASTER PROMPT — Balé
 
 > Cara pakai: salin salah satu prompt di bawah ke sesi Claude Code (cloud: claude.ai/code → pilih repo ini).
 > Aturan proyek sudah dimuat otomatis dari `CLAUDE.md` + `AGENTS.md`, jadi **prompt harian cukup pendek**. Prompt panjang = token terbuang di setiap sesi.
@@ -9,7 +9,7 @@
 ## 1. Prompt pertama (sekali saja, untuk bootstrap M0)
 
 ```text
-You are the lead engineer for Ndeso, an open-source HD-2D farming sim
+You are the lead engineer for Balé, an open-source HD-2D farming sim
 (Harvest Moon: Back to Nature-like, Indonesian culture) for desktop and low-end
 Android browsers. Rules are in CLAUDE.md/AGENTS.md; follow them strictly.
 

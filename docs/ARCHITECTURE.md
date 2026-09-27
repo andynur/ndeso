@@ -5,7 +5,7 @@
 ## 1. Monorepo layout (Bun workspaces)
 
 ```
-ndeso/
+bale/
 ├── apps/
 │   ├── client/            # Browser game: Three.js render + Preact UI + platform adapters
 │   │   ├── index.html     # Entry (Bun HTML import); dev server + bundler both start here
@@ -132,7 +132,7 @@ requestAnimationFrame(frame):
 | `pwa` | SW registration, update prompt ("New version, reload?"), install prompt |
 
 ## 5. Save format
-- `SaveFile = { format: 'ndeso-save', version, createdAt, updatedAt, meta: { day, season, money, playTime }, state: GameState }`.
+- `SaveFile = { format: 'bale-save', version, createdAt, updatedAt, meta: { day, season, money, playTime }, state: GameState }`.
 - Validated with Zod on load. `migrations[version] = (old) => new` chain in `packages/shared/src/migrations.ts`.
 - Before overwriting a slot, copy the previous save to `:backup`. On validation failure, offer to restore the backup.
 - Export: JSON → gzip (`CompressionStream`) → base64url file download.
