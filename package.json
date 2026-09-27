@@ -9,10 +9,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun tools/todo.ts M0-03 'dev server with HMR'",
+    "dev": "bun tools/dev.ts",
     "build": "bun tools/todo.ts M0-07 'production build'",
     "check": "bun run check:types && bun run check:lint && bun run check:deps && bun run check:i18n && bun run check:content && bun run test",
-    "check:types": "tsc -b --noEmit",
+    "check:types": "tsc -b --noEmit && tsc -b apps/client --noEmit",
     "check:lint": "biome check .",
     "check:deps": "bun tools/todo.ts M0-05 'import boundary check'",
     "check:i18n": "bun tools/todo.ts M0-04 'locale parity check'",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.14",
+    "@types/three": "~0.186.0",
     "bun-types": "1.4.1",
     "typescript": "5.9.3"
   }

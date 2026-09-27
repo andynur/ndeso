@@ -1,0 +1,12 @@
+{
+  "name": "@ndeso/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ndeso/content": "workspace:*",
+    "@ndeso/shared": "workspace:*",
+    "preact": "10.29.8",
+    "three": "0.186.1"
+  }
+}

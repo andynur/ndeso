@@ -1,6 +1,8 @@
 {
   "app.title": "Ndeso",
   "app.tagline": "A cozy farming life on an Indonesian island",
+  "boot.hello": "Hello",
+  "boot.placeholder": "Placeholder scene — no art yet",
   "title.new_game": "New game",
   "title.continue": "Continue",
   "title.settings": "Settings",
