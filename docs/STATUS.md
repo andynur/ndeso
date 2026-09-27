@@ -5,7 +5,7 @@
 
 ## Now
 - **Milestone:** M0 — Bootstrap
-- **Next task:** M0-06 (CI workflow green: install, check, build)
+- **Next task:** M0-07 (production build `apps/client/build.ts` + `tools/check-size.ts`)
 - **Blockers:** none
 - **Open decisions:** final game title (PRD §12)
 - **Known issues:** unimplemented `bun run` scripts are `tools/todo.ts` stubs that print `TODO <task-id>` and exit 0 (content M2-01, build/size M0-07, smoke M2-19).
@@ -18,6 +18,15 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M0-06 · ci/M0-06-workflow
+- Done: real CI workflow. Dropped the "skip until M0-01" gate that guarded every step, added `actions/cache` on `~/.bun/install/cache` keyed by `bun.lock`, `permissions: contents: read`, `workflow_dispatch`, and an artifact upload for `artifacts/`. The steps now mirror `bun run ci` stage by stage (install → check → coverage → build + size → smoke) so a red check names itself instead of pointing at one opaque script.
+- Tests: `bun run check` green; 128 tests across 13 files (2 new for `todoAllowed`). Workflow YAML parses; `bun run ci` green locally end to end.
+- Notes/decisions:
+  - **`[TODO-ID]` no longer fails on `main`, only on a release tag.** I18N §1 rule 3 said CI "fails on `main` release tags", which the checker had read as *main or tags*. That contradicts AGENTS rule 3, which lets a PR merge with `[TODO-ID]` plus a `needs-translation` label: the PR would pass and then turn `main` red on the merge commit — an alarm arriving after the decision it was meant to gate. A release tag is the point where untranslated strings must not ship. I18N §1 rule 3 reworded to say so unambiguously, and `todoAllowed(ref)` is now a pure function with tests for branch / main / PR / tag.
+  - **`bunfig.toml` no longer sets `[test] coverage = false`.** An explicit `false` there *overrides* `bun test --coverage`, so the CI coverage step would have silently produced nothing. Bun's default is already off, so removing the key keeps the local loop fast and lets CI opt in with the flag. TECH_STACK §4 corrected — it claimed `coverage = true` on CI, which was never what the file did. Current coverage: 99.84% lines, 93.73% functions; no threshold gate yet.
+  - The workflow duplicates the *stages* of `bun run ci` but not their contents — what each stage runs stays in `package.json`, and a comment at the top of the workflow says so.
+  - `cancel-in-progress` is on for branches and off for `main`, so a merge queue never cancels the run that proves the default branch is green.
+- Next: M0-07
 ### 2026-09-27 · M0-05 · feat/M0-05-check-deps
 - Done: real `check:deps`. `tools/check-deps.ts` walks every source file in `packages/` and `apps/` and applies the ARCHITECTURE §2 table, which now lives as data in `tools/deps/rules.ts`; `tools/deps/scan.ts` is a small tokenizer that finds import specifiers, and `tools/deps/purity.ts` holds the `packages/sim` API rules. `scripts/hooks/post-edit.ts` was rewritten to call the same `checkSource`, so the edit hook and the CI gate cannot drift.
 - Tests: `bun run check` green; 118 tests across 12 files (36 new). AC verified live — adding `import { Vector3 } from 'three'` to `packages/sim/src/index.ts` makes `bun run check:deps` exit 1 and the PostToolUse hook exit 2 with the same message.

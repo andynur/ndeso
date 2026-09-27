@@ -1,27 +1,65 @@
+# The gate every PR must pass. The steps below mirror `bun run ci` stage by stage
+# (TESTING §1) — split up only so a failure names itself in the checks UI. Keep the two
+# in step: the composition of each stage lives in package.json, never here.
 name: CI
+
 on:
-  push: { branches: [main] }
+  push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch cancels the run it supersedes; runs on main are never cancelled.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
 jobs:
   check:
+    name: check
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Skip until workspace exists (before M0-01)
-        id: gate
-        run: |
-          if [ -f package.json ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "No package.json yet, skipping."; fi
+
       - uses: oven-sh/setup-bun@v2
-        if: steps.gate.outputs.run == 'true'
         with:
           bun-version-file: .bun-version
-      - if: steps.gate.outputs.run == 'true'
+
+      - name: Cache Bun's install cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      # Fails if bun.lock is out of date, so a dependency can never sneak in unpinned.
+      - name: Install
         run: bun install --frozen-lockfile
-      - if: steps.gate.outputs.run == 'true'
+
+      # types + lint + deps + i18n + content + tests (AGENTS rule 6).
+      - name: Check
         run: bun run check
-      - if: steps.gate.outputs.run == 'true'
+
+      # Coverage on CI only (TECH_STACK §4). The suite runs in milliseconds, so a second
+      # run is cheaper than making `bun test` itself conditional.
+      - name: Coverage
+        run: bun test --coverage
+
+      - name: Build
         run: bun run build && bun run check:size
+
+      - name: Smoke
+        run: bun run smoke
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-artifacts
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 7

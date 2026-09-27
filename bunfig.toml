@@ -2,6 +2,6 @@
 [install]
 exact = true
 
-[test]
-# Coverage is collected on CI only (CI=true); locally it just slows the loop down.
-coverage = false
+# No `[test] coverage` key on purpose: an explicit `coverage = false` here *overrides*
+# `bun test --coverage`, silently producing no report. Bun's default is already off, so
+# the local loop stays fast and CI can opt in with the flag (.github/workflows/ci.yml).

@@ -50,7 +50,7 @@ WebGL2 · Web Audio · IndexedDB · Service Worker + Cache Storage · `Compressi
 
 - `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `moduleResolution: "bundler"`, `jsx: "react-jsx"`, `jsxImportSource: "preact"`, `types: ["bun-types"]` (not for client code, which uses `lib: ["DOM","ES2023"]`).
 - Internal package deps use `"workspace:*"`.
-- `bunfig.toml`: `[install] exact = true` (reproducible), `[test] coverage = true` on CI only.
+- `bunfig.toml`: `[install] exact = true` (reproducible). No `[test] coverage` key — an explicit `false` there overrides `bun test --coverage`, so CI opts in with the flag instead and the local loop stays fast.
 - Biome: 2-space indentation, single quotes, trailing commas, line width 100. Lint `recommended` plus `noExplicitAny: error`, `noConsole: warn` (allowed in tools/).
 
 ## 5. Versions policy
