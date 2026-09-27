@@ -15,6 +15,8 @@ import {
   WebGLRenderer,
 } from 'three';
 import { clampPixelRatio } from './quality/presets.ts';
+import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
+import { createAtlasTexture, type Sprite, SpriteBatch } from './sprites/sprite-batch.ts';
 
 /** Camera rig constants, DESIGN §1.1. The full rig (follow, yaw snap, zoom) is M1-04. */
 const FOV_DEG = 30;
@@ -32,8 +34,13 @@ const NOON_SUN = { color: 0xfff4e0, intensity: 2.5 };
 const NOON_AMBIENT = { color: 0xa8c4e0, intensity: 0.7 };
 
 const GROUND_SIZE = 40;
-/** One full turn every 8 s, slow enough to read on a 30 fps phone. */
-const SPIN_RAD_PER_SECOND = (Math.PI * 2) / 8;
+
+/** Placeholder villagers: one walks a square round the house, four stand facing each way. */
+const WALK_HALF_SIDE = 2.5;
+const WALK_SPEED = 1.5;
+/** Flanking the house, inside the landscape-phone frame at the default zoom. */
+const IDLE_XS = [-6.5, -5, 5, 6.5] as const;
+const IDLE_Z = 0.5;
 
 /**
  * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
@@ -46,6 +53,7 @@ export interface ScenePalette {
   readonly roof: number;
   readonly marker: number;
   readonly fog: number;
+  readonly character: CharPalette;
 }
 
 export interface SceneOptions {
@@ -67,9 +75,10 @@ export interface SceneHandle {
 }
 
 /**
- * M0-03 walking skeleton: a ground plane and a rotating low-poly placeholder, enough to
- * prove WebGL2 and the camera framing on a real phone. Sprites (M1-03), area streaming
- * and day/night lighting (M1-07) replace the contents; the plumbing here stays.
+ * M0-03 walking skeleton: a ground plane and a low-poly placeholder house, enough to
+ * prove WebGL2 and the camera framing on a real phone, plus the M1-03 billboard sprites.
+ * Area streaming (M1-09) and day/night lighting (M1-07) replace the contents; the
+ * plumbing here stays.
  */
 export function createScene({ canvas, preset, palette }: SceneOptions): SceneHandle {
   const renderer = new WebGLRenderer({
@@ -120,6 +129,22 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
   placeholder.add(marker);
   scene.add(placeholder);
 
+  const { atlas, pixels } = buildPlaceholderCharAtlas(palette.character);
+  const atlasTexture = createAtlasTexture(pixels, atlas);
+  const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
+  scene.add(sprites.mesh);
+  const walker = sprites.add({ x: 0, y: 0, z: WALK_HALF_SIDE, tag: 'walk_side' });
+  const idleFacings = [
+    ['idle_down', false],
+    ['idle_up', false],
+    ['idle_side', false],
+    ['idle_side', true],
+  ] as const;
+  idleFacings.forEach(([tag, flipX], i) => {
+    // Staggered starts, so the four do not breathe in lockstep.
+    sprites.add({ x: IDLE_XS[i] ?? 0, y: 0, z: IDLE_Z, tag, flipX, startSeconds: i * 0.3 });
+  });
+
   let pixelRatio = 0;
 
   function resize(): void {
@@ -140,7 +165,8 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
 
   function draw(simSeconds: number): void {
     if (contextLost) return;
-    placeholder.rotation.y = simSeconds * SPIN_RAD_PER_SECOND;
+    walkSquare(walker, simSeconds);
+    sprites.update(simSeconds);
     marker.position.y = 2.9 + Math.sin(simSeconds * 2) * 0.15;
     renderer.render(scene, camera);
   }
@@ -166,8 +192,10 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     observer.disconnect();
     canvas.removeEventListener('webglcontextlost', onContextLost);
     canvas.removeEventListener('webglcontextrestored', onContextRestored);
+    sprites.dispose();
+    atlasTexture.dispose();
     scene.traverse((object) => {
-      if (!(object instanceof Mesh)) return;
+      if (!(object instanceof Mesh) || object === sprites.mesh) return;
       object.geometry.dispose();
       const { material } = object;
       for (const slot of Array.isArray(material) ? material : [material]) slot.dispose();
@@ -182,4 +210,40 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     draw,
     dispose,
   };
+}
+
+/**
+ * Moves `sprite` round a square centred on the house (+x, -z, -x, +z legs) and
+ * picks the walk tag from its heading, as seen by the camera at yaw 0: +z is towards the
+ * camera (`down`), -z away (`up`), ±x the side view, mirrored for -x. Each side restarts
+ * the walk cycle so a turn begins on the contact frame.
+ */
+function walkSquare(sprite: Sprite, simSeconds: number): void {
+  const side = WALK_HALF_SIDE * 2;
+  const sideSeconds = side / WALK_SPEED;
+  const leg = Math.floor(simSeconds / sideSeconds) % 4;
+  const along = (simSeconds % sideSeconds) * WALK_SPEED - WALK_HALF_SIDE;
+  const h = WALK_HALF_SIDE;
+  // A switch rather than a table of poses: this runs every frame and must not allocate.
+  switch (leg) {
+    case 0:
+      setWalk(sprite, along, h, 'walk_side', false);
+      break;
+    case 1:
+      setWalk(sprite, h, -along, 'walk_up', false);
+      break;
+    case 2:
+      setWalk(sprite, -along, -h, 'walk_side', true);
+      break;
+    default:
+      setWalk(sprite, -h, along, 'walk_down', false);
+  }
+  sprite.startSeconds = simSeconds - (simSeconds % sideSeconds);
+}
+
+function setWalk(sprite: Sprite, x: number, z: number, tag: string, flipX: boolean): void {
+  sprite.x = x;
+  sprite.z = z;
+  sprite.tag = tag;
+  sprite.flipX = flipX;
 }

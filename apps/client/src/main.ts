@@ -22,6 +22,14 @@ const PALETTE: ScenePalette = {
   roof: colorHex('terakota500'),
   marker: colorHex('kunyit400'),
   fog: colorHex('indigo700'),
+  // Placeholder villager (M1-03); real character art replaces the whole atlas.
+  character: {
+    outline: colorHex('ink900'),
+    skin: colorHex('kayu500'),
+    hair: colorHex('indigo900'),
+    shirt: colorHex('hujan400'),
+    trousers: colorHex('indigo700'),
+  },
 };
 
 const BROWSER_FRAMES: FrameScheduler = {
