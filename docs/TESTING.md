@@ -17,6 +17,13 @@
 
 **Seeing it run.** A merge to `main` publishes the built client to <https://andynur.github.io/ndeso/> (the `deploy` job in `.github/workflows/ci.yml`, gated on `check`). Cloud agent sessions are disposable and their dev server is unreachable, so that URL is how a change gets looked at on a real phone — and it is what makes M1-10's device test cheap. A project site is served from `/<repo>/`, so that build passes `--public-path`; see `apps/client/build.ts`.
 
+⚠️ **One-time setup, by a repository admin.** Until both are done the `deploy` job is **skipped**, not failed:
+
+1. Settings → Pages → Source: **GitHub Actions**
+2. Settings → Secrets and variables → Actions → Variables → `DEPLOY_PAGES` = `true`
+
+Step 1 cannot be automated: `actions/configure-pages` has an `enablement` option, but turning Pages on needs repository-administration rights that a `permissions:` block cannot grant to `GITHUB_TOKEN`. The variable gate exists so the job states its prerequisite instead of failing every push until someone notices — a permanently red `main` teaches everyone to ignore the colour. Once the variable is set, a failure there means a real deploy failure again.
+
 ## 2. Test types
 
 | Type | Where | Tool | Notes |

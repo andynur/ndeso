@@ -6,7 +6,9 @@
 
 > Status: **pra-alfa, tahap M1 tech spike** (lihat [docs/STATUS.md](docs/STATUS.md)).
 >
-> **[Buka build terbaru](https://andynur.github.io/ndeso/)** — tiap merge ke `main` terbit di situ. Sekarang isinya masih placeholder yang berputar, belum game. Bisa jalan-jalan mulai M1-09; bisa dimainkan mulai M2.
+> Tiap merge ke `main` menerbitkan build ke **<https://andynur.github.io/ndeso/>**. Sekarang isinya masih placeholder yang berputar, belum game. Bisa jalan-jalan mulai M1-09; bisa dimainkan mulai M2.
+>
+> *Penerbitan menunggu satu setelan repo sekali jalan — lihat [SETUP_AI_AGENT](docs/id/SETUP_AI_AGENT.md).*
 
 ## Ceritanya
 Kamu pulang dari Jakarta ke Purworejo, mengambil alih sebidang tanah dari kakekmu, **Mbah Hita** — masih ada, sudah sepuh, sudah tidak kuat menggarap. Mbah Hita punya cita-cita yang belum selesai: menjadikan tanah itu **asri, nyaman, tenang**. Karena itu namanya **Balé Al Jannah**.

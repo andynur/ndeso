@@ -54,6 +54,19 @@ Jangan simpan secret atau API key di environment variables, karena siapa pun yan
 3. Setelah sesi berjalan, ketik `/context` untuk melihat pemakaian konteks. Idealnya konteks awal kecil.
 4. Di akhir sesi, agent akan meng-update `docs/STATUS.md`, mencentang ROADMAP, lalu commit. Buat PR dari tombol di claude.ai/code, lalu merge setelah CI hijau.
 
+## Langkah 4b: Aktifkan penerbitan build (sekali saja, butuh hak admin repo)
+
+Supaya tiap merge ke `main` bisa dibuka di HP lewat <https://andynur.github.io/ndeso/>:
+
+1. **Settings → Pages → Source: "GitHub Actions"**
+2. **Settings → Secrets and variables → Actions → Variables → `DEPLOY_PAGES` = `true`**
+
+Selama keduanya belum diatur, job `deploy` **di-skip**, bukan gagal — jadi `main` tetap hijau.
+
+Langkah 1 tidak bisa diotomatiskan: menyalakan Pages butuh hak administrasi repo, yang tidak bisa diberikan ke `GITHUB_TOKEN` lewat blok `permissions`. Penjelasan lengkap di [TESTING §1](../TESTING.md).
+
+Tanpa ini, sesi cloud tidak punya cara menunjukkan hasil kerjanya: container-nya sekali pakai dan dev server-nya tidak bisa dijangkau dari HP.
+
 ## Langkah 5: Ritme harian
 
 ```text
