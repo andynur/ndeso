@@ -47,6 +47,13 @@ export const BUDGETS: readonly Budget[] = [
     pendingUntil: 'M1-09',
   },
   {
+    id: 'music-track',
+    label: 'Music track (Opus ~64 kbps, streamed)',
+    limit: 1.5 * MB,
+    compressed: false,
+    pendingUntil: 'M2-14',
+  },
+  {
     id: 'area-chunk',
     label: 'Per additional area chunk',
     limit: 3 * MB,

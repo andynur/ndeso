@@ -4,5 +4,11 @@
   "compilerOptions": {
     "tsBuildInfoFile": ".cache/tsc/root.tsbuildinfo"
   },
-  "include": ["packages/*/src/**/*.ts", "tools/**/*.ts", "apps/client/src/**/*.test.ts"]
+  "include": [
+    "packages/*/src/**/*.ts",
+    "tools/**/*.ts",
+    "apps/client/src/**/*.test.ts",
+    "apps/client/build.ts",
+    "apps/client/*.test.ts"
+  ]
 }

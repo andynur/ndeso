@@ -42,10 +42,15 @@ function budget(id: string): Budget {
   return found;
 }
 
+/**
+ * A missing `dist/` is a failure, not a pending budget. `pending` means "this budget has
+ * nothing to measure until task X ships"; a build that produced no `index.html` is a broken
+ * build, and letting it report ok is how a green CI run comes to mean nothing.
+ */
 async function measureShell(): Promise<Measurement> {
   const html = Bun.file(join(DIST, 'index.html'));
   if (!(await html.exists())) {
-    return measure(budget('shell'), undefined, 'no dist/ — run `bun run build` first');
+    throw new Error('no dist/index.html — run `bun run build` before `bun run check:size`');
   }
   const files = shellFiles(await html.text());
   let total = 0;
@@ -129,4 +134,11 @@ async function main(): Promise<number> {
   return 0;
 }
 
-if (import.meta.main) process.exit(await main());
+if (import.meta.main) {
+  process.exit(
+    await main().catch((error: unknown) => {
+      console.error(`\n  check:size failed — ${(error as Error).message}\n`);
+      return 1;
+    }),
+  );
+}

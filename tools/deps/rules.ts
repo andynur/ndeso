@@ -23,8 +23,9 @@ export const WORKSPACE_PACKAGES: Readonly<Record<string, string>> = {
  * to turn a path into the row of the ARCHITECTURE §2 table it belongs to.
  */
 export const REGION_PREFIXES: readonly string[] = [
-  // A build script, not part of the bundle: it may use Bun, node: and tools/ (M0-07).
+  // Build scripts, not part of the bundle: they may use Bun, node: and tools/ (M0-07).
   'apps/client/build.ts',
+  'apps/client/build.test.ts',
   'apps/client/src/render',
   'apps/client/src/ui',
   'apps/client/src/game',

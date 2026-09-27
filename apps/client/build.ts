@@ -15,7 +15,8 @@
 
 import { existsSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
+import { shellFiles } from '../../tools/size/shell.ts';
 
 const CLIENT_DIR = import.meta.dir;
 const REPO_ROOT = join(CLIENT_DIR, '../..');
@@ -42,21 +43,16 @@ export interface BuildResult {
   readonly durationMs: number;
 }
 
-/**
- * The core shell: what a cold visit needs before anything can be shown. Area chunks and
- * locale bundles beyond the source locale load on demand, so they stay out of the manifest
- * and out of the shell budget (PERFORMANCE_BUDGET §2).
- */
-export function isShellFile(path: string): boolean {
-  if (path.endsWith('.map')) return false;
-  if (/^locales\//.test(path)) return false;
-  return /\.(html|js|css)$/.test(path);
-}
-
 function parseArgs(argv: readonly string[]): BuildOptions {
   const outdirIndex = argv.indexOf('--outdir');
+  const requested = outdirIndex === -1 ? undefined : (argv[outdirIndex + 1] as string);
   return {
-    outdir: outdirIndex === -1 ? DEFAULT_OUTDIR : join(REPO_ROOT, argv[outdirIndex + 1] as string),
+    outdir:
+      requested === undefined
+        ? DEFAULT_OUTDIR
+        : isAbsolute(requested)
+          ? requested
+          : join(REPO_ROOT, requested),
     minify: !argv.includes('--no-minify'),
     publicPath: '/',
   };
@@ -92,8 +88,21 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
     throw new AggregateError(result.logs, 'Bun.build failed');
   }
 
-  // `public/` ships as-is: manifest.webmanifest, icons (M2-15).
+  // `public/` ships as-is: manifest.webmanifest, icons (M2-15). A static file must never
+  // silently overwrite a bundler output — the hash in the name would then be a lie.
   if (existsSync(PUBLIC_DIR)) {
+    const emitted = new Set(
+      result.outputs.map((output) => relative(options.outdir, output.path).replaceAll('\\', '/')),
+    );
+    const collisions: string[] = [];
+    for await (const path of new Bun.Glob('**/*').scan({ cwd: PUBLIC_DIR })) {
+      if (emitted.has(path.replaceAll('\\', '/'))) collisions.push(path);
+    }
+    if (collisions.length > 0) {
+      throw new Error(
+        `public/ would overwrite build output: ${collisions.join(', ')}. Rename the static file.`,
+      );
+    }
     await cp(PUBLIC_DIR, options.outdir, { recursive: true });
   }
 
@@ -108,15 +117,21 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
   }
   files.sort((a, b) => a.path.localeCompare(b.path));
 
+  // The core shell only, never the area chunks (ARCHITECTURE §7). One definition of "shell"
+  // for the whole repo: index.html plus exactly what it links, shared with `check:size`.
+  const shell = shellFiles(await Bun.file(join(options.outdir, 'index.html')).text());
+  const shellFingerprint = shell.map((path) => {
+    const file = files.find((entry) => entry.path === path);
+    if (file === undefined) throw new Error(`index.html references a missing file: ${path}`);
+    return `${file.path}:${file.bytes}`;
+  });
   await Bun.write(
     join(options.outdir, 'precache-manifest.json'),
     `${JSON.stringify(
       {
         // The SW of M2-15 compares this to decide what to precache on install.
-        revision: Bun.hash(files.map((file) => `${file.path}:${file.bytes}`).join('\n')).toString(
-          16,
-        ),
-        shell: files.filter((file) => isShellFile(file.path)).map((file) => `/${file.path}`),
+        revision: Bun.hash(shellFingerprint.join('\n')).toString(16),
+        shell: shell.map((path) => `/${path}`),
       },
       null,
       2,
