@@ -12,7 +12,7 @@
 - [x] **M0-04** i18n runtime skeleton (`t`, `format.money`, locale detect/switch) plus `tools/i18n/check.ts` (parity) and `gen-types.ts`. *AC:* switching locale updates the overlay; `check:i18n` catches a removed key.
 - [x] **M0-05** `tools/check-deps.ts` enforcing ARCHITECTURE §2. *AC:* importing `three` inside `packages/sim` fails the check.
 - [x] **M0-06** CI workflow green (install, check, build). *AC:* PR shows passing checks.
-- [ ] **M0-07** Production build `apps/client/build.ts` + `tools/check-size.ts`. *AC:* `bun run build` outputs hashed files; the size report prints.
+- [x] **M0-07** Production build `apps/client/build.ts` + `tools/check-size.ts`. *AC:* `bun run build` outputs hashed files; the size report prints.
 
 ## M1 — Tech spike (exit: 30 fps on a Low device; first frame ≤ 5 MB)
 

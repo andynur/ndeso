@@ -57,7 +57,7 @@
   },
   "overrides": [
     {
-      "includes": ["tools/**", "scripts/**"],
+      "includes": ["tools/**", "scripts/**", "apps/client/build.ts"],
       "linter": {
         "rules": {
           "suspicious": {
