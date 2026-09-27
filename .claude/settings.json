@@ -1,8 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "enableAllProjectMcpServers": true,
   "env": {
-    "MCP_TIMEOUT": "60000",
     "BASH_MAX_OUTPUT_LENGTH": "20000"
   },
   "permissions": {
@@ -10,20 +8,45 @@
       "Bash(bun install:*)",
       "Bash(bun run:*)",
       "Bash(bun test:*)",
+      "Bash(bun tools/:*)",
       "Bash(bunx biome:*)",
       "Bash(bunx tsc:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git switch:*)",
-      "Bash(git checkout -b:*)",
+      "Bash(awk:*)",
+      "Bash(cat:*)",
+      "Bash(comm:*)",
+      "Bash(cut:*)",
+      "Bash(diff:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
       "Bash(ls:*)",
-      "mcp__serena",
-      "mcp__context-mode"
+      "Bash(sed -n:*)",
+      "Bash(sort:*)",
+      "Bash(tail:*)",
+      "Bash(tr:*)",
+      "Bash(uniq:*)",
+      "Bash(wc:*)",
+      "Bash(git add:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git checkout -B:*)",
+      "Bash(git commit:*)",
+      "Bash(git diff:*)",
+      "Bash(git fetch:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(git switch:*)"
     ],
-    "ask": ["Bash(git push:*)", "Bash(bun add:*)", "Bash(bun remove:*)"],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(bun add:*)",
+      "Bash(bun remove:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
@@ -49,33 +72,6 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh",
             "timeout": 300
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh activate",
-            "timeout": 20
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Grep|Glob|Read|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh remind",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__serena__.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh auto-approve",
-            "timeout": 10
           }
         ]
       }
@@ -88,18 +84,6 @@
             "type": "command",
             "command": "if command -v bun >/dev/null 2>&1; then bun \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/post-edit.ts; fi",
             "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/serena-hook.sh cleanup",
-            "timeout": 10
           }
         ]
       }

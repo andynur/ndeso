@@ -9,6 +9,7 @@
 | `check:deps` | Enforces the import boundaries from ARCHITECTURE §2 |
 | `check:i18n` | Key parity en↔id, placeholder parity, Ink structure parity |
 | `check:content` | Zod-validates all content JSON5 and cross-references keys |
+| `check:links` | Every relative markdown link and `#anchor` resolves. External URLs are not fetched — a gate that needs the network fails for reasons unrelated to the commit |
 | `test` | `bun test` (unit + golden) |
 | `check:size` | Build output vs PERFORMANCE_BUDGET (runs after `build`) |
 
