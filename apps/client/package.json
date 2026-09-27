@@ -6,6 +6,7 @@
   "dependencies": {
     "@bale/content": "workspace:*",
     "@bale/shared": "workspace:*",
+    "@bale/sim": "workspace:*",
     "@preact/signals": "2.11.2",
     "preact": "10.29.8",
     "three": "0.186.1"

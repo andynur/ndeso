@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01 done.
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01, M1-02 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-02 (fixed-step game loop with render interpolation and pause on hide — ARCH §4.1). It wires `createTimeSystem(cal)` from `@bale/sim` into the client loop.
+- **Next task:** M1-03 (billboard sprite system: instanced, atlas UV, animation by tag — DESIGN §1.2). The loop is in `apps/client/src/game/`; render gets `(ticks + alpha)` sim time via `scene.draw(simSeconds)`.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
-- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19); the calendar data is already validated by `bun test`. Shell size is 120 KB brotli of a 350 KB budget (three.js + Preact; no art yet).
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. Shell size is 124 KB brotli of a 350 KB budget.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-27 · M1-02 · claude/friendly-curie-r6bxqk
+- Done: `game/loop.ts` fixed-step loop (pure `advance()`, 250 ms clamp, `alpha`, injected frame scheduler); `game/game.ts` owns the sim state and runs `createTimeSystem`, buffering events; `scene.ts` no longer schedules itself (`draw(simSeconds)`, skips frames while the GL context is lost); `main.ts` pauses the loop on `visibilitychange`. New `@bale/content/calendar` imports the calendar JSON5 statically for the browser.
+- Tests: `bun run check` green (221 tests); build + `check:size` ok; Chromium renders with no console errors.
+- Notes/decisions: hidden time is not billed to the sim on resume (the game clock stops in a background tab). The placeholder spin is now driven by interpolated sim time.
+- Next: M1-03.
+
 ### 2026-09-27 · M1-01 follow-up · claude/cool-albattani-s1w499
 - Done: settled the open GDD §10 question. The owner chose **proportional** Hijri months, so Ramadan stays 9–10 game days (30 in life), as the build already does. There is no Ramadan-specific rule. GDD §10 is updated.
 - Notes: this branch had a second, independent M1-01 implementation. It was dropped in favour of the one merged in PR #14, and only this decision was carried over.
@@ -128,27 +134,3 @@
   - Review fix: the tokenizer originally masked a whole template literal, so `` `seed-${Math.random()}` `` or `` `${await import('three')}` `` inside `packages/sim` was invisible to both halves of the check. `${…}` spans are now re-tokenized as code with brace-depth tracking (nesting included); only the literal text between them is blanked.
   - `apps/client/build.ts` is registered as build-time code so M0-07 can use `Bun.build`, `node:*` and `tools/` helpers without a carve-out mid-task; the bundle may not import it.
 - Next: M0-06
-### 2026-09-27 · M0-04 · feat/M0-04-i18n-runtime
-- Done: i18n runtime in `apps/client/src/i18n/` (`t`, lazy namespaces, signal-backed locale switch, `createNumberFormats` for money/number/clock, `formatGameDate`), the ICU subset of I18N §3 as `packages/shared/src/message.ts`, a locale picker in the overlay, and the real `check:i18n` (`tools/i18n/check.ts`) plus `tools/i18n/gen-types.ts`.
-- Tests: `bun run check` green; 82 tests across 9 files (56 new: message formatter, parity rules, key parsing, number formats, and the runtime itself — fallback chain, dev/prod missing-key behaviour, lazy namespaces, hot switch, hostile storage). Verified live over CDP — clicking *Bahasa Indonesia* re-renders every overlay string, switches `Rp12,500` → `Rp12.500`, updates `<html lang>` and persists the choice. `check:i18n` exits 1 on a removed key and on a placeholder mismatch.
-- Notes/decisions:
-  - **`packages/content/src/i18n.generated.ts` is generated and committed** (`bun run gen:i18n`), exported as `@bale/content/i18n`. It holds the `I18nKey` unions *and* a per-locale map of lazy namespace loaders, so there is no hand-maintained registry to forget. `check:i18n` fails when it drifts, and the generator pipes its output through Biome so `bun run fmt` cannot cause false drift. Committing it keeps `bun run check` working on a clean checkout without a codegen step.
-  - Our own ~190-line ICU subset instead of a formatter dependency: `{name}`, `plural` with `#` and `=n` selectors, `select`. Apostrophe escaping, `selectordinal` and number skeletons are rejected loudly rather than silently mis-rendered.
-  - `createI18n({ bundles, storage, dev })` is a factory rather than a module singleton, and `index.ts` wires it to the generated registry and to `localStorage`. That keeps `runtime.ts` free of the DOM and of the generated import, so the fallback chain and the hot switch are unit-testable with fake bundles.
-  - Biome's `complexity/useLiteralKeys` is off **for two files only** (`packages/shared/src/message.ts`, `apps/client/src/platform/env.ts`): it demands `obj.other` where tsconfig `noPropertyAccessFromIndexSignature` demands `obj['other']`, so the two rules cannot both be satisfied. (Biome rejects comments in `biome.json`, hence the rationale living here.)
-  - `format.money` needs `currencyDisplay: 'narrowSymbol'` — otherwise an `en` locale renders IDR as `IDR12,500` instead of the `Rp12,500` I18N §7 specifies.
-  - Locale preference persists in `localStorage` (`bale.locale`), wrapped in try/catch for private mode. M2's storage adapter (`idb-keyval`, ARCHITECTURE §4.4) takes over settings later; `localStorage` is used here because the choice must be readable synchronously before the first render.
-  - `Season` / `Weekday` / `Pasaran` literals live in the i18n runtime for now; M1-01 owns the clock and moves them into `packages/shared`.
-  - `@preact/signals` added (already on the TECH_STACK §2 allow-list) and `@bale/shared` linked into the root so `tools/` can import it.
-- Next: M0-05
-### 2026-09-27 · M0-03 · feat/M0-03-client-bootstrap
-- Done: `apps/client` walking skeleton — `index.html` + `src/main.ts`, Three.js scene (ground plane, rotating low-poly house placeholder, camera per DESIGN §1.1: FOV 30 / pitch 38 / distance 14), Preact overlay reading strings from the locale bundles, `src/ui/tokens.ts` mirroring DESIGN §2, `src/render/quality/presets.ts` (preset + DPR cap per PERF §4). `tools/dev.ts` serves it with HMR on `0.0.0.0` and prints the LAN URL.
-- Tests: `bun run check` green; 26 tests across 5 files (8 new for `quality.ts`). Verified in headless Chromium: overlay renders over the WebGL canvas, no page console errors, scene draws.
-- Notes/decisions:
-  - `check:types` is now two programs: `tsc -b --noEmit` for `packages/*` + `tools/*` (bun-types), then `tsc -b apps/client --noEmit` for browser code (`lib: ["DOM","ES2023"]`, `types: []`) as TECH_STACK §4 requires. Build mode accepts `--noEmit` per project; it is only composite *references* that TS 5.9 rejects (TS6310), so no project references were reintroduced.
-  - Added dev dep `@types/three` (three ships no declarations), pinned to three's minor and listed in TECH_STACK §2. Types only — never bundled.
-  - New strings `boot.hello` / `boot.placeholder` in both `locales/en/ui.json` and `locales/id/ui.json`; no hardcoded player-facing text. `src/i18n/boot.ts` is a ~20-line eager loader (`resolveLocale(navigator.languages)` + JSON imports) so the first frame needs no fetch; M0-04 replaces it with the real runtime.
-  - ARCHITECTURE §2 forbids `render/` importing `ui/`, so `main.ts` reads `ui/tokens.ts` and passes a `ScenePalette` down instead of the scene importing the tokens. Lighting uses the DESIGN §1.3 noon keyframe directly (those are lighting values, not §2 palette tokens); M1-07 moves the table into `content/data/lighting.json5`.
-  - The scene owns only rendering plumbing (DPR cap, resize observer, `visibilitychange` pause, `webglcontextlost`/`restored`). The fixed-step loop and interpolation are M1-02; sprites M1-03; the full camera rig M1-04.
-  - **Not verified on a real phone yet** — the ROADMAP AC "loads on a phone" needs the maintainer to open the printed LAN URL. The device checklist is M1-10.
-- Next: M0-04

@@ -1,3 +1,7 @@
+import { CALENDAR_DATA } from '@bale/content/calendar';
+import { TICK_MS } from '@bale/shared';
+import { createGame } from './game/game.ts';
+import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { initI18n, locale, t } from './i18n/index.ts';
 import { guessPreset } from './render/quality/presets.ts';
 import { createScene, type ScenePalette } from './render/scene.ts';
@@ -18,6 +22,12 @@ const PALETTE: ScenePalette = {
   roof: colorHex('terakota500'),
   marker: colorHex('kunyit400'),
   fog: colorHex('indigo700'),
+};
+
+const BROWSER_FRAMES: FrameScheduler = {
+  request: (callback) => requestAnimationFrame(callback),
+  cancel: (handle) => cancelAnimationFrame(handle),
+  now: () => performance.now(),
 };
 
 async function boot(): Promise<void> {
@@ -45,13 +55,28 @@ async function boot(): Promise<void> {
   const debug = new URLSearchParams(location.search).get('debug') === 'perf';
   mountOverlay(overlay, debug ? { stats: { preset, pixelRatio: scene.pixelRatio } } : {});
 
-  // ARCHITECTURE §4.1: stop burning battery (and the frame budget) while hidden.
+  const game = createGame(CALENDAR_DATA);
+  const loop = createLoop(
+    {
+      step: game.step,
+      frame(alpha) {
+        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000);
+        // Nothing listens yet; the HUD clock (M1-08) is the first `ui.sync` consumer.
+        game.drainEvents();
+      },
+    },
+    BROWSER_FRAMES,
+  );
+
+  // ARCHITECTURE §4.1: pause the sim and the renderer while hidden, so the game clock does
+  // not run on in a background tab and the battery is spared. Saving first joins here once
+  // there is a save (M2).
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) scene.stop();
-    else scene.start();
+    if (document.hidden) loop.stop();
+    else loop.start();
   });
 
-  scene.start();
+  if (!document.hidden) loop.start();
   window.__GAME_READY__ = true;
 }
 

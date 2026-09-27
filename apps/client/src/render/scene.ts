@@ -34,8 +34,6 @@ const NOON_AMBIENT = { color: 0xa8c4e0, intensity: 0.7 };
 const GROUND_SIZE = 40;
 /** One full turn every 8 s, slow enough to read on a 30 fps phone. */
 const SPIN_RAD_PER_SECOND = (Math.PI * 2) / 8;
-/** ARCHITECTURE §4.1: never integrate more than 250 ms of real time in one frame. */
-const MAX_FRAME_MS = 250;
 
 /**
  * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
@@ -59,8 +57,12 @@ export interface SceneOptions {
 export interface SceneHandle {
   /** Current render scale; re-clamped whenever the canvas resizes onto another screen. */
   readonly pixelRatio: number;
-  start(): void;
-  stop(): void;
+  /**
+   * Draws one frame at `simSeconds`, the sim time interpolated between ticks
+   * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
+   * frame timing; the scene never schedules itself.
+   */
+  draw(simSeconds: number): void;
   dispose(): void;
 }
 
@@ -134,30 +136,13 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     renderer.setSize(width, height, false);
   }
 
-  let frame = 0;
-  let last = 0;
-  let elapsed = 0;
+  let contextLost = false;
 
-  function draw(now: number): void {
-    frame = requestAnimationFrame(draw);
-    const delta = Math.min(now - last, MAX_FRAME_MS);
-    last = now;
-    elapsed += delta / 1000;
-    placeholder.rotation.y = elapsed * SPIN_RAD_PER_SECOND;
-    marker.position.y = 2.9 + Math.sin(elapsed * 2) * 0.15;
+  function draw(simSeconds: number): void {
+    if (contextLost) return;
+    placeholder.rotation.y = simSeconds * SPIN_RAD_PER_SECOND;
+    marker.position.y = 2.9 + Math.sin(simSeconds * 2) * 0.15;
     renderer.render(scene, camera);
-  }
-
-  function start(): void {
-    if (frame !== 0) return;
-    last = performance.now();
-    frame = requestAnimationFrame(draw);
-  }
-
-  function stop(): void {
-    if (frame === 0) return;
-    cancelAnimationFrame(frame);
-    frame = 0;
   }
 
   const observer = new ResizeObserver(resize);
@@ -165,20 +150,19 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
   resize();
 
   // ARCHITECTURE §4.1: the browser drops the GL context on a backgrounded phone.
-  // The sim is unaffected; we only have to stop asking for frames until it is back.
+  // The sim is unaffected and keeps stepping; we only skip drawing until it is back.
   const onContextLost = (event: Event): void => {
     event.preventDefault();
-    stop();
+    contextLost = true;
   };
   const onContextRestored = (): void => {
+    contextLost = false;
     resize();
-    start();
   };
   canvas.addEventListener('webglcontextlost', onContextLost);
   canvas.addEventListener('webglcontextrestored', onContextRestored);
 
   function dispose(): void {
-    stop();
     observer.disconnect();
     canvas.removeEventListener('webglcontextlost', onContextLost);
     canvas.removeEventListener('webglcontextrestored', onContextRestored);
@@ -195,8 +179,7 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     get pixelRatio() {
       return pixelRatio;
     },
-    start,
-    stop,
+    draw,
     dispose,
   };
 }
