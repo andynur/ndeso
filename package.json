@@ -17,7 +17,7 @@
     "check:lint": "biome check .",
     "check:deps": "bun tools/check-deps.ts",
     "check:i18n": "bun tools/i18n/check.ts",
-    "check:content": "bun tools/todo.ts M2-01 'content schema check'",
+    "check:content": "bun tools/check-content.ts",
     "check:links": "bun tools/check-links.ts",
     "check:size": "bun tools/check-size.ts",
     "gen:i18n": "bun tools/i18n/gen-types.ts",

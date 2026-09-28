@@ -140,6 +140,8 @@ requestAnimationFrame(frame):
 
 ## 6. Content pipeline
 - JSON5 in `packages/content/data/**` is validated at **build time** by Zod schemas (`bun run check:content`), then emitted as compact JSON chunks per area and loaded lazily.
+- Crop, item and tool files are arrays; each `data/npcs/*.json5` file holds one NPC. Their schemas and the three calendar-file schemas are exported from `@bale/shared/content`, separate from the browser-facing shared root so Zod does not enter the client shell.
+- `check:content` rejects JSON5 with no registered schema and checks locale-key and area-id references across files.
 - Ink dialogs: `packages/content/dialog/<locale>/<npc>.ink` compiled to JSON at build time (inkjs compiler). Knot names must match across locales (checked).
 - Locales: see [I18N](I18N.md).
 

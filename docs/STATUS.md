@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-09 done; M1-11/M1-12 done as **desk substitutes** (owner decision; human round + photo trip deferred to M4); M1-10 device test is still the human's.
+- **Milestone:** M2 — Vertical slice. M2-01 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-01 (M2 may start: M1-11's desk round unblocks writing, provisionally). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
+- **Next task:** M2-02 (farming system). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
-- **Known issues:** `check:content` (M2-01) and `smoke` (M2-19) are still `tools/todo.ts` stubs. Sim events are drained unread (the HUD clock reads `ClockState`). Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 156 KB brotli of 350 KB.
+- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. Crop/item/tool/NPC schemas exist but their M2 data files land with the owning system tasks. Sim events are drained unread (the HUD clock reads `ClockState`). Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 157 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · M2-01 · feat/M2-01-content-schemas
+- Done: Zod schemas for crops, items, tools, NPC schedules and all calendar files under `@bale/shared/content`; real `check:content` validates every JSON5 file, rejects unregistered files, and checks locale keys, area references and duplicate ids. Zod stays out of the browser-facing shared root.
+- Tests: `bun run check` green (399 tests); build + `check:size` green (shell 157.0 KB brotli).
+- Notes/decisions: crop prices remain on crop entries as GDD §4.3 and I18N §5 specify; schemas require cultural origin. M2 data files land with their owning system tasks, rather than inventing content here.
+- Next: M2-02.
+
 ### 2026-09-28 · calendar: Masehi first, Jawa + Hijri subtitle (ADR-0009) · claude/charming-keller-syx5d4
 - Done (owner decision after playing the demo): the pranata-mangsa year is replaced by a **scaled Masehi calendar** — 12 months × 10 game days, the date scaled from the real month (1, 4, 7 … 28) — with the **Javanese** (Sultan Agungan, Hijri + 512, windu year name) and **tabular Hijri** dates of that real date as a HUD subtitle: `Rabu Wage, 1 Juli 2026` / `15 Sura 1960 Dal · 15 Muharam 1448 H`. Arrival moved to 1 Juli 2026 (kemarau); day 0's weekday and pasaran are the real ones, then advance per game day. Musim from the month (hujan Nov–Mar, pancaroba Apr/Okt, kemarau Mei–Sep: 50/20/50). `mangsa.json5` → `months.json5`; prayer times re-keyed per month; `mangsaChanged` → `monthChanged`. ADR-0007 superseded by ADR-0009; GDD §3 rewritten, weather "Kapitu" row → Januari; PRD/GLOSSARY/ARCHITECTURE/I18N/ROADMAP M2-01, M2-05 follow.
 - Tests: `bun run check` green (392). Golden calendar snapshot regenerated on purpose (the whole projection changed). Anchors checked: 17 Agustus 1945 Jumat Legi, 1 Sura 1959 = Jumat Kliwon 27 Juni 2025, Idul Adha 2026 = 27 Mei. Headless Chromium: HUD in EN and ID, no console errors.
