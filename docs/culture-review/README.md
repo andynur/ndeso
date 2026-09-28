@@ -40,6 +40,10 @@ pack get guesses.
 
 ## What happens to the answers
 
+> **Round 00** ([desk research, 2026-09-28](round-00-desk-2026-09-28.md)) is *not* a
+> reader round: it answers the questions from public sources so M2 could start. Round 01,
+> with real readers, is still owed before release.
+
 Each round lands as a file here, `round-NN-<date>.md`, with the reviewer's points and what
 we did about each. Changes that follow become their own PRs referencing it. Points we
 decline stay visible in the file — a record of what was considered, not a list of what was
