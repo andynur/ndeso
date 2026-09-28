@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-05 done.
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-06 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-06 (player movement in sim + tile collision grid; render follows; walk anim by direction). The `commands` system it adds is the first consumer of `ctx.commands`: `move {x, z}` is a **held** world-space intent (sent only on change, `{0,0}` = stop), so the sim must keep it in state between ticks. Replace the scene's placeholder walker with the player as the camera's follow target.
+- **Next task:** M1-07 (day/night lighting from `lighting.json5` keyframes driven by the clock; Maghrib first — DESIGN §1.3). The scene's `NOON_SUN`/`NOON_AMBIENT` constants are what it replaces.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
-- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. `Command`s are queued but no system reads them until M1-06. No menu or gamepad input yet (GDD §12 Esc/I, gamepad column) — add them with the task that needs them. Shell size is 129 KB brotli of a 350 KB budget.
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · walk speed **3 tiles/s** (`sim/player.ts` `WALK_SPEED`) is not a GDD number yet — confirm and add it to GDD §12.
+- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. `interact`/`selectSlot`/`cycleSlot` reach the `commands` system but do nothing until M2 tools/inventory. The collision grid is a hand-made placeholder (`game/placeholder-area.ts`) mirroring the scene's house; M1-09 replaces both. No menu or gamepad input yet. Shell size is well inside the 350 KB budget.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · M1-06 · claude/friendly-curie-r6bxqk
+- Done: `sim/collision.ts` (per-area tile grid, off-grid solid), `sim/player.ts` (pos, 4-way world `Dir`, held intent, axis-separated sweep of a 0.6-tile footprint → slides along walls), `sim/systems/commands.ts` (last `move` per step replaces the intent; walks every tick). Client composes `TimeState & PlayerState`, keeps `previousPos`, interpolates by `alpha`; the scene's scripted walker is now the player (walk/idle tag by facing through the camera, cycle restarts on start/stop).
+- Tests: `bun run check` green (312 tests); build + `check:size` ok. Headless Chromium: W walks up and stops at the house wall (back sprite), D turns and walks right, no console errors.
+- Notes/decisions: facing is world-space and 4-way so GDD §12 auto-target is one tile; exact diagonals keep the current facing. Walking into a wall animates in place. `WALK_SPEED` = 3 tiles/s proposed, not in GDD.
+- Next: M1-07.
+
 ### 2026-09-27 · M1-05 · claude/friendly-curie-r6bxqk
 - Done: `sim/commands.ts` — `Command` union (`move` world-space held intent, `interact`, `selectSlot`, `cycleSlot`) + `sanitizeCommand`; `SimContext.commands`. `game.submit()` queues sanitized commands for the next tick. `platform/input/` — keyboard by `event.code`, floating stick in the left 40 % (DESIGN §5), two-finger swipe turns / pinch zooms, mouse click = interact; one `InputFrame` per frame. `game/commands.ts` maps it through the camera yaw (`screenToWorld`, the inverse of `screenFacing`). `ui/touch-controls.tsx` — stick ring, Use (72 dp) and turn (48 dp) buttons, hidden where the primary pointer is a mouse.
 - Tests: `bun run check` green (288 tests); build + `check:size` ok (shell 129 KB). Headless Chromium: touch stick draws and releases, buttons shown on touch / hidden on desktop, no console errors.

@@ -1,4 +1,5 @@
 import type { QualityPreset } from '@bale/shared';
+import { DIR_HEADINGS, type Dir } from '@bale/sim';
 import {
   AmbientLight,
   BoxGeometry,
@@ -31,10 +32,7 @@ const NOON_AMBIENT = { color: 0xa8c4e0, intensity: 0.7 };
 
 const GROUND_SIZE = 40;
 
-/** Placeholder villagers: one walks a square round the house, four stand facing each way. */
-const WALK_HALF_SIDE = 2.5;
-const WALK_SPEED = 1.5;
-/** Flanking the house, inside the landscape-phone frame at the default zoom. */
+/** Placeholder villagers standing facing each way, flanking the house, inside the landscape-phone frame at the default zoom. */
 const IDLE_XS = [-6.5, -5, 5, 6.5] as const;
 const IDLE_Z = 0.5;
 
@@ -58,6 +56,14 @@ export interface SceneOptions {
   readonly palette: ScenePalette;
 }
 
+/** What render needs of the player this frame, already interpolated between ticks. */
+export interface PlayerView {
+  readonly x: number;
+  readonly z: number;
+  readonly facing: Dir;
+  readonly walking: boolean;
+}
+
 /** What the input layer may do to the camera (DESIGN §1.1). */
 export interface CameraControls {
   /**
@@ -78,9 +84,10 @@ export interface SceneHandle {
    * Draws one frame at `simSeconds`, the sim time interpolated between ticks
    * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
    * frame timing; the scene never schedules itself. `realDtSeconds` is wall-clock frame
-   * time, which the camera runs on so it still eases while the sim is paused.
+   * time, which the camera runs on so it still eases while the sim is paused. The first
+   * draw snaps the camera onto the player; after that it follows.
    */
-  draw(simSeconds: number, realDtSeconds: number): void;
+  draw(simSeconds: number, realDtSeconds: number, player: PlayerView): void;
   readonly camera: CameraControls;
   dispose(): void;
 }
@@ -144,9 +151,10 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
   const atlasTexture = createAtlasTexture(pixels, atlas);
   const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
   scene.add(sprites.mesh);
-  // The walker stands in for the player (M1-06) as the camera's follow target.
-  const walker = sprites.add({ x: 0, y: 0, z: WALK_HALF_SIDE, tag: 'walk_side' });
-  rig.snapTo(walker.x, walker.z);
+  // The player, and the camera's follow target. Shares the villager atlas until real art.
+  const hero = sprites.add({ x: 0, y: 0, z: 0, tag: 'idle_down' });
+  let heroWalking = false;
+  let snapped = false;
   // World headings (dx, dz): at yaw 0 these face down, up, right and left.
   const idleHeadings = [
     [0, 1],
@@ -193,13 +201,22 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
 
   let contextLost = false;
 
-  function draw(simSeconds: number, realDtSeconds: number): void {
+  function draw(simSeconds: number, realDtSeconds: number, player: PlayerView): void {
+    hero.x = player.x;
+    hero.z = player.z;
+    if (snapped) rig.follow(hero.x, hero.z);
+    else rig.snapTo(hero.x, hero.z);
+    snapped = true;
     // The rig keeps easing while the context is lost, so it is settled when it returns.
-    const leg = walkSquare(walker, simSeconds);
-    rig.follow(walker.x, walker.z);
     rig.update(realDtSeconds);
     if (contextLost) return;
-    face(walker, 'walk', LEG_HEADINGS[leg * 2] ?? 0, LEG_HEADINGS[leg * 2 + 1] ?? 0);
+    // Restart the cycle on every start and stop, so a step begins on the contact frame.
+    if (player.walking !== heroWalking) {
+      heroWalking = player.walking;
+      hero.startSeconds = simSeconds;
+    }
+    const heading = DIR_HEADINGS[player.facing];
+    face(hero, player.walking ? 'walk' : 'idle', heading.x, heading.z);
     for (const idler of idlers) face(idler.sprite, 'idle', idler.dx, idler.dz);
     sprites.update(simSeconds);
 
@@ -265,39 +282,3 @@ const TAGS = {
   idle: { down: 'idle_down', up: 'idle_up', side: 'idle_side' },
   walk: { down: 'walk_down', up: 'walk_up', side: 'walk_side' },
 } as const;
-
-/** World heading `(dx, dz)` of each leg of the walk: +x, -z, -x, +z. */
-const LEG_HEADINGS = [1, 0, 0, -1, -1, 0, 0, 1] as const;
-
-/**
- * Moves `sprite` round a square centred on the house and returns which leg (0–3) it is
- * on; the caller turns the leg's heading into a tag for the current camera yaw. Each side
- * restarts the walk cycle so a turn begins on the contact frame.
- */
-function walkSquare(sprite: Sprite, simSeconds: number): number {
-  const side = WALK_HALF_SIDE * 2;
-  const sideSeconds = side / WALK_SPEED;
-  const leg = Math.floor(simSeconds / sideSeconds) % 4;
-  const along = (simSeconds % sideSeconds) * WALK_SPEED - WALK_HALF_SIDE;
-  const h = WALK_HALF_SIDE;
-  // A switch rather than a table of poses: this runs every frame and must not allocate.
-  switch (leg) {
-    case 0:
-      sprite.x = along;
-      sprite.z = h;
-      break;
-    case 1:
-      sprite.x = h;
-      sprite.z = -along;
-      break;
-    case 2:
-      sprite.x = -along;
-      sprite.z = -h;
-      break;
-    default:
-      sprite.x = -h;
-      sprite.z = along;
-  }
-  sprite.startSeconds = simSeconds - (simSeconds % sideSeconds);
-  return leg;
-}

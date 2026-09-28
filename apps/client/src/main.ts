@@ -1,12 +1,14 @@
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { TICK_MS } from '@bale/shared';
+import { isWalking } from '@bale/sim';
 import { createCommandMapper } from './game/commands.ts';
 import { createGame } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
+import { createPlaceholderArea } from './game/placeholder-area.ts';
 import { initI18n, locale, t } from './i18n/index.ts';
 import { attachInput, createInput } from './platform/input/input.ts';
 import { guessPreset } from './render/quality/presets.ts';
-import { createScene, type ScenePalette } from './render/scene.ts';
+import { createScene, type PlayerView, type ScenePalette } from './render/scene.ts';
 import { mountOverlay } from './ui/mount.ts';
 import { colorHex } from './ui/tokens.ts';
 import { stickView } from './ui/touch-controls.tsx';
@@ -74,7 +76,15 @@ async function boot(): Promise<void> {
     controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
   });
 
-  const game = createGame(CALENDAR_DATA);
+  const game = createGame(CALENDAR_DATA, createPlaceholderArea());
+  const { player } = game.state;
+  // Reused every frame: the draw path must not allocate.
+  const view: { x: number; z: number; facing: PlayerView['facing']; walking: boolean } = {
+    x: 0,
+    z: 0,
+    facing: player.facing,
+    walking: false,
+  };
   const commands = createCommandMapper();
   const loop = createLoop(
     {
@@ -89,7 +99,13 @@ async function boot(): Promise<void> {
         }
         if (frame.zoom !== 0) scene.camera.zoomBy(frame.zoom);
         commands.map(frame, scene.camera.yaw, game.submit);
-        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000);
+        // ARCHITECTURE §4.1: render sits `alpha` of the way through the tick just stepped.
+        const from = game.previousPos;
+        view.x = from.x + (player.pos.x - from.x) * alpha;
+        view.z = from.z + (player.pos.z - from.z) * alpha;
+        view.facing = player.facing;
+        view.walking = isWalking(player);
+        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000, view);
         // Nothing listens yet; the HUD clock (M1-08) is the first `ui.sync` consumer.
         game.drainEvents();
       },
