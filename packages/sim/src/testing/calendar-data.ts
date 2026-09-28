@@ -13,7 +13,7 @@ async function read(file: string): Promise<unknown> {
 
 export async function loadCalendarForTests(): Promise<CalendarData> {
   const result = validateCalendar({
-    mangsa: await read('mangsa.json5'),
+    months: await read('months.json5'),
     clock: await read('clock.json5'),
     prayerTimes: await read('prayer-times.json5'),
   });

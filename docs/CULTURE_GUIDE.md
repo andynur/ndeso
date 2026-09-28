@@ -29,7 +29,7 @@
 | *kalen* | irrigation channel / ditch | The spine of the build project (GDD §4.4) |
 | *ulu-ulu* | the village official responsible for irrigation | **The Javanese model, and the one we use.** A real role in village administration |
 | *subak* | Balinese cooperative irrigation system, UNESCO World Heritage (2012) | **Not our model.** Purworejo is Javanese. Keep the term in the glossary as a distinct Balinese institution; do not call our system subak-inspired |
-| *pranata mangsa* | the Javanese 12-season solar farming calendar | GDD §3.1 |
+| *pranata mangsa* | the Javanese 12-season solar farming calendar | Lore only since ADR-0009: older characters may read its signs; no system uses it (GDD §3.1) |
 | *mangsa* | one of the 12 seasons | Kasa, Karo, Katelu … Sadha |
 | *merti desa* | village thanksgiving and cleansing, also *sedekah bumi* / *bersih desa* | The flagship festival (GDD §10), with a wayang kulit night. See §3 on contested practices |
 | *slametan* | communal blessing meal | See §3 |

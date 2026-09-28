@@ -18,7 +18,7 @@ Open a link and, in under 15 seconds, be standing on Mbah Hita's ground at maghr
 
 - **Cozy and grounded:** a relaxing daily rhythm. No combat, no villain, no fail state.
 - **Measured by the place, not the profit:** *asri, nyaman, tenang* is the scoreboard, and it is computed from what you actually put on the ground.
-- **Authentically Indonesian, and specifically Javanese:** culture expressed through systems — the *pranata mangsa*, the market day, the water schedule — not decorative stereotypes. A real town, handled by a [naming policy](docs/PLACES.md) and a [culture guide](docs/CULTURE_GUIDE.md).
+- **Authentically Indonesian, and specifically Javanese:** culture expressed through systems — the Javanese and Hijri calendars, the market day, the water schedule — not decorative stereotypes. A real town, handled by a [naming policy](docs/PLACES.md) and a [culture guide](docs/CULTURE_GUIDE.md).
 - **Instant and lightweight:** playable in a browser, offline after the first visit, and designed for low-to-mid-range Android phones.
 - **Open and moddable:** data-driven content and welcoming contribution paths for code, art, music, translation, and cultural knowledge.
 

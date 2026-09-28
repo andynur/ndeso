@@ -1,19 +1,22 @@
-// The game clock and the anchors that pin every calendar to day 0 (GDD §3, ADR-0007).
+// The game clock and the anchors that pin every calendar to day 0 (GDD §3, ADR-0009).
 //
 // Times are minutes since the midnight that opens the game day. A day runs
 // 05:00 → 01:00, so `dayEndMinute` is past 24:00 (1500 = 01:00 the next morning).
 // At 10 sim ticks per second (ARCHITECTURE §3.1), 7 ticks per game minute is the
 // GDD's "1 game-minute = 0.7 real s", which makes a day ~14 real minutes.
 //
-// Day 0 is the arrival and the first day of Kasa. The anchors below are design
-// choices, not facts to verify: the real Kasa starts around 22 June, and 22 June
-// 2026 was a Senin falling on 6 Muharram 1448 in the tabular calendar, so the
-// save opens in a plausible present. Pasaran is `day % 5` (ADR-0007), so day 0
-// is Legi by definition.
+// `arrival` is day 0, a design choice: 1 Juli 2026, in the kemarau, so the kalen is dry
+// when the player arrives. It must be a date the scaled calendar shows (the 1st always
+// is). Day 0's weekday and pasaran are the real ones for that date — Rabu Wage — and
+// then each advances one per game day.
+//
+// `jawa`: the Javanese year is the Hijri year + 512 (Sultan Agung aligned 1 Sura 1555
+// with 1 Muharram 1043), and 1956 was an Alip year, so 1959 is Je and 1960 is Dal.
+// verified: false — against a published Javanese almanac (primbon / kalender Jawa).
 {
   ticksPerMinute: 7,
   dayStartMinute: 300,
   dayEndMinute: 1500,
-  weekdayOfDay0: 'mon',
-  hijriOfDay0: { year: 1448, month: 1, day: 6 },
+  arrival: { year: 2026, month: 7, day: 1 },
+  jawa: { hijriYearOffset: 512, alipYear: 1956 },
 }

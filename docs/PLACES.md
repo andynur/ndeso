@@ -95,7 +95,7 @@ against *convenience*:
 | Price | cheaper, negotiable | fixed, higher |
 | Hours | produce at dawn; kiosks until the afternoon | all day into the evening |
 | Day | best on its pasaran day | the same every day |
-| Stock | varies with the mangsa | always there |
+| Stock | varies with the musim | always there |
 | Needs | knowing the sellers, waking early | only money |
 | Buys your harvest | yes, price fluctuates | no |
 

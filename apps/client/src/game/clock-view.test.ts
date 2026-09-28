@@ -4,21 +4,24 @@ import { clockViewOf } from './clock-view.ts';
 
 const cal = CALENDAR_DATA;
 
-test('day 0 at 05:00 is subuh, Kasa day 1, Legi', () => {
+test('day 0 at 05:00 is subuh on Rabu Wage, 1 Juli 2026 = 15 Sura 1960 Dal = 15 Muharram 1448', () => {
   expect(clockViewOf({ tick: 0, day: 0, minute: 300 }, cal)).toEqual({
     hour: 5,
     minute: 0,
     band: 'subuh',
-    mangsa: 'kasa',
-    mangsaDay: 1,
-    mangsaLength: cal.mangsa[0]?.gameDays ?? 0,
-    pasaran: 'legi',
+    weekday: 'wed',
+    pasaran: 'wage',
+    date: 1,
+    month: 'jul',
+    year: 2026,
+    jawa: { day: 15, month: 'sura', year: 1960, yearName: 'dal' },
+    hijri: { day: 15, month: 'muharram', year: 1448 },
   });
 });
 
-test('reads the GDD §3.2 example: 15:40 is Ashar, day 4 is Kliwon', () => {
+test('reads the GDD §3.2 example: 15:40 is Ashar', () => {
   const view = clockViewOf({ tick: 3, day: 4, minute: 15 * 60 + 40 }, cal);
-  expect([view.hour, view.minute, view.band, view.pasaran]).toEqual([15, 40, 'ashar', 'kliwon']);
+  expect([view.hour, view.minute, view.band]).toEqual([15, 40, 'ashar']);
 });
 
 test('past midnight the wall clock wraps and it is still isya', () => {

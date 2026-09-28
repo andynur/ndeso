@@ -1,10 +1,17 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import type { CalendarData } from '@bale/shared';
 import {
+  dayOnOrAfterJdn,
   hijriOf,
   hijriToDay,
+  hijriToJdn,
   hijriToReal,
-  mangsaOf,
+  jawaOf,
+  jdnOf,
+  jdnToHijri,
+  masehiOf,
+  masehiToJdn,
+  musimOf,
   pasaranOf,
   prayerBandOf,
   projectDay,
@@ -23,55 +30,73 @@ const at = (hhmm: string): number => {
   return (h as number) * 60 + (m as number);
 };
 
-describe('pranata mangsa', () => {
-  test('day 0 is the first day of Kasa, year 1', () => {
+describe('Masehi, scaled (ADR-0009)', () => {
+  test('day 0 is the arrival: 1 Juli 2026, kemarau', () => {
     expect(projectDay(0, cal)).toMatchObject({
-      year: 1,
-      dayOfYear: 0,
-      mangsa: { id: 'kasa', day: 1, length: 13, musim: 'kemarau' },
+      masehi: { year: 2026, month: 7, monthId: 'jul', date: 1, monthDay: 0 },
+      musim: 'kemarau',
     });
   });
 
-  test('Kasa lasts 13 days, then Karo starts', () => {
-    expect(mangsaOf(12, cal)).toMatchObject({ id: 'kasa', day: 13 });
-    expect(mangsaOf(13, cal)).toMatchObject({ id: 'karo', day: 1, length: 8 });
+  test('a month is 10 game days showing 1, 4, 7 … 28, then the next month starts', () => {
+    const dates = Array.from({ length: 10 }, (_, day) => masehiOf(day, cal).date);
+    expect(dates).toEqual([1, 4, 7, 10, 13, 16, 19, 22, 25, 28]);
+    expect(masehiOf(10, cal)).toMatchObject({ month: 8, date: 1 });
   });
 
-  test('the last day of the year is Sadha 13/13 and day 120 opens year 2 in Kasa', () => {
-    expect(mangsaOf(119, cal)).toMatchObject({ id: 'sadha', day: 13, length: 13 });
-    expect(projectDay(120, cal)).toMatchObject({ year: 2, dayOfYear: 0, mangsa: { id: 'kasa' } });
+  test('a game year is 120 days and 1 Januari follows 31 Desember’s game day', () => {
+    // July is month 7, so 1 Januari 2027 is 6 months × 10 days later.
+    expect(masehiOf(59, cal)).toMatchObject({ year: 2026, month: 12, date: 28 });
+    expect(masehiOf(60, cal)).toMatchObject({ year: 2027, month: 1, date: 1 });
+    expect(masehiOf(60 + 120, cal)).toMatchObject({ year: 2028, month: 1, date: 1 });
   });
 
-  test('musim totals match GDD §3: hujan 54, kemarau 50, pancaroba 16', () => {
+  test('February scales from its real length, leap years included', () => {
+    const feb = (year: number) =>
+      Array.from({ length: 10 }, (_, k) => masehiOf(60 + (year - 2027) * 120 + 10 + k, cal).date);
+    expect(feb(2027)).toEqual([1, 3, 6, 9, 12, 15, 17, 20, 23, 26]);
+    expect(feb(2028)).toEqual([1, 3, 6, 9, 12, 15, 18, 21, 24, 27]);
+  });
+
+  test('days before the arrival project backwards', () => {
+    expect(masehiOf(-1, cal)).toMatchObject({ year: 2026, month: 6, date: 28 });
+  });
+
+  test('musim totals over a year: hujan 50, kemarau 50, pancaroba 20', () => {
     const totals: Record<string, number> = {};
     for (let day = 0; day < cal.gameYearDays; day++) {
-      const { musim } = mangsaOf(day, cal);
+      const musim = musimOf(day, cal);
       totals[musim] = (totals[musim] ?? 0) + 1;
     }
-    expect(totals).toEqual({ kemarau: 50, pancaroba: 16, hujan: 54 });
+    expect(totals).toEqual({ kemarau: 50, pancaroba: 20, hujan: 50 });
   });
 });
 
-describe('pasaran and weekday', () => {
-  test('pasaran is day % 5 starting at Legi', () => {
-    expect([0, 1, 2, 3, 4, 5].map(pasaranOf)).toEqual([
-      'legi',
-      'pahing',
-      'pon',
-      'wage',
-      'kliwon',
-      'legi',
-    ]);
+describe('Julian day numbers', () => {
+  test('17 Agustus 1945 was Jumat Legi', () => {
+    const jdn = masehiToJdn({ year: 1945, month: 8, day: 17 });
+    expect(jdn).toBe(2431685);
+    expect(jdn % 7).toBe(4); // 0 = Senin
+    expect(jdn % 5).toBe(0); // 0 = Legi
+  });
+
+  test('jdnOf follows the shown date', () => {
+    expect(jdnOf(1, cal) - jdnOf(0, cal)).toBe(3); // 1 → 4 Juli
+  });
+});
+
+describe('weekday and pasaran', () => {
+  test('day 0 is the real Rabu Wage of 1 Juli 2026', () => {
+    expect([weekdayOf(0, cal), pasaranOf(0, cal)]).toEqual(['wed', 'wage']);
+  });
+
+  test('both advance one per game day, whatever date is skipped', () => {
+    expect([1, 2, 7].map((day) => weekdayOf(day, cal))).toEqual(['thu', 'fri', 'wed']);
+    expect([1, 2, 5].map((day) => pasaranOf(day, cal))).toEqual(['kliwon', 'legi', 'wage']);
   });
 
   test('pasaran is stable against the year because 120 is divisible by 5', () => {
-    expect(pasaranOf(cal.gameYearDays)).toBe(pasaranOf(0));
-  });
-
-  test('the week starts on Senin at day 0 and repeats every 7 days', () => {
-    expect(weekdayOf(0, cal)).toBe('mon');
-    expect(weekdayOf(6, cal)).toBe('sun');
-    expect(weekdayOf(7, cal)).toBe('mon');
+    expect(pasaranOf(cal.gameYearDays, cal)).toBe(pasaranOf(0, cal));
   });
 });
 
@@ -88,61 +113,80 @@ describe('tabular Hijri', () => {
     );
   });
 
-  test('day 0 falls in Muharram 1448, the month having started before the arrival', () => {
-    expect(hijriOf(0, cal)).toMatchObject({ year: 1448, month: 1 });
-    expect(hijriOf(0, cal).day).toBeGreaterThan(1);
+  test('1 Juli 2026 is 15 Muharram 1448', () => {
+    expect(hijriOf(0, cal)).toEqual({ year: 1448, month: 1, day: 15 });
   });
 
-  test('months are 9 or 10 game days and each day follows the last', () => {
+  test('the Hijri date only moves forward, by the real days between shown dates', () => {
     for (let day = 1; day < cal.gameYearDays * 3; day++) {
-      const prev = hijriOf(day - 1, cal);
-      const today = hijriOf(day, cal);
-      expect([9, 10]).toContain(today.monthLength);
-      if (today.month === prev.month) {
-        expect(today.day).toBe(prev.day + 1);
-      } else {
-        expect(today.day).toBe(1);
-        expect(prev.day).toBe(prev.monthLength);
-      }
+      const gap = jdnOf(day, cal) - jdnOf(day - 1, cal);
+      const prev = hijriToReal(hijriOf(day - 1, cal));
+      expect(hijriToReal(hijriOf(day, cal)) - prev).toBe(gap);
     }
   });
 
-  test('hijriToDay lands on the first game day of the month', () => {
-    const day = hijriToDay({ year: 1448, month: 9, day: 1 }, cal);
-    expect(hijriOf(day, cal)).toMatchObject({ year: 1448, month: 9, day: 1 });
+  test('hijriToDay lands on the first game day on or after the date', () => {
+    const target = { year: 1448, month: 9, day: 1 };
+    const day = hijriToDay(target, cal);
+    expect(hijriToReal(hijriOf(day, cal))).toBeGreaterThanOrEqual(hijriToReal(target));
+    expect(hijriToReal(hijriOf(day - 1, cal))).toBeLessThan(hijriToReal(target));
   });
 
-  test('Ramadan walks 3–4 days earlier against the solar year each year (ADR-0007)', () => {
-    const starts = [1448, 1449, 1450, 1451].map(
-      (year) => hijriToDay({ year, month: 9, day: 1 }, cal) % cal.gameYearDays,
-    );
+  test('dayOnOrAfterJdn inverts jdnOf, before the arrival too', () => {
+    for (let day = -200; day < 400; day += 7) {
+      expect(dayOnOrAfterJdn(jdnOf(day, cal), cal)).toBe(day);
+    }
+  });
+
+  test('Ramadan walks 10–12 real days earlier against the Masehi year each year', () => {
+    const starts = [1448, 1449, 1450, 1451].map((year) => {
+      const jdn = hijriToJdn({ year, month: 9, day: 1 });
+      const shown = masehiOf(dayOnOrAfterJdn(jdn, cal), cal);
+      return { jdn, month: shown.month };
+    });
+    expect(starts.map((s) => s.month)).toEqual([2, 1, 1, 1]);
     for (let i = 1; i < starts.length; i++) {
-      const drift = (starts[i - 1] as number) - (starts[i] as number);
-      expect(drift).toBeGreaterThanOrEqual(3);
-      expect(drift).toBeLessThanOrEqual(4);
+      const yearLater = (starts[i - 1]?.jdn ?? 0) + 365;
+      const drift = yearLater - (starts[i]?.jdn ?? 0);
+      expect(drift).toBeGreaterThanOrEqual(10);
+      expect(drift).toBeLessThanOrEqual(12);
     }
   });
 });
 
-describe('prayer-time bands', () => {
-  const kasa = () => mangsaOf(0, cal);
-  const kapat = () => mangsaOf(31, cal); // Kapat hari 3/8, as in GDD §3.2
-
-  test('the day opens at 05:00 in subuh', () => {
-    expect(prayerBandOf(at('05:00'), kasa(), cal)).toBe('subuh');
+describe('Jawa', () => {
+  test('is the Hijri date under Javanese names: 15 Sura 1960 Dal', () => {
+    expect(jawaOf(0, cal)).toEqual({ year: 1960, month: 1, day: 15, yearName: 'dal' });
   });
 
-  test('reads the GDD §3.2 example: 15:40 in Kapat is Ashar', () => {
-    expect(kapat().id).toBe('kapat');
-    expect(prayerBandOf(at('15:40'), kapat(), cal)).toBe('ashar');
+  test('1 Sura 1959 (27 Juni 2025, tabular) was a Je year and a Jumat Kliwon', () => {
+    const jdn = masehiToJdn({ year: 2025, month: 6, day: 27 });
+    expect(jdnToHijri(jdn)).toEqual({ year: 1447, month: 1, day: 1 });
+    expect([jdn % 7, jdn % 5]).toEqual([4, 4]); // Jumat, Kliwon
+    const day = dayOnOrAfterJdn(jdn, cal);
+    expect(jawaOf(day, cal)).toMatchObject({ year: 1959, yearName: 'je' });
+  });
+});
+
+describe('prayer-time bands', () => {
+  const jul = 7;
+
+  test('the day opens at 05:00 in subuh', () => {
+    expect(prayerBandOf(at('05:00'), jul, cal)).toBe('subuh');
+  });
+
+  test('reads the GDD §3.2 example: 15:40 is Ashar in every month', () => {
+    for (let month = 1; month <= 12; month++) {
+      expect(prayerBandOf(at('15:40'), month, cal)).toBe('ashar');
+    }
   });
 
   test('a band starts exactly at its table time', () => {
-    expect(prayerBandOf(at('17:36'), kasa(), cal)).toBe('ashar');
-    expect(prayerBandOf(at('17:37'), kasa(), cal)).toBe('maghrib');
+    expect(prayerBandOf(at('17:36'), jul, cal)).toBe('ashar');
+    expect(prayerBandOf(at('17:37'), jul, cal)).toBe('maghrib');
   });
 
   test('after midnight it is still isya', () => {
-    expect(prayerBandOf(at('24:30'), kasa(), cal)).toBe('isya');
+    expect(prayerBandOf(at('24:30'), jul, cal)).toBe('isya');
   });
 });

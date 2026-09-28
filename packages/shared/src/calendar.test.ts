@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { parseClockTime, type RawCalendarFiles, validateCalendar } from './calendar.ts';
+import {
+  MASEHI_MONTH_IDS,
+  masehiMonthLength,
+  parseClockTime,
+  type RawCalendarFiles,
+  scaledDate,
+  validateCalendar,
+} from './calendar.ts';
 
 const TIMES = ['04:30', '05:50', '11:45', '15:00', '17:40', '18:50'];
 
@@ -9,30 +16,29 @@ function nth<T>(items: T[], index: number): T {
   return item;
 }
 
-/** A minimal valid set: two mangsa of 60 game days each. */
+/** A minimal valid set: every month kemarau, every month the same prayer times. */
 function files() {
   return {
-    mangsa: {
-      realYearDays: 365,
+    months: {
       gameYearDays: 120,
-      mangsa: [
-        { id: 'kasa', realDays: 180, gameDays: 60, musim: 'kemarau' },
-        { id: 'karo', realDays: 185, gameDays: 60, musim: 'hujan' },
-      ],
+      months: MASEHI_MONTH_IDS.map((id): { id: string; musim: string } => ({
+        id,
+        musim: 'kemarau',
+      })),
     },
     clock: {
       ticksPerMinute: 7,
       dayStartMinute: 300,
       dayEndMinute: 1500,
-      weekdayOfDay0: 'mon',
-      hijriOfDay0: { year: 1448, month: 1, day: 6 },
+      arrival: { year: 2026, month: 7, day: 1 },
+      jawa: { hijriYearOffset: 512, alipYear: 1956 } as unknown,
     },
     prayerTimes: {
       bands: ['subuh', 'dhuha', 'dzuhur', 'ashar', 'maghrib', 'isya'],
-      byMangsa: [
-        { mangsa: 'kasa', starts: TIMES },
-        { mangsa: 'karo', starts: TIMES },
-      ],
+      byMonth: MASEHI_MONTH_IDS.map((month): { month: string; starts: string[] } => ({
+        month,
+        starts: TIMES,
+      })),
     },
   };
 }
@@ -46,58 +52,83 @@ describe('validateCalendar', () => {
   test('accepts valid data and converts prayer times to minutes', () => {
     const result = validateCalendar(files());
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.data.mangsa[0]?.prayerStarts[0]).toBe(270);
+    if (result.ok) {
+      expect(result.data.gameMonthDays).toBe(10);
+      expect(result.data.months[0]?.prayerStarts[0]).toBe(270);
+    }
   });
 
-  test('rejects gameDays that do not sum to gameYearDays', () => {
+  test('rejects a year that does not split into 12 equal months', () => {
     const raw = files();
-    nth(raw.mangsa.mangsa, 0).gameDays = 59;
-    expect(errorsOf(raw)).toContain('mangsa.json5: gameDays sum to 119, but gameYearDays is 120');
+    raw.months.gameYearDays = 125;
+    expect(errorsOf(raw).join()).toContain('multiple of 12');
   });
 
-  test('rejects a year length that breaks the pasaran grid', () => {
+  test('rejects months missing or out of order', () => {
     const raw = files();
-    raw.mangsa.gameYearDays = 121;
-    nth(raw.mangsa.mangsa, 0).gameDays = 61;
-    expect(errorsOf(raw).join()).toContain('divisible by 5');
+    raw.months.months.reverse();
+    expect(errorsOf(raw).join()).toContain('months must be the 12 rows');
   });
 
-  test('rejects duplicate mangsa ids', () => {
+  test('rejects an unknown musim', () => {
     const raw = files();
-    nth(raw.mangsa.mangsa, 1).id = 'kasa';
-    expect(errorsOf(raw).join()).toContain("'kasa' is a duplicate");
+    nth(raw.months.months, 0).musim = 'both';
+    expect(errorsOf(raw)).toContain(
+      "months.json5: jan.musim 'both' is not one of kemarau, pancaroba, hujan",
+    );
   });
 
-  test('rejects an unknown musim tag', () => {
+  test('rejects a month with no prayer-time row, and a row for an unknown month', () => {
     const raw = files();
-    nth(raw.mangsa.mangsa, 0).musim = 'both';
-    expect(errorsOf(raw).join()).toContain("kasa.musim 'both' is not one of");
+    nth(raw.prayerTimes.byMonth, 1).month = 'kasa';
+    const errors = errorsOf(raw).map((e) => e.replace('prayer-times.json5: ', ''));
+    expect(errors).toContain("no row for month 'feb'");
+    expect(errors).toContain("row for unknown month 'kasa'");
   });
 
-  test('rejects a mangsa with no prayer-time row, and a row for an unknown mangsa', () => {
+  test('rejects prayer times that are not strictly increasing', () => {
     const raw = files();
-    nth(raw.prayerTimes.byMangsa, 1).mangsa = 'kapat';
-    const errors = errorsOf(raw).join('\n');
-    expect(errors).toContain("no row for mangsa 'karo'");
-    expect(errors).toContain("row for unknown mangsa 'kapat'");
+    nth(raw.prayerTimes.byMonth, 0).starts = [...TIMES].reverse();
+    expect(errorsOf(raw).join()).toContain('strictly increasing');
   });
 
-  test('rejects prayer times out of order', () => {
+  test('rejects an impossible arrival date', () => {
     const raw = files();
-    nth(raw.prayerTimes.byMangsa, 0).starts = [...TIMES].reverse();
-    expect(errorsOf(raw).join()).toContain('kasa: starts must be strictly increasing');
+    raw.clock.arrival = { year: 2026, month: 2, day: 29 };
+    expect(errorsOf(raw).join()).toContain('arrival must be a valid Masehi');
   });
 
-  test('rejects an impossible Hijri anchor', () => {
+  test('rejects an arrival the scaled calendar skips, naming the dates it shows', () => {
     const raw = files();
-    raw.clock.hijriOfDay0 = { year: 1448, month: 2, day: 30 };
-    expect(errorsOf(raw).join()).toContain('hijriOfDay0');
+    raw.clock.arrival = { year: 2026, month: 7, day: 2 };
+    expect(errorsOf(raw).join()).toContain('pick one of 1, 4, 7, 10, 13, 16, 19, 22, 25, 28');
+  });
+
+  test('rejects a missing Javanese anchor', () => {
+    const raw = files();
+    raw.clock.jawa = undefined;
+    expect(errorsOf(raw).join()).toContain('jawa must be');
   });
 
   test('rejects a day that ends before it starts', () => {
     const raw = files();
     raw.clock.dayEndMinute = 200;
     expect(errorsOf(raw).join()).toContain('dayEndMinute');
+  });
+});
+
+describe('Masehi month arithmetic', () => {
+  test('February has 29 days in a leap year only', () => {
+    expect([2026, 2028, 2100, 2000].map((y) => masehiMonthLength(y, 2))).toEqual([28, 29, 28, 29]);
+  });
+
+  test('a scaled month always shows the 1st and never runs past its last day', () => {
+    for (const length of [28, 29, 30, 31]) {
+      const shown = Array.from({ length: 10 }, (_, k) => scaledDate(k, length, 10));
+      expect(shown[0]).toBe(1);
+      expect(Math.max(...shown)).toBeLessThanOrEqual(length);
+      expect(new Set(shown).size).toBe(10);
+    }
   });
 });
 

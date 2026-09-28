@@ -63,7 +63,7 @@ The table lives as data in `tools/deps/rules.ts`. A PostToolUse hook (`scripts/h
 - **Commands in, events out:** input becomes `Command`s (`{ type: 'useTool', tool: 'hoe', target: {x,z} }`). Systems emit `Event`s (`cropHarvested`, `dayStarted`, `moneyChanged`) that render, UI, and audio subscribe to.
 
 ### 3.2 System order (per tick)
-1. `time` → advances the tick and `day` counter; emits `hourChanged`, `prayerTimeChanged`, `dayStarted`, `mangsaChanged`, `musimChanged`, `pasaranChanged`, `hijriMonthChanged`. All of those are **projections of `day`** ([ADR-0007](adr/0007-three-calendars.md)), not stored fields — the system compares yesterday's projection with today's to decide what to emit
+1. `time` → advances the tick and `day` counter; emits `hourChanged`, `prayerTimeChanged`, `dayStarted`, `monthChanged`, `musimChanged`, `pasaranChanged`, `hijriMonthChanged`. All of those are **projections of `day`** ([ADR-0007](adr/0007-three-calendars.md)), not stored fields — the system compares yesterday's projection with today's to decide what to emit
 2. `weather` → on `dayStarted`, roll the day's weather from seed + day index
 3. `commands` → validate and apply player commands (movement intent, tool use, interact)
 4. `farming` → on `dayStarted`: growth, watering reset, withering; rain auto-waters
@@ -79,7 +79,7 @@ The table lives as data in `tools/deps/rules.ts`. A PostToolUse hook (`scripts/h
 interface GameState {
   version: number;           // save schema version
   seed: number; rng: RngState;
-  clock: { tick: number; day: number; minute: number };   // day is absolute; mangsa/musim/pasaran/year/hijri are derived (ADR-0007)
+  clock: { tick: number; day: number; minute: number };   // day is absolute; masehi/jawa/hijri/musim/pasaran are derived (ADR-0009)
   weather: { today: Weather; tomorrow: Weather };
   player: { area: AreaId; pos: Vec2; facing: Dir; stamina: number; money: number; inventory: Slot[] };
   farm: { tiles: Record<TileKey, Tile> };           // TileKey = `${area}:${x},${z}`
@@ -133,7 +133,7 @@ requestAnimationFrame(frame):
 
 ## 5. Save format
 - `SaveFile = { format: 'bale-save', version, createdAt, updatedAt, meta: { day, money, playTime }, state: GameState }`.
-- **`day` is the only time stored.** Mangsa, musim, pasaran, weton and the Hijri date are all pure projections of it ([ADR-0007](adr/0007-three-calendars.md)), so storing them would let the save disagree with itself after a data fix.
+- **`day` is the only time stored.** The Masehi, Javanese and Hijri dates, musim, pasaran and weton are all pure projections of it ([ADR-0009](adr/0009-masehi-jawa-hijri.md)), so storing them would let the save disagree with itself after a data fix.
 - Validated with Zod on load. `migrations[version] = (old) => new` chain in `packages/shared/src/migrations.ts`.
 - Before overwriting a slot, copy the previous save to `:backup`. On validation failure, offer to restore the backup.
 - Export: JSON → gzip (`CompressionStream`) → base64url file download.

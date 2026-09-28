@@ -36,7 +36,7 @@ describe('time system', () => {
     expect(ofType(events, 'hourChanged')).toEqual([{ type: 'hourChanged', hour: 6 }]);
   });
 
-  test('emits prayerTimeChanged when a band starts (dhuha at 05:55 in Kasa)', () => {
+  test('emits prayerTimeChanged when a band starts (dhuha at 05:55 in Juli)', () => {
     const { events } = run(minutes(55));
     expect(ofType(events, 'prayerTimeChanged')).toEqual([
       { type: 'prayerTimeChanged', band: 'dhuha' },
@@ -49,7 +49,7 @@ describe('time system', () => {
     const rollover = events.slice(events.findIndex((e) => e.type === 'dayStarted'));
     expect(rollover).toEqual([
       { type: 'dayStarted', day: 1 },
-      { type: 'pasaranChanged', pasaran: 'pahing' },
+      { type: 'pasaranChanged', pasaran: 'kliwon' },
       { type: 'hourChanged', hour: 5 },
       { type: 'prayerTimeChanged', band: 'subuh' },
     ]);
@@ -61,14 +61,23 @@ describe('time system', () => {
     expect(events.at(-1)).toEqual({ type: 'hourChanged', hour: 0 });
   });
 
-  test('emits mangsaChanged when Karo starts on day 13', () => {
+  test('emits monthChanged when Agustus starts on day 10', () => {
     const state = createTimeState(cal);
     const ctx = createContext();
-    for (let i = 0; i < 13; i++) startNextDay(state, ctx, cal);
-    expect(ofType(ctx.events, 'mangsaChanged')).toEqual([
-      { type: 'mangsaChanged', mangsa: 'karo', year: 1 },
+    for (let i = 0; i < 10; i++) startNextDay(state, ctx, cal);
+    expect(ofType(ctx.events, 'monthChanged')).toEqual([
+      { type: 'monthChanged', year: 2026, month: 8 },
     ]);
     expect(ofType(ctx.events, 'musimChanged')).toEqual([]);
+  });
+
+  test('emits musimChanged when Oktober brings pancaroba on day 30', () => {
+    const state = createTimeState(cal);
+    const ctx = createContext();
+    for (let i = 0; i < 30; i++) startNextDay(state, ctx, cal);
+    expect(ofType(ctx.events, 'musimChanged')).toEqual([
+      { type: 'musimChanged', musim: 'pancaroba' },
+    ]);
   });
 
   test('one big step equals many single-tick steps', () => {

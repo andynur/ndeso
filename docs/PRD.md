@@ -29,7 +29,7 @@ Pillars (every feature must serve at least one):
 
 1. **Cozy & grounded.** Relaxing daily rhythm, no fail states, no villain, no combat.
 2. **The place is the point.** The player is graded on *asri, nyaman, tenang* — how the ground feels — not on wealth. Money is the means (GDD §5).
-3. **Authentically Indonesian, and specifically Javanese.** Culture expressed through *systems* — the pranata mangsa, the pasaran market day, the water schedule, the Hijri festivals — not through skins. A real town, handled by the rules in [PLACES §1](PLACES.md) and [CULTURE_GUIDE](CULTURE_GUIDE.md).
+3. **Authentically Indonesian, and specifically Javanese.** Culture expressed through *systems* — the Javanese and Hijri calendars beside the Masehi one, the pasaran market day, the water schedule, the Hijri festivals — not through skins. A real town, handled by the rules in [PLACES §1](PLACES.md) and [CULTURE_GUIDE](CULTURE_GUIDE.md).
 4. **Instant & light.** Link to play, small downloads, runs on a cheap phone, works offline.
 5. **Open.** Open source, moddable data, community contributions, including cultural review.
 
@@ -45,7 +45,7 @@ Pillars (every feature must serve at least one):
 ## 5. Goals & non-goals
 
 ### Goals (v1.0)
-- G1: A complete 120-day year across all 12 *mangsa*, with crops, animals, the pasar, 8+ NPCs, and 4 festivals including Lebaran.
+- G1: A complete 120-day year across all 12 months and three musim, with crops, animals, the pasar, 8+ NPCs, and 4 festivals including Lebaran.
 - G1b: The *asri / nyaman / tenang* system readable and reactive, and Mbah Hita's plan completable to Act 3 (he moves back).
 - G2: Runs at 30 fps on reference low-end Android devices ([PERFORMANCE_BUDGET](PERFORMANCE_BUDGET.md)).
 - G3: First playable frame reached with ≤ 10 MB downloaded; fully playable offline after the first visit.
@@ -89,10 +89,10 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 | ID | Requirement | Pri |
 |---|---|---|
 | FR-010 | Game clock runs 05:00–01:00. One in-game minute equals ~0.7 s real time (tunable). Passing out at 01:00 costs money and stamina. | P0 |
-| FR-011 | The year is **120 days across the 12 *mangsa*** of the pranata mangsa, with the real proportions preserved. *Musim* (hujan / kemarau / pancaroba) is a derived label. Lengths are data, not code. ([ADR-0007](adr/0007-three-calendars.md)) | P0 |
+| FR-011 | The year is **120 days across the 12 Masehi months**, 10 game days each, showing real dates scaled from the real month. *Musim* (hujan / kemarau / pancaroba) is derived from the month; the split is data, not code. ([ADR-0009](adr/0009-masehi-jawa-hijri.md)) | P0 |
 | FR-012 | Seven-day week combined with the Javanese five-day *pasaran* cycle (Legi, Pahing, Pon, Wage, Kliwon). Pasar Baledono is busiest on its *pasaran* day. | P0 |
-| FR-013 | **Tabular Hijri calendar** projected from the same day counter, so Ramadan, Lebaran and Idul Adha drift ~4 days per game year against the mangsa. No astronomical hisab. | P1 |
-| FR-014 | The HUD shows the clock **and the prayer-time band** it falls in (`15:40 · Ashar`), plus mangsa, day-in-mangsa and pasaran. A display only: it gates nothing and scores nothing (CULTURE_GUIDE §3.1). | P0 |
+| FR-013 | **Tabular Hijri and Javanese dates** of the real date each game day shows, so Ramadan, Lebaran and Idul Adha drift ~11 real days per year against the seasons, as in life. No astronomical hisab. | P1 |
+| FR-014 | The HUD shows the clock **and the prayer-time band** it falls in (`15:40 · Ashar`), plus the weekday, pasaran and Masehi date, with the Javanese and Hijri dates as a subtitle. A display only: it gates nothing and scores nothing (CULTURE_GUIDE §3.1). | P0 |
 | FR-015 | Calendar UI shows festivals, NPC birthdays and *weton*, and pasaran days. | P1 |
 
 ### 7.3 Farming
@@ -102,7 +102,7 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 | FR-021 | Crops have season, growth days, regrowth, sell price, and water need (see [GDD §4](GDD.md#4-farming)). | P0 |
 | FR-022 | Wet-rice paddy (*sawah*) plots need flooding via the *kalen* (irrigation channel), a separate plot type. | P1 |
 | FR-023 | Water sharing, Javanese model: the **ulu-ulu** sets which days each plot gets water. Helping maintain the channels improves your slots. Taking water out of turn is possible and costs standing, never a hard fail. | P1 |
-| FR-024 | Pests (e.g. *wereng*) and crop disease, prevented by crop rotation and natural remedies. Pest pressure varies by mangsa. | P2 |
+| FR-024 | Pests (e.g. *wereng*) and crop disease, prevented by crop rotation and natural remedies. Pest pressure varies by month. | P2 |
 | FR-025 | Tool upgrades (hoe, watering can, sickle, axe) at the *pandai besi* (blacksmith). | P1 |
 
 ### 7.3b Kawasan (the place itself)
@@ -134,7 +134,7 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 ### 7.6 NPCs & social
 | ID | Requirement | Pri |
 |---|---|---|
-| FR-050 | NPCs follow daily schedules that depend on weekday, weather, and mangsa. | P0 (3 NPCs) |
+| FR-050 | NPCs follow daily schedules that depend on weekday, weather, and musim. | P0 (3 NPCs) |
 | FR-051 | Dialog via Ink scripts, with branching based on friendship and flags. Speech level (ngoko/krama) correct per relationship. | P0 |
 | FR-052 | **Mbah Hita** is present, talks, comments on the ground as it changes, and is the readout for *asri / nyaman / tenang* before any UI meter exists. His plan drives the build order. He **does not die**. | P0 |
 | FR-053 | Friendship levels (0–10 hearts). Gifts, with liked/disliked items per NPC. Birthday and *weton* gifts ×3. | P1 |
@@ -148,7 +148,7 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 | FR-060 | ***Merti Desa*** (village harvest thanksgiving, a.k.a. *sedekah bumi*) — the flagship festival, hosted at the balé the player built. | P1 |
 | FR-061 | **Ramadan (30 days):** the *town* changes — pasar opens ~03:00, midday empties, takjil stalls before maghrib, tarawih at the musholla. The player's own fasting is **never modelled, rewarded, or penalised**. | P1 |
 | FR-062 | **Lebaran:** *mudik* — the kampung empties then fills; NPCs who left come home; sungkeman and ketupat. The emotional peak of the year. | P1 |
-| FR-063 | **Festival Durian** in the durian mangsa: grow one over years, enter your best fruit. | P2 |
+| FR-063 | **Festival Durian** in the durian months (Des–Feb): grow one over years, enter your best fruit. | P2 |
 | FR-064 | ***Dolalak*** — Purworejo's own dance, as a visual set piece; rhythm minigame later. | P2 |
 | FR-065 | *Tujuhbelasan* with *balap karung*, *makan kerupuk*, *panjat pinang*. Apolitical. | P2 |
 
@@ -237,4 +237,4 @@ Full budget: [PERFORMANCE_BUDGET](PERFORMANCE_BUDGET.md).
 3. Should the GitHub repository itself be renamed from `ndeso` to `bale`? Owner's call; GitHub redirects the old URL.
 4. Is cloud save worth the operational cost for v1, or should we ship export/import only?
 5. Keep the Play Store TWA as a post-v1 experiment?
-6. The mangsa day-lengths in `packages/content/data/calendar/mangsa.json5` are transcribed from secondary sources and marked `verified: false`. Confirm all twelve against a Javanese-calendar reference before v1.
+6. The Javanese year anchor in `packages/content/data/calendar/clock.json5` (1956 = Alip; Javanese date taken as the tabular Hijri date) is marked `verified: false`. Confirm against a published Javanese almanac before v1. (The mangsa lengths this item used to cover are gone with ADR-0009.)
