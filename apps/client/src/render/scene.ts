@@ -154,6 +154,7 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
   // The player, and the camera's follow target. Shares the villager atlas until real art.
   const hero = sprites.add({ x: 0, y: 0, z: 0, tag: 'idle_down' });
   let heroWalking = false;
+  let heroFacing: Dir = 'south';
   let snapped = false;
   // World headings (dx, dz): at yaw 0 these face down, up, right and left.
   const idleHeadings = [
@@ -210,9 +211,10 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     // The rig keeps easing while the context is lost, so it is settled when it returns.
     rig.update(realDtSeconds);
     if (contextLost) return;
-    // Restart the cycle on every start and stop, so a step begins on the contact frame.
-    if (player.walking !== heroWalking) {
+    // Restart the cycle on every start, stop and turn, so a step begins on the contact frame.
+    if (player.walking !== heroWalking || player.facing !== heroFacing) {
       heroWalking = player.walking;
+      heroFacing = player.facing;
       hero.startSeconds = simSeconds;
     }
     const heading = DIR_HEADINGS[player.facing];

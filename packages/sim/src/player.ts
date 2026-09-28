@@ -4,7 +4,7 @@ import { type CollisionGrid, isSolid } from './collision.ts';
 /**
  * The player's body in the world (ARCHITECTURE §3.3 `player`). Only position, facing and
  * the held movement intent so far; stamina, money and inventory join with the systems that
- * change them.
+ * change them, and `area` with the second area (M1-09 builds only one).
  */
 
 export interface Vec2 {
@@ -66,6 +66,7 @@ export function facingFor(x: number, z: number, current: Dir): Dir {
   const az = Math.abs(z);
   if (ax > az) return ew;
   if (az > ax) return ns;
+  // Keep east/west if already facing it; else face along z (the front and back sprites).
   return current === ew ? ew : ns;
 }
 
