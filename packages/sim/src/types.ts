@@ -18,6 +18,8 @@ export interface SimContext {
   readonly ticks: number;
   /** This step's player commands, already sanitized, in the order they were issued. */
   readonly commands: readonly Command[];
+  /** Events emitted earlier in this step, in system order. Later systems may react to them. */
+  readonly events: readonly SimEvent[];
   emit(event: SimEvent): void;
 }
 

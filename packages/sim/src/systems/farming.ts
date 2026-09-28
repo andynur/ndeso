@@ -1,0 +1,222 @@
+import type { CalendarData, MusimId } from '@bale/shared';
+import type { CropDef } from '@bale/shared/content';
+import { projectDay } from '../calendar.ts';
+import type { TileTarget } from '../commands.ts';
+import type { SimContext, System } from '../types.ts';
+
+/** A stable key for the serializable farm record (ARCHITECTURE §3.3). */
+export type TileKey = `${string}:${number},${number}`;
+
+export interface FarmLocation {
+  readonly area: string;
+  readonly x: number;
+  readonly z: number;
+}
+
+export type FarmPlot = FarmLocation &
+  (
+    | { readonly plot: 'tegalan' | 'kebun' }
+    | { readonly plot: 'sawah'; readonly waterLevel?: 0 | 1 | 2 | 3 }
+  );
+
+type Hydration =
+  | { plot: 'tegalan' | 'kebun'; watered: boolean }
+  | { plot: 'sawah'; waterLevel: 0 | 1 | 2 | 3 };
+
+type EmptyPhase = { phase: 'untilled' | 'tilled' };
+interface CropFields {
+  cropId: string;
+  /** Productive, watered days completed since planting. */
+  growthDays: number;
+  /** Consecutive days without enough water; meaningful for tegalan and kebun. */
+  dryDays: number;
+}
+type CropPhase = CropFields & ({ phase: 'seeded' } | { phase: 'mature' } | { phase: 'withered' });
+
+/** One tile is always in exactly one phase; hydration is part of the same plain-data value. */
+export type FarmTile = FarmLocation & Hydration & (EmptyPhase | CropPhase);
+
+export interface FarmingState {
+  farm: { tiles: Record<TileKey, FarmTile> };
+}
+
+export function tileKey(target: TileTarget): TileKey {
+  return `${target.area}:${target.x},${target.z}`;
+}
+
+export function createFarmingState(plots: readonly FarmPlot[] = []): FarmingState {
+  const tiles = {} as Record<TileKey, FarmTile>;
+  for (const plot of plots) {
+    const key = tileKey(plot);
+    if (tiles[key] !== undefined) throw new Error(`duplicate farm tile '${key}'`);
+    tiles[key] =
+      plot.plot === 'sawah'
+        ? { ...plot, waterLevel: plot.waterLevel ?? 0, phase: 'untilled' }
+        : { ...plot, watered: false, phase: 'untilled' };
+  }
+  return { farm: { tiles } };
+}
+
+/** Step 3: apply farm commands. Inventory and stamina charge these actions in later tasks. */
+export function createFarmCommandSystem(crops: readonly CropDef[]): System<FarmingState> {
+  const cropById = indexCrops(crops);
+  return (state, ctx) => {
+    for (const command of ctx.commands) {
+      if (command.type === 'useTool') {
+        const key = tileKey(command.target);
+        const tile = state.farm.tiles[key];
+        if (tile === undefined) continue;
+        if (command.tool === 'hoe') hoe(state, key, tile, ctx);
+        else water(state, key, tile, ctx);
+      } else if (command.type === 'plantSeed') {
+        const key = tileKey(command.target);
+        const tile = state.farm.tiles[key];
+        const crop = cropById.get(command.cropId);
+        if (tile !== undefined && crop !== undefined) plant(state, key, tile, crop, ctx);
+      } else if (command.type === 'harvest') {
+        const key = tileKey(command.target);
+        const tile = state.farm.tiles[key];
+        if (tile?.phase === 'mature') harvest(state, key, tile, cropById.get(tile.cropId), ctx);
+      }
+    }
+  };
+}
+
+/** Step 4: advance crops once for each `dayStarted` emitted by the time system. */
+export function createFarmingSystem(
+  crops: readonly CropDef[],
+  cal: CalendarData,
+): System<FarmingState> {
+  const cropById = indexCrops(crops);
+  return (state, ctx) => {
+    for (const event of ctx.events) {
+      const { day } = event as { readonly day?: unknown };
+      if (event.type !== 'dayStarted' || typeof day !== 'number') continue;
+      const musim = projectDay(day, cal).musim;
+      for (const [key, current] of Object.entries(state.farm.tiles) as [TileKey, FarmTile][]) {
+        // A clear day lowers a sawah before growth. Tegalan consumes yesterday's watering,
+        // then resets after growth so it must be watered again for tomorrow.
+        const tile = current.plot === 'sawah' ? resetDailyWater(current) : current;
+        if (tile.phase !== 'seeded' && tile.phase !== 'mature') {
+          state.farm.tiles[key] = tile.plot === 'sawah' ? tile : resetDailyWater(tile);
+          continue;
+        }
+        const crop = cropById.get(tile.cropId);
+        if (crop === undefined) {
+          state.farm.tiles[key] = tile.plot === 'sawah' ? tile : resetDailyWater(tile);
+          continue;
+        }
+        const advanced = advanceCrop(tile, crop, musim, key, ctx);
+        state.farm.tiles[key] = advanced.plot === 'sawah' ? advanced : resetDailyWater(advanced);
+      }
+    }
+  };
+}
+
+function indexCrops(crops: readonly CropDef[]): ReadonlyMap<string, CropDef> {
+  const byId = new Map<string, CropDef>();
+  for (const crop of crops) {
+    if (byId.has(crop.id)) throw new Error(`duplicate crop '${crop.id}'`);
+    byId.set(crop.id, crop);
+  }
+  return byId;
+}
+
+function hoe(state: FarmingState, key: TileKey, tile: FarmTile, ctx: SimContext): void {
+  if (tile.phase !== 'untilled') return;
+  state.farm.tiles[key] = { ...tile, phase: 'tilled' };
+  ctx.emit({ type: 'tileHoed', key });
+}
+
+function water(state: FarmingState, key: TileKey, tile: FarmTile, ctx: SimContext): void {
+  if (tile.phase === 'untilled') return;
+  const next: FarmTile =
+    tile.plot === 'sawah'
+      ? { ...tile, waterLevel: Math.min(3, tile.waterLevel + 1) as 0 | 1 | 2 | 3 }
+      : { ...tile, watered: true };
+  state.farm.tiles[key] = next;
+  ctx.emit({
+    type: 'tileWatered',
+    key,
+    waterLevel: next.plot === 'sawah' ? next.waterLevel : undefined,
+  });
+}
+
+function plant(
+  state: FarmingState,
+  key: TileKey,
+  tile: FarmTile,
+  crop: CropDef,
+  ctx: SimContext,
+): void {
+  if (tile.phase !== 'tilled' || tile.plot !== crop.plot) return;
+  state.farm.tiles[key] = { ...tile, phase: 'seeded', cropId: crop.id, growthDays: 0, dryDays: 0 };
+  ctx.emit({ type: 'cropPlanted', key, cropId: crop.id });
+}
+
+function harvest(
+  state: FarmingState,
+  key: TileKey,
+  tile: Extract<FarmTile, { phase: 'mature' }>,
+  crop: CropDef | undefined,
+  ctx: SimContext,
+): void {
+  if (crop === undefined) return;
+  if (crop.regrowDays === null) {
+    state.farm.tiles[key] = clearCrop(tile, 'untilled');
+  } else {
+    state.farm.tiles[key] = {
+      ...tile,
+      phase: 'seeded',
+      growthDays: Math.max(0, crop.growDays - crop.regrowDays),
+      dryDays: 0,
+    };
+  }
+  ctx.emit({ type: 'cropHarvested', key, cropId: crop.id, yield: crop.harvestYield });
+}
+
+function clearCrop(tile: FarmTile, phase: 'untilled' | 'tilled'): FarmTile {
+  const location = { area: tile.area, x: tile.x, z: tile.z };
+  return tile.plot === 'sawah'
+    ? { ...location, plot: tile.plot, waterLevel: tile.waterLevel, phase }
+    : { ...location, plot: tile.plot, watered: tile.watered, phase };
+}
+
+function resetDailyWater(tile: FarmTile): FarmTile {
+  if (tile.plot === 'sawah') {
+    return { ...tile, waterLevel: Math.max(0, tile.waterLevel - 1) as 0 | 1 | 2 | 3 };
+  }
+  return { ...tile, watered: false };
+}
+
+function advanceCrop(
+  tile: Extract<FarmTile, { phase: 'seeded' | 'mature' }>,
+  crop: CropDef,
+  musim: MusimId,
+  key: TileKey,
+  ctx: SimContext,
+): FarmTile {
+  if (crop.musim !== 'semua' && crop.musim !== musim) {
+    ctx.emit({ type: 'cropWithered', key, cropId: crop.id, reason: 'musim' });
+    return { ...tile, phase: 'withered' };
+  }
+
+  const hasWater = tile.plot === 'sawah' ? tile.waterLevel >= 2 : tile.watered;
+  if (!hasWater) {
+    const dryDays = tile.dryDays + 1;
+    if (tile.plot !== 'sawah' && dryDays >= crop.dryDaysToWither) {
+      ctx.emit({ type: 'cropWithered', key, cropId: crop.id, reason: 'dry' });
+      return { ...tile, phase: 'withered', dryDays };
+    }
+    return { ...tile, dryDays };
+  }
+
+  if (tile.phase === 'mature') return { ...tile, dryDays: 0 };
+
+  const growthDays = tile.growthDays + 1;
+  if (growthDays >= crop.growDays) {
+    ctx.emit({ type: 'cropMatured', key, cropId: crop.id });
+    return { ...tile, phase: 'mature', growthDays, dryDays: 0 };
+  }
+  return { ...tile, growthDays, dryDays: 0 };
+}

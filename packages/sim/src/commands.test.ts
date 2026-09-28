@@ -42,6 +42,36 @@ describe('sanitizeCommand', () => {
     expect(sanitizeCommand({ type: 'teleport' } as unknown as Command)).toBeNull();
   });
 
+  test('validates farm ids and integer tile targets', () => {
+    expect(
+      sanitizeCommand({
+        type: 'plantSeed',
+        cropId: 'cabai',
+        target: { area: 'bale', x: 8, z: -2 },
+      }),
+    ).toEqual({
+      type: 'plantSeed',
+      cropId: 'cabai',
+      target: { area: 'bale', x: 8, z: -2 },
+    });
+    expect(
+      sanitizeCommand({
+        type: 'plantSeed',
+        cropId: '../cabai',
+        target: { area: 'bale', x: 8, z: -2 },
+      }),
+    ).toBeNull();
+    expect(
+      sanitizeCommand({
+        type: 'harvest',
+        target: { area: 'bale', x: 8.5, z: -2 },
+      }),
+    ).toBeNull();
+    expect(
+      sanitizeCommand({ type: 'harvest', target: undefined } as unknown as Command),
+    ).toBeNull();
+  });
+
   test('returns a copy, never the caller’s object', () => {
     const input: Command = { type: 'interact' };
     expect(sanitizeCommand(input)).not.toBe(input);

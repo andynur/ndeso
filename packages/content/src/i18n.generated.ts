@@ -63,6 +63,14 @@ export type GlossaryKey =
   | 'tengkulak.def'
   | 'tengkulak.term';
 
+export type ItemsKey =
+  | 'crop.cabai.desc'
+  | 'crop.cabai.name'
+  | 'crop.padi.desc'
+  | 'crop.padi.name'
+  | 'crop.singkong.desc'
+  | 'crop.singkong.name';
+
 export type UiKey =
   | 'app.tagline'
   | 'app.title'
@@ -124,9 +132,14 @@ export type UiKey =
   | 'weekday.wed';
 
 /** Every key a caller may pass to `t()`: `ui` keys bare, and all keys namespaced. */
-export type I18nKey = UiKey | `calendar:${CalendarKey}` | `glossary:${GlossaryKey}` | `ui:${UiKey}`;
+export type I18nKey =
+  | UiKey
+  | `calendar:${CalendarKey}`
+  | `glossary:${GlossaryKey}`
+  | `items:${ItemsKey}`
+  | `ui:${UiKey}`;
 
-export const GENERATED_NAMESPACES = ['calendar', 'glossary', 'ui'] as const;
+export const GENERATED_NAMESPACES = ['calendar', 'glossary', 'items', 'ui'] as const;
 export type GeneratedNamespace = (typeof GENERATED_NAMESPACES)[number];
 
 export type BundleLoader = () => Promise<{ readonly default: Readonly<Record<string, string>> }>;
@@ -138,11 +151,13 @@ export const LOCALE_BUNDLES: Readonly<
   en: {
     calendar: () => import('../locales/en/calendar.json'),
     glossary: () => import('../locales/en/glossary.json'),
+    items: () => import('../locales/en/items.json'),
     ui: () => import('../locales/en/ui.json'),
   },
   id: {
     calendar: () => import('../locales/id/calendar.json'),
     glossary: () => import('../locales/id/glossary.json'),
+    items: () => import('../locales/id/items.json'),
     ui: () => import('../locales/id/ui.json'),
   },
 };

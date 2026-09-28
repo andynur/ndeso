@@ -1,5 +1,6 @@
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
+import { CROP_DATA } from '@bale/content/crops';
 import { LIGHTING_DATA } from '@bale/content/lighting';
 import { PLAYER_DATA } from '@bale/content/player';
 import { parseAssetManifest, TICK_MS } from '@bale/shared';
@@ -118,7 +119,7 @@ async function boot(): Promise<void> {
   const state = createGameState(CALENDAR_DATA, BALE_AREA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
-  const game = createGame(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, state);
+  const game = createGame(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, CROP_DATA, state);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const commands = createCommandMapper();
   const now = BROWSER_FRAMES.now;

@@ -1,8 +1,11 @@
 import { type AreaDef, type CalendarData, type PlayerData, parseClockTime } from '@bale/shared';
+import type { CropDef } from '@bale/shared/content';
 import {
   buildCollisionGrid,
   type Command,
   createContext,
+  createFarmCommandSystem,
+  createFarmingSystem,
   createGameState,
   createMovementSystem,
   createTimeSystem,
@@ -54,11 +57,14 @@ export function createGame(
   cal: CalendarData,
   area: AreaDef,
   player: PlayerData,
+  crops: readonly CropDef[],
   state: GameState = createGameState(cal, area),
   after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
   const movement = createMovementSystem(buildCollisionGrid(area), player);
+  const farmCommands = createFarmCommandSystem(crops);
+  const farming = createFarmingSystem(crops, cal);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
   let previousZ = state.player.z;
@@ -83,6 +89,8 @@ export function createGame(
       previousZ = state.player.z;
       time(state, ctx);
       movement(state, ctx);
+      farmCommands(state, ctx);
+      farming(state, ctx);
       for (const system of after) system(state, ctx);
       ticks++;
       if (ctx.events.length > 0) pending.push(...ctx.events);

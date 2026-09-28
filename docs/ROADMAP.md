@@ -35,7 +35,7 @@
 ## M2 — Vertical slice (exit: GDD §13 "Done when")
 
 - [x] **M2-01** Content schemas (crops, items, tools, npcs, **calendar**) in `shared` + `check:content`. Must keep the `months.json5` checks (12 months in order, `gameYearDays` a multiple of 12 and 5; ADR-0009).
-- [ ] **M2-02** Farming system: tile states, hoe, seed, water, growth on `dayStarted`, harvest. Unit + golden tests.
+- [x] **M2-02** Farming system: tile states, hoe, seed, water, growth on `dayStarted`, harvest. Unit + golden tests.
 - [ ] **M2-03** Crop rendering: instanced per stage, watered-soil decals, updates on day change.
 - [ ] **M2-04** Inventory + hotbar (sim + UI), tool switching.
 - [ ] **M2-05** Weather (clear/rain) seeded per month; rain particles; rain auto-waters. Januari is the heavy one (GDD §3.3).

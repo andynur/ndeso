@@ -1,0 +1,33 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`a scripted 14-day cabai and singkong plot 1`] = `
+{
+  "harvests": [
+    "cabai:3",
+    "cabai:3",
+    "cabai:3",
+    "singkong:1",
+  ],
+  "tiles": [
+    {
+      "area": "bale",
+      "cropId": "cabai",
+      "dryDays": 0,
+      "growthDays": 5,
+      "phase": "seeded",
+      "plot": "tegalan",
+      "watered": false,
+      "x": 8,
+      "z": -2,
+    },
+    {
+      "area": "bale",
+      "phase": "untilled",
+      "plot": "tegalan",
+      "watered": false,
+      "x": 9,
+      "z": -2,
+    },
+  ],
+}
+`;
