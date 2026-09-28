@@ -7,7 +7,7 @@
 ## 1. Core loop
 
 ```
-Bangun subuh → lihat mangsa/cuaca/pasaran → garap kebun (siram, panen, ternak)
+Bangun subuh → lihat tanggal/cuaca/pasaran → garap kebun (siram, panen, ternak)
   → waktu luang: ke pasar / ngobrol / jalan-jalan / cari bahan
   → sore–maghrib: bangun kawasan, festival, ngobrol → tidur (autosave)
   → semalam: tanaman tumbuh, setoran dibayar
@@ -74,72 +74,52 @@ profit is rewarded; here the reward is the place itself.
 
 ## 3. Time & calendar
 
-Three real calendars run at once, all derived from a single integer `day`
-counter. See **[ADR-0007](adr/0007-three-calendars.md)** for the decision and
-its constraints.
+The calendar reads the way an Indonesian wall calendar does: the **Masehi** date on top,
+the **Javanese** and **Hijri** dates underneath. All of them derive from a single integer
+`day` counter. See **[ADR-0009](adr/0009-masehi-jawa-hijri.md)** (which supersedes the
+pranata-mangsa year of ADR-0007).
 
 | Unit | Value |
 |---|---|
 | Day | 05:00 → 01:00. Default 1 game-minute = 0.7 real s, so a day is ~14 real min |
-| Week | 7 days (Senin–Minggu) plus the 5-day *pasaran* cycle (Legi, Pahing, Pon, Wage, Kliwon) |
-| Year | **120 days**, divided into the **12 mangsa** of the pranata mangsa |
-| Musim | Derived label over groups of mangsa: *hujan* 54 d, *kemarau* 50 d, *pancaroba* 16 d |
-| Hijriah | Tabular (arithmetic) Islamic calendar, lunar year 116 days → **drifts 4 days per game year** |
+| Week | 7 days (Senin–Minggu) plus the 5-day *pasaran* cycle (Legi, Pahing, Pon, Wage, Kliwon). Day 0 takes the real weekday and pasaran of the arrival date; both then advance one per game day |
+| Month | **10 game days** per Masehi month. The date shown is scaled from the real month: 1, 4, 7 … 28 for a 31-day month |
+| Year | **120 days** = 12 months. Arrival (day 0): **1 Juli 2026** |
+| Musim | From the month: *hujan* Nov–Mar (50 d), *pancaroba* Apr & Okt (20 d), *kemarau* Mei–Sep (50 d) |
+| Hijriah | The tabular Hijri date of the real date shown, so Ramadan and Lebaran drift ~11 real days earlier each year against the seasons, as in life |
+| Jawa | The Hijri date under Javanese month names (Sura … Besar), year = Hijri + 512, with the windu year name (Alip … Jimakir) |
 
-### 3.1 Pranata mangsa
+### 3.1 Musim, and the pranata mangsa as lore
 
-Lengths live in `packages/content/data/calendar/mangsa.json5` and must sum to
-120. The real proportions are preserved, so Kasa and Kanem are the long mangsa
-and Karo and Dhesta the short ones.
+The musim split lives in `packages/content/data/calendar/months.json5`. Crops are
+tagged coarsely by `musim`: one of `hujan` · `kemarau` · `pancaroba` · **`semua`**
+(grows all year). *Musim hujan* is 50 days, comfortably longer than the 28-day
+season the crop numbers in §4.3 were first tuned for.
 
-**Who uses it.** The pranata mangsa is still known but increasingly checked
-against the BMKG forecast and the government planting calendar (*Katam*), because
-the seasons have shifted. So the older characters — Mbah Hita, the farmers —
-read the pertanda; the younger ones look at their phones; and the game lets
-both be right sometimes. It is a living habit under strain, not a museum piece.
+**The pranata mangsa is lore, not a system** (owner decision, 2026-09-28). It is
+still known in Purworejo, but increasingly checked against the BMKG forecast and the
+government planting calendar (*Katam*), because the seasons have shifted. So the
+older characters — Mbah Hita, the farmers — may read the *pertanda* in dialog,
+and the younger ones look at their phones.
+No rule, event or HUD line depends on a mangsa.
 
-The **pertanda** column below is design intent, recorded here because this
-document may hold prose and the data file may not. Each becomes
-`calendar:mangsa.<id>.sign` in **both** locales in the task that first surfaces
-it (M1-01) — see `.claude/rules/content-i18n.md` and AGENTS rule 3.
+### 3.2 The HUD date and the prayer-time clock
 
-| # | Mangsa | Game days | Musim | Pertanda |
-|---|---|---|---|---|
-| 1 | Kasa | 13 | kemarau | daun berguguran, tanah retak |
-| 2 | Karo | 8 | kemarau | puncak kemarau, tanah paling kering |
-| 3 | Katelu | 8 | kemarau | umbi tumbuh, rebung muncul |
-| 4 | Kapat | 8 | pancaroba | burung mulai bersarang |
-| 5 | Kalima | 9 | hujan | hujan pertama |
-| 6 | Kanem | 14 | hujan | hujan menguat, musim buah |
-| 7 | Kapitu | 14 | hujan | hujan terberat, kali meluap |
-| 8 | Kawolu | 9 | hujan | padi menghijau, hama banyak |
-| 9 | Kasanga | 8 | hujan | padi berbuah, jangkrik bersuara |
-| 10 | Kasadasa | 8 | pancaroba | hujan mereda, panen |
-| 11 | Dhesta | 8 | kemarau | udara panas dan kering |
-| 12 | Sadha | 13 | kemarau | air menyusut, angin kering |
-
-Crops stay tagged coarsely by `musim`, not by mangsa, so the crop table in §4.3
-needs no rebalancing: *musim hujan* is 54 days, comfortably longer than the
-28-day season the numbers were first tuned for.
-
-`musim` on a crop is one of `hujan` · `kemarau` · `pancaroba` · **`semua`**
-(grows in all twelve mangsa). The old `both` tag is gone: with pancaroba now a
-first-class musim rather than a sub-phase, "both" no longer says whether the
-16 pancaroba days are included.
-
-### 3.2 The clock reads in prayer times
-
-The HUD shows both the clock and the prayer-time band it falls in, because that
-is how people there actually tell the time:
+The HUD shows the clock, the prayer-time band it falls in, and the date on three lines:
 
 ```
-  15:40 · Ashar          Mangsa Kapat · hari 3/8 · Kliwon
+  15:40 · Ashar
+  Rabu Wage, 1 Juli 2026
+  15 Sura 1960 Dal · 15 Muharam 1448 H
 ```
 
-Prayer times come from a **fixed table that varies only by mangsa**, not from a latitude
-and a date. Computing them is astronomy, and it would cost `packages/sim` its purity and
-determinism to buy precision the game never uses — the same reasoning ADR-0007 applied to
-the Hijri calendar. The clock lands in M1-01; the HUD that shows it, in M1-08.
+Because a game day stands for ~3 real days, about two in three dates never show. A
+festival whose date is skipped lands on the next game day (ADR-0009). On that day the
+HUD names the festival, so Idul Adha never reads as "12 Zulhijah".
+
+Prayer times come from a **fixed table that varies only by Masehi month**, not from a
+latitude and a date. Computing them is astronomy, and it would cost `packages/sim` its
+purity and determinism to buy precision the game never uses.
 
 ⚠️ **This is a time display and nothing else.** Prayer times never gate an
 action, never score anything, and are never required. The player character is
@@ -153,9 +133,9 @@ pray. See CULTURE_GUIDE §3.
 | Kemarau | 65% | 25% | 10% | 0% |
 | Pancaroba | 35% | 30% | 30% | 5% |
 | Hujan | 20% | 25% | 45% | 10% |
-| Hujan, mangsa **Kapitu** | 10% | 20% | 50% | 20% |
+| Hujan, **Januari** | 10% | 20% | 50% | 20% |
 
-Kapitu is the heaviest rain of the year: storms, an overflowing *kalen*, debris
+Januari is the heaviest rain of the year (the old *Kapitu*): storms, an overflowing *kalen*, debris
 on the ground the next morning, and a chance of crop damage.
 
 ## 4. Farming

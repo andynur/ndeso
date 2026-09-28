@@ -7,7 +7,7 @@ model: sonnet
 Review the working-tree diff (`git diff --stat` then `git diff` per file; skip lockfiles and generated files).
 
 Check, in order:
-1. Correctness bugs and missing edge cases (null tiles, day rollover at 01:00, mangsa and pasaran boundaries, save migration).
+1. Correctness bugs and missing edge cases (null tiles, day rollover at 01:00, month, year and pasaran boundaries, skipped scaled dates, save migration).
 2. AGENTS.md hard rules: sim purity, no hardcoded strings, no unapproved deps, ADR/GDD not changed silently.
 3. Boundaries from docs/ARCHITECTURE.md §2.
 4. i18n: new keys exist in en + id with identical placeholders.

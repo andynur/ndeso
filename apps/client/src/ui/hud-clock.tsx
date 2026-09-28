@@ -17,15 +17,14 @@ const BAND_KEYS: Record<PrayerBandId, I18nKey> = {
 };
 
 /**
- * GDD §3.2: `15:40 · Ashar` over `Mangsa Kapat · hari 3/8 · Kliwon`. The prayer band is a
- * time label and nothing else (CULTURE_GUIDE §3). Top-left per DESIGN §5.
+ * GDD §3.2: the time and its prayer band, the Masehi date with weekday and pasaran, and under
+ * it the Javanese and Hijri dates as a subtitle. The prayer band is a time label and nothing
+ * else (CULTURE_GUIDE §3). Top-left per DESIGN §5.
  */
 export function HudClock() {
   const view = clockView.value;
   if (!view) return null;
-  // Mangsa ids come from validated data; `content/src/calendar.test.ts` checks every one
-  // has a name in every locale, which the key union cannot express.
-  const mangsaKey = `calendar:mangsa.${view.mangsa}.name` as I18nKey;
+  const n = format.value.number;
   return (
     <div class="clock" role="timer" aria-live="off">
       <p class="clock__time">
@@ -35,11 +34,23 @@ export function HudClock() {
         })}
       </p>
       <p class="clock__date">
-        {t('hud.mangsa_day', {
-          mangsa: t(mangsaKey),
-          day: format.value.number(view.mangsaDay),
-          length: format.value.number(view.mangsaLength),
+        {t('hud.date', {
+          weekday: t(`weekday.${view.weekday}`),
           pasaran: t(`pasaran.${view.pasaran}`),
+          date: n(view.date),
+          month: t(`calendar:masehi.${view.month}`),
+          year: String(view.year),
+        })}
+      </p>
+      <p class="clock__sub">
+        {t('hud.date_sub', {
+          jawa_day: n(view.jawa.day),
+          jawa_month: t(`calendar:jawa.${view.jawa.month}`),
+          jawa_year: String(view.jawa.year),
+          jawa_year_name: t(`calendar:jawa_year.${view.jawa.yearName}`),
+          hijri_day: n(view.hijri.day),
+          hijri_month: t(`calendar:hijri.${view.hijri.month}`),
+          hijri_year: String(view.hijri.year),
         })}
       </p>
     </div>

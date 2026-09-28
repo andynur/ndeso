@@ -73,7 +73,7 @@ async function boot(): Promise<void> {
   if (!canvas || !overlay) throw new Error('index.html is missing #stage or #overlay');
 
   await initI18n(navigator.languages);
-  // The HUD clock names the mangsa (GDD §3.2).
+  // The HUD clock names the months (GDD §3.2).
   await loadNamespace('calendar');
   // `subscribe` fires immediately and again on every switch, so this covers both the
   // initial paint and a live locale change.

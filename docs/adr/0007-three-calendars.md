@@ -1,5 +1,5 @@
 # ADR-0007: Three overlapping calendars, all derived from one day counter
-- Status: Accepted
+- Status: Superseded by [ADR-0009](0009-masehi-jawa-hijri.md) — the single `day` counter stays; the pranata mangsa year and compressed Hijri months are replaced
 - Date: 2026-09-27
 
 ## Context

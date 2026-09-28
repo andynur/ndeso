@@ -6,9 +6,9 @@ import { loadCalendarForTests } from './testing/calendar-data.ts';
 import { createContext } from './types.ts';
 
 /**
- * Golden: three whole game years of the calendar (ROADMAP M1-01, ARCHITECTURE §3.4). A mangsa
- * length, the Hijri anchor or the tabular arithmetic changing shows up here as a readable
- * diff. Update with `bun test -u` only on purpose, and say why in the PR.
+ * Golden: three whole game years of the calendar (ROADMAP M1-01, ARCHITECTURE §3.4, ADR-0009).
+ * The arrival, the date scaling, the musim split or the tabular arithmetic changing shows up
+ * here as a readable diff. Update with `bun test -u` only on purpose, and say why in the PR.
  */
 
 const YEARS = 3;
@@ -20,17 +20,17 @@ beforeAll(async () => {
 const line = (d: CalendarDate): string =>
   [
     `day ${String(d.day).padStart(3)}`,
-    `y${d.year}`,
-    `${d.mangsa.id} ${d.mangsa.day}/${d.mangsa.length} (${d.mangsa.musim})`,
     `${d.weekday} ${d.pasaran}`,
-    `${d.hijri.day}/${d.hijri.month}/${d.hijri.year} of ${d.hijri.monthLength}`,
+    `${d.masehi.date}/${d.masehi.month}/${d.masehi.year} (${d.musim})`,
+    `jawa ${d.jawa.day}/${d.jawa.month}/${d.jawa.year} ${d.jawa.yearName}`,
+    `hijri ${d.hijri.day}/${d.hijri.month}/${d.hijri.year}`,
   ].join(' · ');
 
-test(`mangsa boundaries for ${YEARS} years`, () => {
+test(`month boundaries for ${YEARS} years`, () => {
   const rows: string[] = [];
   for (let day = 0; day < cal.gameYearDays * YEARS; day++) {
     const date = projectDay(day, cal);
-    if (date.mangsa.day === 1) rows.push(line(date));
+    if (date.masehi.monthDay === 0) rows.push(line(date));
   }
   expect(rows).toMatchSnapshot();
 });
@@ -69,13 +69,15 @@ test(`the time system's calendar events agree with the projections over ${YEARS}
     ctx.events.length = 0;
     system(state, ctx);
     expect(state.clock.day).toBe(day);
-    for (const { type, mangsa, month } of ctx.events) {
-      if (type === 'mangsaChanged') seen.push(`${day} mangsa ${String(mangsa)}`);
+    for (const { type, month } of ctx.events) {
+      if (type === 'monthChanged') seen.push(`${day} month ${String(month)}`);
       if (type === 'hijriMonthChanged') seen.push(`${day} hijri ${String(month)}`);
     }
     const today = projectDay(day, cal);
     const yesterday = projectDay(day - 1, cal);
-    if (today.mangsa.id !== yesterday.mangsa.id) expected.push(`${day} mangsa ${today.mangsa.id}`);
+    if (today.masehi.month !== yesterday.masehi.month) {
+      expected.push(`${day} month ${today.masehi.month}`);
+    }
     if (today.hijri.month !== yesterday.hijri.month) {
       expected.push(`${day} hijri ${today.hijri.month}`);
     }

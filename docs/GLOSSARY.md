@@ -10,9 +10,9 @@
 | **Plot type** | `tegalan` (dry), `sawah` (wet paddy), `kebun` (orchard) |
 | **Tick** | One fixed sim step (100 ms real time) |
 | **Game minute** | Derived from ticks via `time.minutesPerTick`; day = 05:00→01:00 |
-| **Day** | The **only** stored time value. Mangsa, musim, pasaran, weton and the Hijri date are pure projections of it ([ADR-0007](adr/0007-three-calendars.md)) |
-| **Mangsa** | One of the 12 pranata-mangsa seasons; unequal lengths from `content/data/calendar/mangsa.json5`, summing to the 120-day year |
-| **Musim** | Derived coarse label over groups of mangsa: `'hujan' \| 'kemarau' \| 'pancaroba'`. **Crops are tagged by musim, not by mangsa** |
+| **Day** | The **only** stored time value. The Masehi, Javanese and Hijri dates, musim, pasaran and weton are pure projections of it ([ADR-0009](adr/0009-masehi-jawa-hijri.md)) |
+| **Mangsa** | One of the 12 pranata-mangsa seasons. **Lore only** since ADR-0009: characters may mention them; no system uses them |
+| **Musim** | Coarse season derived from the Masehi month (`months.json5`): `'hujan' \| 'kemarau' \| 'pancaroba'`. **Crops are tagged by musim** |
 | **Pasaran** | `'legi' \| 'pahing' \| 'pon' \| 'wage' \| 'kliwon'`, `(dayIndex) % 5` |
 | **Kawasan** | The area-scale game: what the player builds and grows, as opposed to the tile-scale farming (GDD §1.1, §5) |
 | **Quality** | `asri \| nyaman \| tenang` — computed **spatially** per area from what is on the ground. Never a counter (GDD §5) |

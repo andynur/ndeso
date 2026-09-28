@@ -1,0 +1,30 @@
+// The twelve Masehi months and the musim each belongs to (GDD §3, ADR-0009).
+//
+// A game year is 120 days, so every month is 10 game days whatever its real length; the
+// date shown on each game day is scaled from the real month (1, 4, 7 … for a 31-day month).
+// gameYearDays must be a multiple of 12 (equal months) and of 5 (pasaran stays stable
+// against the year); the calendar schema in packages/shared asserts both.
+//
+// `musim` is the coarse season crops are tagged with. The split is the owner's decision
+// (2026-09-28): hujan Nov–Mar, pancaroba Apr and Oct, kemarau May–Sep — the common reading
+// of the Central Java year, not a BMKG table for any one year.
+//
+// No prose here, per .claude/rules/content-i18n.md: ids and enum tags only. Month names are
+// player-facing and live in `calendar:masehi.<id>` in BOTH locales.
+{
+  gameYearDays: 120,
+  months: [
+    { id: 'jan', musim: 'hujan' },
+    { id: 'feb', musim: 'hujan' },
+    { id: 'mar', musim: 'hujan' },
+    { id: 'apr', musim: 'pancaroba' },
+    { id: 'may', musim: 'kemarau' },
+    { id: 'jun', musim: 'kemarau' },
+    { id: 'jul', musim: 'kemarau' },
+    { id: 'aug', musim: 'kemarau' },
+    { id: 'sep', musim: 'kemarau' },
+    { id: 'oct', musim: 'pancaroba' },
+    { id: 'nov', musim: 'hujan' },
+    { id: 'dec', musim: 'hujan' },
+  ],
+}

@@ -158,6 +158,14 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* The Javanese and Hijri dates: a subtitle under the Masehi date. */
+.clock__sub {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* PERFORMANCE_BUDGET §6 `?debug=perf` overlay: developer telemetry, top-right. */
 .perf {
   position: absolute;

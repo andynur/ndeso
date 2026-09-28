@@ -1,7 +1,7 @@
 /// <reference path="./json5.d.ts" />
 import { type CalendarData, validateCalendar } from '@bale/shared';
 import clock from '../data/calendar/clock.json5';
-import mangsa from '../data/calendar/mangsa.json5';
+import months from '../data/calendar/months.json5';
 import prayerTimes from '../data/calendar/prayer-times.json5';
 
 /**
@@ -10,7 +10,7 @@ import prayerTimes from '../data/calendar/prayer-times.json5';
  * Validated once at import; a broken file fails the boot loudly instead of desyncing the clock.
  */
 function load(): CalendarData {
-  const result = validateCalendar({ mangsa, clock, prayerTimes });
+  const result = validateCalendar({ months, clock, prayerTimes });
   if (!result.ok) throw new Error(`invalid calendar data:\n  ${result.errors.join('\n  ')}`);
   return result.data;
 }
