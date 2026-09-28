@@ -27,6 +27,10 @@ Track `assets-src/**` with **Git LFS**: `git lfs track "assets-src/**"`. Never c
 
 ## 3. Build script (`tools/assets/build.ts`)
 
+**Implemented today (M1-09), the minimum:** `bun run assets` takes the generated placeholder models plus any `assets-src/models/<area>/<id>.glb` (an export wins over the placeholder with the same id), runs each through `gltf-transform optimize --compress meshopt` (dedup, weld, prune, meshopt; simplify, instancing, joins and texture steps off), writes `assets/models/<area>/<id>-<hash>.glb` and `assets/manifest.json`, and skips unchanged sources via `.cache/assets.json`. The CLI runs under Bun, so neither the machine nor CI needs Node. `bun run dev` and `bun run build` call it first; the build ships the manifest and the models under `dist/assets/`. The client decodes meshopt with the decoder bundled in `three`. Textures, sprites and audio join as their tasks land.
+
+The full design:
+
 Runs with Bun Shell, is incremental (content-hash cache in `.cache/assets.json`), and processes files in parallel:
 1. Find changed sources since the last run.
 2. Convert with the right tool (table above). External tools (`blender`, `aseprite`, `ffmpeg`) are **optional**: if missing, skip with a warning and reuse the last committed output from the release bucket.
@@ -36,7 +40,7 @@ Runs with Bun Shell, is incremental (content-hash cache in `.cache/assets.json`)
 ## 4. Placeholder-first workflow
 
 - Every system is built with **placeholder assets** first: colored boxes, `tools/placeholders/` generated sprites with the id text drawn on them.
-- Placeholders live in `assets-src/placeholders/` and have ids identical to the final assets, so a swap needs no code change.
+- Placeholders have ids identical to the final assets, so a swap needs no code change. Placeholder **models** are generated from the area data by code in `tools/placeholders/` (nothing binary is committed); a placeholder that has to be drawn by hand lives in `assets-src/placeholders/`.
 - AI agents must **never** try to generate final art. They use placeholders and open an issue labeled `art-needed` with the spec from DESIGN.md.
 
 ## 5. Licensing of assets

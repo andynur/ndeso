@@ -1,6 +1,7 @@
+import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { LIGHTING_DATA } from '@bale/content/lighting';
-import { TICK_MS } from '@bale/shared';
+import { parseAssetManifest, TICK_MS } from '@bale/shared';
 import { createTimeState } from '@bale/sim';
 import { clockViewOf } from './game/clock-view.ts';
 import { createCommandMapper } from './game/commands.ts';
@@ -12,7 +13,13 @@ import { initI18n, loadNamespace, locale, t } from './i18n/index.ts';
 import { attachInput, createInput } from './platform/input/input.ts';
 import { localSettings } from './platform/settings.ts';
 import { guessPreset } from './render/quality/presets.ts';
-import { createScene, type RenderStats, type ScenePalette } from './render/scene.ts';
+import {
+  createScene,
+  type RenderStats,
+  type SceneHandle,
+  type ScenePalette,
+} from './render/scene.ts';
+import { loadAreaModels } from './render/world/area-models.ts';
 import { clockView } from './ui/hud-clock.tsx';
 import { mountOverlay } from './ui/mount.ts';
 import { perfView } from './ui/perf-overlay.tsx';
@@ -29,9 +36,6 @@ declare global {
 /** ARCHITECTURE §2: `render/` may not import `ui/`, so the boot layer hands colours down. */
 const PALETTE: ScenePalette = {
   ground: colorHex('sawah500'),
-  wall: colorHex('kayu500'),
-  roof: colorHex('terakota500'),
-  marker: colorHex('kunyit400'),
   // Placeholder villager (M1-03); real character art replaces the whole atlas.
   character: {
     outline: colorHex('ink900'),
@@ -47,6 +51,20 @@ const BROWSER_FRAMES: FrameScheduler = {
   cancel: (handle) => cancelAnimationFrame(handle),
   now: () => performance.now(),
 };
+
+async function loadWorld(scene: SceneHandle): Promise<void> {
+  const manifestUrl = new URL('assets/manifest.json', document.baseURI);
+  try {
+    const response = await fetch(manifestUrl);
+    if (!response.ok) throw new Error(`${manifestUrl.href}: HTTP ${response.status}`);
+    const manifest = parseAssetManifest(await response.json());
+    if (!manifest) throw new Error(`${manifestUrl.href} is not an asset manifest`);
+    scene.setWorld(await loadAreaModels(BALE_AREA, manifest, manifestUrl));
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: a missing world must be visible to a developer.
+    console.error('[assets] area models failed to load; showing the fallback ground', error);
+  }
+}
 
 async function boot(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#stage');
@@ -78,7 +96,11 @@ async function boot(): Promise<void> {
     preset: quality.preset,
     palette: PALETTE,
     lighting: LIGHTING_DATA,
+    area: BALE_AREA,
   });
+  // ASSET_PIPELINE §3: the area's models come from the generated manifest. The game runs
+  // on the fallback ground meanwhile, and stays on it if the models cannot be had.
+  void loadWorld(scene);
 
   // PERFORMANCE_BUDGET §6: render telemetry belongs behind `?debug=perf`.
   const debug = params.get('debug') === 'perf';

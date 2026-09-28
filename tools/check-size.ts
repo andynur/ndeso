@@ -15,6 +15,7 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { brotliCompressSync, constants } from 'node:zlib';
 import { LOCALE_NAMESPACES, SUPPORTED_LOCALES } from '@bale/shared';
+import { BALE_AREA } from '../packages/content/src/areas-bundle.ts';
 import {
   BUDGETS,
   type Budget,
@@ -60,11 +61,47 @@ async function measureShell(): Promise<Measurement> {
     ? (((await manifest.json()) as { publicPath?: string }).publicPath ?? '/')
     : '/';
   const files = shellFiles(await html.text(), 'index.html', publicPath);
+  return measure(
+    budget('shell'),
+    await brotliTotal(files),
+    `${files.length} files: ${files.join(', ')}`,
+  );
+}
+
+async function brotliTotal(paths: readonly string[]): Promise<number> {
   let total = 0;
-  for (const path of files) {
+  for (const path of paths) {
     total += brotliSize(new Uint8Array(await Bun.file(join(DIST, path)).arrayBuffer()));
   }
-  return measure(budget('shell'), total, `${files.length} files: ${files.join(', ')}`);
+  return total;
+}
+
+/**
+ * PERFORMANCE_BUDGET §2 "first playable frame (farm area)": everything a cold visit fetches
+ * before the farm is on screen — the shell, the lazily loaded locale chunks (both locales,
+ * an upper bound), the asset manifest, and every model the base area lists.
+ */
+async function measureFirstFrame(shell: Measurement): Promise<Measurement> {
+  const manifestPath = join(DIST, 'assets', 'manifest.json');
+  if (!(await Bun.file(manifestPath).exists())) {
+    throw new Error('no dist/assets/manifest.json — the build did not ship the area models');
+  }
+  const manifest = (await Bun.file(manifestPath).json()) as Record<string, { url: string }>;
+  const models = BALE_AREA.models.map((id) => {
+    const entry = manifest[id];
+    if (entry === undefined) throw new Error(`dist/assets/manifest.json has no ${id}`);
+    return `assets/${entry.url}`;
+  });
+  const locales: string[] = [];
+  for await (const path of new Bun.Glob('{ui,calendar}-*.js').scan({ cwd: DIST })) {
+    locales.push(path);
+  }
+  const rest = await brotliTotal(['assets/manifest.json', ...models, ...locales]);
+  return measure(
+    budget('first-playable-frame'),
+    (shell.actual ?? 0) + rest,
+    `shell + ${locales.length} locale chunks + manifest + ${models.length} models`,
+  );
 }
 
 /** Locale bundles are measured at the source, where they are authored and reviewed. */
@@ -97,15 +134,18 @@ function line(measurement: Measurement): string {
 async function main(): Promise<number> {
   const { GITHUB_SHA } = process.env;
   const shell = await measureShell();
+  const firstFrame = await measureFirstFrame(shell);
   const locales = await measureLocales();
   const pending = BUDGETS.filter((entry) => entry.pendingUntil !== undefined).map((entry) =>
     measure(entry, undefined),
   );
-  const all = [shell, ...locales, ...pending];
+  const all = [shell, firstFrame, ...locales, ...pending];
 
   console.log('\n  size budget — PERFORMANCE_BUDGET §2\n');
   console.log(`  ${'shell (brotli)'}`);
   console.log(line(shell));
+  console.log('\n  first playable frame (brotli)');
+  console.log(line(firstFrame));
   console.log('\n  locale namespaces (raw)');
   for (const measurement of locales) console.log(line(measurement));
   console.log('\n  not measurable yet');

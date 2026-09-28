@@ -1,11 +1,9 @@
-import type { LightingData, QualityPreset } from '@bale/shared';
+import type { AreaDef, LightingData, QualityPreset } from '@bale/shared';
 import {
   AmbientLight,
-  BoxGeometry,
-  CylinderGeometry,
   DirectionalLight,
   Fog,
-  IcosahedronGeometry,
+  type Group,
   Mesh,
   MeshLambertMaterial,
   PCFShadowMap,
@@ -32,22 +30,23 @@ const SHADOW_HALF = 14;
 
 /**
  * Teras lamps (DESIGN §1.3: point lights, max 4 active; PERFORMANCE_BUDGET §4 caps them per
- * preset). Placeholder spot beside the house door until the Balé layout (M1-09) owns them.
- * The warm colour is the maghrib sun's: a lamp is lit by the same kerosene-orange hour.
+ * preset) at the area's lamp points. The warm colour is the maghrib sun's: a lamp is lit by
+ * the same kerosene-orange hour.
  */
-const LAMP_POSITIONS: readonly (readonly [number, number, number])[] = [[1.4, 1.6, 1.4]];
 const LAMP_COLOR = 0xff9a4d;
 const LAMP_INTENSITY = 6;
 const LAMP_RANGE = 7;
 
-const GROUND_SIZE = 40;
+/** A plain plane to stand on until the area's models have loaded (or if they cannot). */
+const FALLBACK_GROUND_SIZE = 40;
 
-/** Placeholder villagers: one walks a square round the house, four stand facing each way. */
+/**
+ * Placeholder villagers: one walks a square round the spawn point, four stand in a row
+ * west of it, facing each way. The walker is the camera's follow target until M1-06.
+ */
 const WALK_HALF_SIDE = 2.5;
 const WALK_SPEED = 1.5;
-/** Flanking the house, inside the landscape-phone frame at the default zoom. */
-const IDLE_XS = [-6.5, -5, 5, 6.5] as const;
-const IDLE_Z = 0.5;
+const IDLE_DXS = [-8.5, -7, -5.5, -4] as const;
 
 /**
  * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
@@ -55,10 +54,8 @@ const IDLE_Z = 0.5;
  * the values down.
  */
 export interface ScenePalette {
+  /** The fallback ground plane shown before the area's models arrive. */
   readonly ground: number;
-  readonly wall: number;
-  readonly roof: number;
-  readonly marker: number;
   readonly character: CharPalette;
 }
 
@@ -68,6 +65,8 @@ export interface SceneOptions {
   readonly palette: ScenePalette;
   /** DESIGN §1.3 keyframes, `content/data/lighting.json5`. */
   readonly lighting: LightingData;
+  /** The area on screen: its spawn frames the camera and its lamp points light the night. */
+  readonly area: AreaDef;
 }
 
 /** What the input layer may do to the camera (DESIGN §1.1). */
@@ -103,6 +102,11 @@ export interface SceneHandle {
   /** Copies the last frame's renderer counters into `out`. */
   stats(out: RenderStats): RenderStats;
   /**
+   * Shows the area's loaded models (`render/world/area-models.ts`) in place of the fallback
+   * ground. The scene owns and disposes them from then on.
+   */
+  setWorld(world: Group): void;
+  /**
    * Draws one frame at `simSeconds`, the sim time interpolated between ticks
    * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
    * frame timing; the scene never schedules itself. `realDtSeconds` is wall-clock frame
@@ -116,13 +120,13 @@ export interface SceneHandle {
 }
 
 /**
- * M0-03 walking skeleton: a ground plane and a low-poly placeholder house, enough to
- * prove WebGL2 and the camera framing on a real phone, plus the M1-03 billboard sprites.
- * Area streaming (M1-09) and day/night lighting (M1-07) replace the contents; the
- * plumbing here stays.
+ * The world view: the area's models (M1-09) under the clock-driven light (M1-07) and the
+ * preset's shadows (M1-08), with the M1-03 billboard sprites on top. The scene starts on a
+ * fallback ground plane and swaps in the area once its models have loaded.
  */
 export function createScene(options: SceneOptions): SceneHandle {
-  const { canvas, palette, lighting } = options;
+  const { canvas, palette, lighting, area } = options;
+  const [spawnX, spawnZ] = area.spawn;
   let preset = options.preset;
   let renderScale = 1;
   const renderer = new WebGLRenderer({
@@ -162,45 +166,20 @@ export function createScene(options: SceneOptions): SceneHandle {
   // changes with the preset.
   const lamps: PointLight[] = [];
 
-  const ground = new Mesh(
-    new PlaneGeometry(GROUND_SIZE, GROUND_SIZE),
+  let fallbackGround: Mesh | undefined = new Mesh(
+    new PlaneGeometry(FALLBACK_GROUND_SIZE, FALLBACK_GROUND_SIZE),
     new MeshLambertMaterial({ color: palette.ground }),
   );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  // Placeholder "house": a terracotta-roofed block. Replaced by real art in M1-09.
-  const placeholder = new Mesh(
-    new BoxGeometry(2, 2, 2),
-    new MeshLambertMaterial({ color: palette.wall }),
-  );
-  placeholder.position.y = 1;
-  placeholder.castShadow = true;
-  placeholder.receiveShadow = true;
-  const roof = new Mesh(
-    new CylinderGeometry(0, 1.9, 1.4, 4),
-    new MeshLambertMaterial({ color: palette.roof, flatShading: true }),
-  );
-  roof.position.y = 1.7;
-  roof.rotation.y = Math.PI / 4;
-  roof.castShadow = true;
-  placeholder.add(roof);
-
-  const marker = new Mesh(
-    new IcosahedronGeometry(0.4, 0),
-    new MeshLambertMaterial({ color: palette.marker, flatShading: true }),
-  );
-  marker.position.set(0, 2.9, 0);
-  placeholder.add(marker);
-  scene.add(placeholder);
+  fallbackGround.rotation.x = -Math.PI / 2;
+  fallbackGround.receiveShadow = true;
+  scene.add(fallbackGround);
 
   const { atlas, pixels } = buildPlaceholderCharAtlas(palette.character);
   const atlasTexture = createAtlasTexture(pixels, atlas);
   const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
   scene.add(sprites.mesh);
   // The walker stands in for the player (M1-06) as the camera's follow target.
-  const walker = sprites.add({ x: 0, y: 0, z: WALK_HALF_SIDE, tag: 'walk_side' });
+  const walker = sprites.add({ x: spawnX, y: 0, z: spawnZ + WALK_HALF_SIDE, tag: 'walk_side' });
   rig.snapTo(walker.x, walker.z);
   // World headings (dx, dz): at yaw 0 these face down, up, right and left.
   const idleHeadings = [
@@ -212,9 +191,9 @@ export function createScene(options: SceneOptions): SceneHandle {
   const idlers = idleHeadings.map(([dx, dz], i) => ({
     // Staggered starts, so the four do not breathe in lockstep.
     sprite: sprites.add({
-      x: IDLE_XS[i] ?? 0,
+      x: spawnX + (IDLE_DXS[i] ?? 0),
       y: 0,
-      z: IDLE_Z,
+      z: spawnZ,
       tag: 'idle_down',
       startSeconds: i * 0.3,
     }),
@@ -249,7 +228,7 @@ export function createScene(options: SceneOptions): SceneHandle {
       sun.shadow.map = null;
     }
     while (lamps.length > quality.lamps) lamps.pop()?.removeFromParent();
-    for (const [x, y, z] of LAMP_POSITIONS.slice(lamps.length, quality.lamps)) {
+    for (const [x, y, z] of area.lamps.slice(lamps.length, quality.lamps)) {
       const lamp = new PointLight(LAMP_COLOR, 0, LAMP_RANGE, 2);
       lamp.position.set(x, y, z);
       scene.add(lamp);
@@ -301,7 +280,7 @@ export function createScene(options: SceneOptions): SceneHandle {
 
   function draw(simSeconds: number, realDtSeconds: number, clockMinute: number): void {
     // The rig keeps easing while the context is lost, so it is settled when it returns.
-    const leg = walkSquare(walker, simSeconds);
+    const leg = walkSquare(walker, simSeconds, spawnX, spawnZ);
     rig.follow(walker.x, walker.z);
     rig.update(realDtSeconds);
     if (contextLost) return;
@@ -317,7 +296,6 @@ export function createScene(options: SceneOptions): SceneHandle {
     // distance, so it tracks zoom and thickens into the maghrib haze.
     fog.near = rig.distance;
     fog.far = rig.distance * light.fog;
-    marker.position.y = 2.9 + Math.sin(simSeconds * 2) * 0.15;
     renderer.render(scene, camera);
   }
 
@@ -372,6 +350,15 @@ export function createScene(options: SceneOptions): SceneHandle {
       renderScale = scale;
       resize();
     },
+    setWorld(world) {
+      if (fallbackGround) {
+        fallbackGround.removeFromParent();
+        fallbackGround.geometry.dispose();
+        (fallbackGround.material as MeshLambertMaterial).dispose();
+        fallbackGround = undefined;
+      }
+      scene.add(world);
+    },
     stats(out) {
       const { render, memory, programs } = renderer.info;
       out.drawCalls = render.calls;
@@ -403,11 +390,11 @@ const TAGS = {
 const LEG_HEADINGS = [1, 0, 0, -1, -1, 0, 0, 1] as const;
 
 /**
- * Moves `sprite` round a square centred on the house and returns which leg (0–3) it is
+ * Moves `sprite` round a square centred on `(cx, cz)` and returns which leg (0–3) it is
  * on; the caller turns the leg's heading into a tag for the current camera yaw. Each side
  * restarts the walk cycle so a turn begins on the contact frame.
  */
-function walkSquare(sprite: Sprite, simSeconds: number): number {
+function walkSquare(sprite: Sprite, simSeconds: number, cx: number, cz: number): number {
   const side = WALK_HALF_SIDE * 2;
   const sideSeconds = side / WALK_SPEED;
   const leg = Math.floor(simSeconds / sideSeconds) % 4;
@@ -416,20 +403,20 @@ function walkSquare(sprite: Sprite, simSeconds: number): number {
   // A switch rather than a table of poses: this runs every frame and must not allocate.
   switch (leg) {
     case 0:
-      sprite.x = along;
-      sprite.z = h;
+      sprite.x = cx + along;
+      sprite.z = cz + h;
       break;
     case 1:
-      sprite.x = h;
-      sprite.z = -along;
+      sprite.x = cx + h;
+      sprite.z = cz - along;
       break;
     case 2:
-      sprite.x = -along;
-      sprite.z = -h;
+      sprite.x = cx - along;
+      sprite.z = cz - h;
       break;
     default:
-      sprite.x = -h;
-      sprite.z = along;
+      sprite.x = cx - h;
+      sprite.z = cz + along;
   }
   sprite.startSeconds = simSeconds - (simSeconds % sideSeconds);
   return leg;

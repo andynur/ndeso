@@ -8,6 +8,7 @@
     "./i18n": "./src/i18n.generated.ts",
     "./calendar": "./src/calendar-bundle.ts",
     "./lighting": "./src/lighting-bundle.ts",
+    "./areas": "./src/areas-bundle.ts",
     "./locales/*": "./locales/*"
   },
   "dependencies": {

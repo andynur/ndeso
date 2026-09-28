@@ -1,0 +1,24 @@
+// Balé — Mbah Hita's ground (PLACES §3, ring 0). The name is provisional until the
+// owners' position is known (PLACES §1 "Ask", PRD §12.2); the id stays `bale` either way.
+//
+// Layout by feel, not survey (PLACES §2): nothing here is traced from a map. World units
+// are tiles; the area is centred on the origin, north is −z, east is +x.
+//
+// The placeholder models are generated from these numbers (`bun run assets`), so moving
+// the field or the kalen here moves the boxes too. Final art keeps the model ids.
+{
+  id: 'bale',
+  origin: 'Baledono, Purworejo, Jawa Tengah',
+  size: [32, 24],
+  models: ['bale_ground_lvl0', 'bale_joglo_lvl0'],
+  // In front of the joglo, where the camera opens.
+  spawn: [0, 3],
+  // The overgrown field east of the kalen. 8 × 12 tiles.
+  field: { x: 7, z: -6, w: 8, d: 12 },
+  // The half-built joglo, just north of the spawn: 8 × 8 including its stone platform.
+  joglo: { x: -4, z: -8, w: 8, d: 8 },
+  // The dead water channel, running north–south along the field's west side.
+  kalen: { points: [[5.5, -12], [5.5, 12]], width: 1 },
+  // Teras lamps hung from the joglo's two front corner posts.
+  lamps: [[-3.5, 2.3, 0.2], [3.5, 2.3, 0.2]],
+}

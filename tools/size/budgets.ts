@@ -44,7 +44,6 @@ export const BUDGETS: readonly Budget[] = [
     label: 'First playable frame (farm area)',
     limit: 10 * MB,
     compressed: true,
-    pendingUntil: 'M1-09',
   },
   {
     id: 'music-track',

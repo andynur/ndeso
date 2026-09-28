@@ -17,6 +17,7 @@
 import { existsSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
 import { isAbsolute, join, relative } from 'node:path';
+import { ASSETS_DIR, buildAssets } from '../../tools/assets/build.ts';
 import { shellFiles } from '../../tools/size/shell.ts';
 
 const CLIENT_DIR = import.meta.dir;
@@ -117,6 +118,13 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
       );
     }
     await cp(PUBLIC_DIR, options.outdir, { recursive: true });
+  }
+
+  // ASSET_PIPELINE §3: generate (incrementally) the models and their manifest, and ship them
+  // under `assets/` next to the page. Only what the manifest lists: CREDITS.md stays out.
+  const { manifest } = await buildAssets();
+  for (const path of ['manifest.json', ...Object.values(manifest).map((entry) => entry.url)]) {
+    await cp(join(ASSETS_DIR, path), join(options.outdir, 'assets', path));
   }
 
   const files: BuiltFile[] = [];
