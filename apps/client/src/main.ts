@@ -8,7 +8,7 @@ import { createCommandMapper } from './game/commands.ts';
 import { createGame, parseStartClock } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { PerfMeter } from './game/perf-meter.ts';
-import { createQualityControl, initialPreset } from './game/quality.ts';
+import { createQualityControl, initialPreset, type QualityControl } from './game/quality.ts';
 import { initI18n, loadNamespace, locale, t } from './i18n/index.ts';
 import { attachInput, createInput } from './platform/input/input.ts';
 import { localSettings } from './platform/settings.ts';
@@ -129,6 +129,9 @@ async function boot(): Promise<void> {
     programs: 0,
   };
   let stepMs = 0;
+  // Quality control drives the loop's fps cap, so it is created once the loop exists; the
+  // frame hook reads it through this binding rather than depending on declaration order.
+  let control: QualityControl | undefined;
   let lastMinute = Number.NaN;
   let lastDay = Number.NaN;
 
@@ -165,7 +168,7 @@ async function boot(): Promise<void> {
           lastDay = clock.day;
           clockView.value = clockViewOf(clock, CALENDAR_DATA);
         }
-        control.frame(realDtMs);
+        control?.frame(realDtMs);
         if (meter?.record(realDtMs, stepMs + now() - frameStart)) {
           scene.stats(renderStats);
           const memory = (performance as Performance & { memory?: { usedJSHeapSize: number } })
@@ -176,7 +179,7 @@ async function boot(): Promise<void> {
             preset: scene.preset,
             pixelRatio: scene.pixelRatio,
             heapMb: memory ? memory.usedJSHeapSize / 1048576 : undefined,
-            benchmarking: control.benchmarking,
+            benchmarking: control?.benchmarking ?? false,
           };
         }
         stepMs = 0;
@@ -184,7 +187,7 @@ async function boot(): Promise<void> {
     },
     BROWSER_FRAMES,
   );
-  const control = createQualityControl(
+  control = createQualityControl(
     {
       get preset() {
         return scene.preset;
@@ -204,7 +207,7 @@ async function boot(): Promise<void> {
     if (document.hidden) {
       loop.stop();
     } else {
-      control.reset();
+      control?.reset();
       loop.start();
     }
   });
