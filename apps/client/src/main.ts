@@ -1,7 +1,9 @@
 import { CALENDAR_DATA } from '@bale/content/calendar';
+import { LIGHTING_DATA } from '@bale/content/lighting';
 import { TICK_MS } from '@bale/shared';
+import { createTimeState } from '@bale/sim';
 import { createCommandMapper } from './game/commands.ts';
-import { createGame } from './game/game.ts';
+import { createGame, parseStartClock } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { initI18n, locale, t } from './i18n/index.ts';
 import { attachInput, createInput } from './platform/input/input.ts';
@@ -24,7 +26,6 @@ const PALETTE: ScenePalette = {
   wall: colorHex('kayu500'),
   roof: colorHex('terakota500'),
   marker: colorHex('kunyit400'),
-  fog: colorHex('indigo700'),
   // Placeholder villager (M1-03); real character art replaces the whole atlas.
   character: {
     outline: colorHex('ink900'),
@@ -60,10 +61,11 @@ async function boot(): Promise<void> {
     touch: matchMedia('(pointer: coarse)').matches,
   });
 
-  const scene = createScene({ canvas, preset, palette: PALETTE });
+  const scene = createScene({ canvas, preset, palette: PALETTE, lighting: LIGHTING_DATA });
 
   // PERFORMANCE_BUDGET §6: render telemetry belongs behind `?debug=perf`.
-  const debug = new URLSearchParams(location.search).get('debug') === 'perf';
+  const params = new URLSearchParams(location.search);
+  const debug = params.get('debug') === 'perf';
   // GDD §12: keyboard, the floating stick, and the on-screen buttons all feed one input.
   const input = createInput((view) => {
     stickView.value = view;
@@ -74,7 +76,11 @@ async function boot(): Promise<void> {
     controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
   });
 
-  const game = createGame(CALENDAR_DATA);
+  // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
+  const state = createTimeState(CALENDAR_DATA);
+  const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
+  if (startMinute !== undefined) state.clock.minute = startMinute;
+  const game = createGame(CALENDAR_DATA, state);
   const commands = createCommandMapper();
   const loop = createLoop(
     {
@@ -89,7 +95,10 @@ async function boot(): Promise<void> {
         }
         if (frame.zoom !== 0) scene.camera.zoomBy(frame.zoom);
         commands.map(frame, scene.camera.yaw, game.submit);
-        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000);
+        const { clock } = game.state;
+        const clockMinute =
+          clock.minute + (clock.tick + alpha) / CALENDAR_DATA.clock.ticksPerMinute;
+        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000, clockMinute);
         // Nothing listens yet; the HUD clock (M1-08) is the first `ui.sync` consumer.
         game.drainEvents();
       },

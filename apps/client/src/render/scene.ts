@@ -1,8 +1,7 @@
-import type { QualityPreset } from '@bale/shared';
+import type { LightingData, QualityPreset } from '@bale/shared';
 import {
   AmbientLight,
   BoxGeometry,
-  Color,
   CylinderGeometry,
   DirectionalLight,
   Fog,
@@ -11,23 +10,28 @@ import {
   MeshLambertMaterial,
   PerspectiveCamera,
   PlaneGeometry,
+  PointLight,
   Scene,
   WebGLRenderer,
 } from 'three';
 import { type CameraPose, CameraRig, type Facing, FOV_DEG } from './camera/camera-rig.ts';
-import { clampPixelRatio } from './quality/presets.ts';
+import { createDayNight, createLightingSample } from './lighting/day-night.ts';
+import { clampPixelRatio, MAX_LAMPS } from './quality/presets.ts';
 import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
 import { createAtlasTexture, type Sprite, SpriteBatch } from './sprites/sprite-batch.ts';
 
+/** How far the sun sits from what it lights; only the direction matters without shadows. */
+const SUN_DISTANCE = 30;
+
 /**
- * Noon keyframe from the DESIGN §1.3 lighting table. Those are lighting values, not
- * §2 palette tokens, so they are not in `ui/tokens.ts`; M1-07 moves the whole table
- * into `content/data/lighting.json5` and interpolates it from the game clock.
- * DESIGN fixes the ambient intensity at 0.7 but not the sun's — 2.5 reads correctly
- * under Three.js' physically-based light units.
+ * Teras lamps (DESIGN §1.3: point lights, max 4 active; PERFORMANCE_BUDGET §4 caps them per
+ * preset). Placeholder spot beside the house door until the Balé layout (M1-09) owns them.
+ * The warm colour is the maghrib sun's: a lamp is lit by the same kerosene-orange hour.
  */
-const NOON_SUN = { color: 0xfff4e0, intensity: 2.5 };
-const NOON_AMBIENT = { color: 0xa8c4e0, intensity: 0.7 };
+const LAMP_POSITIONS: readonly (readonly [number, number, number])[] = [[1.4, 1.6, 1.4]];
+const LAMP_COLOR = 0xff9a4d;
+const LAMP_INTENSITY = 6;
+const LAMP_RANGE = 7;
 
 const GROUND_SIZE = 40;
 
@@ -48,7 +52,6 @@ export interface ScenePalette {
   readonly wall: number;
   readonly roof: number;
   readonly marker: number;
-  readonly fog: number;
   readonly character: CharPalette;
 }
 
@@ -56,6 +59,8 @@ export interface SceneOptions {
   readonly canvas: HTMLCanvasElement;
   readonly preset: QualityPreset;
   readonly palette: ScenePalette;
+  /** DESIGN §1.3 keyframes, `content/data/lighting.json5`. */
+  readonly lighting: LightingData;
 }
 
 /** What the input layer may do to the camera (DESIGN §1.1). */
@@ -79,8 +84,10 @@ export interface SceneHandle {
    * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
    * frame timing; the scene never schedules itself. `realDtSeconds` is wall-clock frame
    * time, which the camera runs on so it still eases while the sim is paused.
+   * `clockMinute` is the game clock (`ClockState.minute` plus the fraction of the minute
+   * elapsed), which drives the day/night lighting.
    */
-  draw(simSeconds: number, realDtSeconds: number): void;
+  draw(simSeconds: number, realDtSeconds: number, clockMinute: number): void;
   readonly camera: CameraControls;
   dispose(): void;
 }
@@ -91,7 +98,7 @@ export interface SceneHandle {
  * Area streaming (M1-09) and day/night lighting (M1-07) replace the contents; the
  * plumbing here stays.
  */
-export function createScene({ canvas, preset, palette }: SceneOptions): SceneHandle {
+export function createScene({ canvas, preset, palette, lighting }: SceneOptions): SceneHandle {
   const renderer = new WebGLRenderer({
     canvas,
     antialias: false,
@@ -99,17 +106,30 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
   });
 
   const scene = new Scene();
-  scene.background = new Color(palette.fog);
   const rig = new CameraRig();
-  const fog = new Fog(palette.fog, rig.distance, rig.distance * 3);
+  const fog = new Fog(0x000000, rig.distance, rig.distance * 3);
   scene.fog = fog;
+  // One colour object for fog and background, so the far field melts into the sky.
+  const sky = fog.color;
+  scene.background = sky;
 
   const camera = new PerspectiveCamera(FOV_DEG, 1, 0.1, 200);
   const cameraPose: CameraPose = { x: 0, y: 0, z: 0, lookX: 0, lookY: 0, lookZ: 0 };
 
-  const sun = new DirectionalLight(NOON_SUN.color, NOON_SUN.intensity);
-  sun.position.set(6, 10, 4);
-  scene.add(sun, new AmbientLight(NOON_AMBIENT.color, NOON_AMBIENT.intensity));
+  // DESIGN §1.3: every light is driven by the clock through `applyLighting`.
+  const dayNight = createDayNight(lighting);
+  const light = createLightingSample();
+  const sun = new DirectionalLight();
+  const ambient = new AmbientLight();
+  scene.add(sun, ambient);
+  // A fixed number of lamps for the preset: adding or removing a light recompiles every
+  // lit material, so a lamp that is "off" stays in the scene at intensity 0.
+  const lamps = LAMP_POSITIONS.slice(0, MAX_LAMPS[preset]).map(([x, y, z]) => {
+    const lamp = new PointLight(LAMP_COLOR, 0, LAMP_RANGE, 2);
+    lamp.position.set(x, y, z);
+    scene.add(lamp);
+    return lamp;
+  });
 
   const ground = new Mesh(
     new PlaneGeometry(GROUND_SIZE, GROUND_SIZE),
@@ -193,7 +213,21 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
 
   let contextLost = false;
 
-  function draw(simSeconds: number, realDtSeconds: number): void {
+  function applyLighting(clockMinute: number): void {
+    // Weather does not exist yet (M2), so rain is always 0.
+    dayNight.sample(clockMinute, 0, light);
+    sun.color.setRGB(light.sun[0], light.sun[1], light.sun[2]);
+    sun.intensity = light.sunIntensity;
+    const [dx, dy, dz] = light.sunDirection;
+    sun.position.set(dx * SUN_DISTANCE, dy * SUN_DISTANCE, dz * SUN_DISTANCE);
+    ambient.color.setRGB(light.ambient[0], light.ambient[1], light.ambient[2]);
+    ambient.intensity = light.ambientIntensity;
+    sky.setRGB(light.haze[0], light.haze[1], light.haze[2]);
+    sprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
+    for (const lamp of lamps) lamp.intensity = light.lamps * LAMP_INTENSITY;
+  }
+
+  function draw(simSeconds: number, realDtSeconds: number, clockMinute: number): void {
     // The rig keeps easing while the context is lost, so it is settled when it returns.
     const leg = walkSquare(walker, simSeconds);
     rig.follow(walker.x, walker.z);
@@ -202,12 +236,15 @@ export function createScene({ canvas, preset, palette }: SceneOptions): SceneHan
     face(walker, 'walk', LEG_HEADINGS[leg * 2] ?? 0, LEG_HEADINGS[leg * 2 + 1] ?? 0);
     for (const idler of idlers) face(idler.sprite, 'idle', idler.dx, idler.dz);
     sprites.update(simSeconds);
+    applyLighting(clockMinute);
 
     rig.pose(cameraPose);
     camera.position.set(cameraPose.x, cameraPose.y, cameraPose.z);
     camera.lookAt(cameraPose.lookX, cameraPose.lookY, cameraPose.lookZ);
+    // Fog starts at the follow target and is total at the keyframe's multiple of the camera
+    // distance, so it tracks zoom and thickens into the maghrib haze.
     fog.near = rig.distance;
-    fog.far = rig.distance * 3;
+    fog.far = rig.distance * light.fog;
     marker.position.y = 2.9 + Math.sin(simSeconds * 2) * 0.15;
     renderer.render(scene, camera);
   }

@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · M1-07 · claude/charming-keller-syx5d4
+- Done: `content/data/lighting.json5` (DESIGN §1.3 keyframes + a `night_hold`, rain modifier) validated by `@bale/shared` `validateLighting`, bundled as `@bale/content/lighting`. `render/lighting/day-night.ts` — pure sampler: linear-space colour blend, wraps past midnight, sun direction from elevation/azimuth, haze (fog + sky) colour and fog distance, lamp level, sprite tint lifted by `SPRITE_LIFT` 0.35 so sprites read at night. Scene drives sun, ambient, fog/sky, sprite tint and a placeholder teras lamp (`MAX_LAMPS` per preset: 0/2/4) from `clockMinute`. `?clock=17:30` opens the day at that hour.
+- Tests: `bun run check` green (309 tests). Headless Chromium screenshots at 05:10/06:30/12:00/15:40/17:30/18:15/21:00, no console errors.
+- Notes/decisions: sun intensities, elevations, `haze`, `fog` are tuning (DESIGN gives only colours + ambient). Maghrib reads warm (orange west light, mauve-to-orange haze) but a flat green field under a 13° sun stays dark olive — judge on a phone. Rain is wired but always 0 until weather (M2). No shadows yet: they are a preset feature (M1-08).
+- Next: M1-08.
+
 ### 2026-09-27 · M1-05 · claude/friendly-curie-r6bxqk
 - Done: `sim/commands.ts` — `Command` union (`move` world-space held intent, `interact`, `selectSlot`, `cycleSlot`) + `sanitizeCommand`; `SimContext.commands`. `game.submit()` queues sanitized commands for the next tick. `platform/input/` — keyboard by `event.code`, floating stick in the left 40 % (DESIGN §5), two-finger swipe turns / pinch zooms, mouse click = interact; one `InputFrame` per frame. `game/commands.ts` maps it through the camera yaw (`screenToWorld`, the inverse of `screenFacing`). `ui/touch-controls.tsx` — stick ring, Use (72 dp) and turn (48 dp) buttons, hidden where the primary pointer is a mouse.
 - Tests: `bun run check` green (288 tests); build + `check:size` ok (shell 129 KB). Headless Chromium: touch stick draws and releases, buttons shown on touch / hidden on desktop, no console errors.

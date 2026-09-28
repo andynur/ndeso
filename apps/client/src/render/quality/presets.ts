@@ -18,6 +18,13 @@ export const MAX_DPR: Record<QualityPreset, number> = {
   high: 2,
 };
 
+/** PERFORMANCE_BUDGET §4: point lights per preset. Low gets none — lamps glow unlit there. */
+export const MAX_LAMPS: Record<QualityPreset, number> = {
+  low: 0,
+  medium: 2,
+  high: 4,
+};
+
 /** Never render above the preset cap, and never below 1 even on odd DPR reports. */
 export function clampPixelRatio(preset: QualityPreset, devicePixelRatio: number): number {
   const dpr = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0 ? devicePixelRatio : 1;

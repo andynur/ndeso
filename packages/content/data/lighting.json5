@@ -1,0 +1,40 @@
+// Day/night lighting keyframes (DESIGN §1.3), interpolated by the game clock.
+//
+// Colours and ambient intensities are the DESIGN table. Everything else is tuning, not
+// design, and may move freely:
+//   - sunIntensity is in Three.js' physical units, where a surface facing a light of
+//     intensity π shows its albedo; 2.5 at noon plus ambient 0.7 lands a sunlit wall
+//     just under full.
+//   - sunElevation / sunAzimuth place the sun (or the moon at night). Azimuth is degrees
+//     clockwise from world north (−z), east is +x. It is not wrapped, so the sun swings
+//     east → north → west as the numbers fall 95 → 10 → −70. Purworejo is ~7.7° S, so
+//     the midday sun stands a little to the north for most of the year.
+//     Before sunrise the "sun" is the glow of the eastern sky, so subuh keeps it high and
+//     soft rather than on the horizon, and never darker than the moonlit night before.
+//   - haze leans the fog and sky from the ambient colour towards the sun's: the warm
+//     maghrib haze is the ambient mauve pulled halfway to the sun's orange.
+//   - fog is where the fog turns total, in multiples of the camera distance (it starts at
+//     the follow target). Lower is hazier: dawn mist over the fields, the maghrib haze.
+//   - lamps fades the teras and warung lamps (max 4 active, per-preset cap).
+//
+// Maghrib (17:30) is the signature hour — low sun from the west-north-west, long light,
+// warm haze. The game day runs 05:00 → 01:00, so the night_hold → subuh segment is never
+// on screen; night_hold only keeps the small hours from drifting towards dawn.
+{
+  keyframes: [
+    { at: '04:00', id: 'night_hold', sun: '#9DB4FF', sunIntensity: 0.6, sunElevation: 45, sunAzimuth: -150,
+      ambient: '#1E2A4A', ambientIntensity: 0.35, haze: 0.1, fog: 2.5, lamps: 1 },
+    { at: '05:00', id: 'subuh', sun: '#5C6B96', sunIntensity: 1.0, sunElevation: 25, sunAzimuth: 95,
+      ambient: '#3A4670', ambientIntensity: 0.4, haze: 0.3, fog: 2.2, lamps: 1 },
+    { at: '06:00', id: 'dawn', sun: '#FFB27A', sunIntensity: 1.6, sunElevation: 12, sunAzimuth: 80,
+      ambient: '#6B7AA8', ambientIntensity: 0.5, haze: 0.45, fog: 1.8, lamps: 0 },
+    { at: '12:00', id: 'noon', sun: '#FFF4E0', sunIntensity: 2.5, sunElevation: 72, sunAzimuth: 10,
+      ambient: '#A8C4E0', ambientIntensity: 0.7, haze: 0.2, fog: 3.5, lamps: 0 },
+    { at: '17:30', id: 'maghrib', sun: '#FF9A4D', sunIntensity: 3.2, sunElevation: 13, sunAzimuth: -70,
+      ambient: '#8A6FA0', ambientIntensity: 0.55, haze: 0.6, fog: 1.9, lamps: 0.6 },
+    { at: '19:00', id: 'night', sun: '#9DB4FF', sunIntensity: 0.6, sunElevation: 45, sunAzimuth: -150,
+      ambient: '#1E2A4A', ambientIntensity: 0.35, haze: 0.1, fog: 2.5, lamps: 1 },
+  ],
+  // DESIGN §1.3 "Rain": ×0.6 intensity, desaturate 30 %. Unused until weather lands (M2).
+  rain: { intensity: 0.6, desaturate: 0.3 },
+}
