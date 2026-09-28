@@ -6,10 +6,17 @@
 ## 1. Principles
 
 1. **A real place, named carefully.** Balé is set in **Baledono, Purworejo, Jawa Tengah** — not a fictional composite. That is what makes it feel true, and it is also what makes carelessness costly. The naming policy (which real names we may use, which we must fictionalise, and what needs permission) lives in **[PLACES §1](PLACES.md)** and is binding.
+
+   **How strict to be (owner decision 2026-09-28):** Baledono anchors the *names and
+   geography*. Everyday culture — food, speech, houses, rituals, the market — may draw on
+   **Javanese culture of Central Java in general**; it does not have to be verified as
+   Baledono-specific. What must hold is that nothing contradicts a known fact about the
+   place (PLACES) and nothing breaks the rules in §3.
+
 2. **People are people first.** An NPC's regional or religious identity is a background detail, not a punchline or their whole personality.
 3. **No sacred things as loot.** Sacred objects, prayers, and rituals are never items to sell, farm, or grind.
 4. **Portray the diversity that is actually there.** Baledono is a Javanese, overwhelmingly Muslim kelurahan — writing it otherwise would be a different kind of falsehood. Its real diversity is local: musholla on the lanes and a masjid agung in town, a church in Purworejo (a colonial-era town), a Chinese-Indonesian trading presence around the pasar that is part of the fabric rather than a token. Show what is there; do not import a diversity checklist, and do not flatten the place into one note either.
-5. **Ask the community.** Anything regional gets reviewed by at least one person from that region before v1. Because the setting is a real kelurahan, **this review happens before M2 writing begins**, not at M4 — it is ROADMAP task **M1-11**, and the pack to send and the questions to ask are in [`docs/culture-review/`](culture-review/README.md). Use the *Culture feedback* issue template for anything that arrives later.
+5. **Ask the community.** Anything regional gets reviewed by at least one person from that region before v1. *(Owner decision 2026-09-28: a desk-research round 00 stood in for M1-11 so M2 could start; the reader round moves to M4 and still blocks public release.)* Originally **this review happens before M2 writing begins**, not at M4 — it is ROADMAP task **M1-11**, and the pack to send and the questions to ask are in [`docs/culture-review/`](culture-review/README.md). Use the *Culture feedback* issue template for anything that arrives later.
 
 ## 2. Glossary seeds (keep terms consistent; also used by the in-game *Kamus*)
 
@@ -24,7 +31,7 @@
 | *subak* | Balinese cooperative irrigation system, UNESCO World Heritage (2012) | **Not our model.** Purworejo is Javanese. Keep the term in the glossary as a distinct Balinese institution; do not call our system subak-inspired |
 | *pranata mangsa* | the Javanese 12-season solar farming calendar | GDD §3.1 |
 | *mangsa* | one of the 12 seasons | Kasa, Karo, Katelu … Sadha |
-| *sedekah bumi* | village thanksgiving for the harvest | The flagship festival. See §3 on contested practices |
+| *merti desa* | village thanksgiving and cleansing, also *sedekah bumi* / *bersih desa* | The flagship festival (GDD §10), with a wayang kulit night. See §3 on contested practices |
 | *slametan* | communal blessing meal | See §3 |
 | *sepuh* | elderly, senior; a term of respect | Mbah Hita is sepuh, not merely old |
 | *ngoko* / *krama* | low / high Javanese speech levels | Characterisation lives here. See §5 |
@@ -71,10 +78,11 @@ that is simply what the place is like:
 - **Lebaran** is mudik, sungkeman, ketupat, and the kampung filling up again.
   It is the emotional peak of the year and needs no mechanic beyond that.
 
-### 3.2 "Al Jannah" — how to frame it
+### 3.2 *Jannah* — how to frame it
 
-The starting location is named for the garden of paradise, and the game's goal
-is to make the ground *asri, nyaman, tenang*.
+Mbah Hita hopes to make his ground *asri, nyaman, tenang* — a place that calls to
+mind the garden of paradise. The place itself is just called **the balé**; the
+hope lives in his words, not in a name on a sign.
 
 ⚠️ **Never frame this as building paradise.** Jannah is God's to give, not a
 human project, and writing it otherwise is both presumptuous and inaccurate to
@@ -97,6 +105,12 @@ by real people.
   quietly changing the content.
 
 ### 3.4 Other guidance
+
+- **Dolalak:** began as a men's dance imitating Dutch soldiers (formalised in Kaliharjo,
+  Kaligesing, 1936); women have danced it since about 1970, and the short-trouser costume
+  is debated locally. Show mixed troupes, keep the colonial-uniform look, and treat the
+  trance (*ndadi*) as the troupe's own matter — brief, respectful, never a spectacle or a
+  scare. Credit it to Purworejo.
 
 - **Dewi Sri:** revered in Javanese agrarian tradition, and still meaningful to many people. Represent her as a gentle, dignified presence in lore (a story Mbah Sri tells, a phrase said at planting). **Do not** make her a quest-giver who trades items for power ups, a romance option, or a comic figure. Any "harvest spirit" gameplay role goes to something **clearly our own invention**, named as such.
 - **Places of worship:** visible, respectful, non-interactive (or with a simple "the building is quiet" description). No items or events inside. The musholla and the masjid agung are **social landmarks** — people gather outside them — which is different from making the prayer hall itself a game space.
@@ -123,8 +137,10 @@ by real people.
   speaks **krama** to Mbah Hita and he answers in **ngoko**; peers use ngoko
   both ways; the kelurahan office gets krama. Get this right and Javanese
   players feel the relationships instantly. Get it wrong and it reads as rude.
-- The local dialect is **Bagelen** — transitional between Banyumasan and
-  Mataraman, neither full ngapak nor Jogja-Solo. Listeners from the area notice.
+- The local dialect is **Bagelen**, a Kedu variety — transitional between Banyumasan and
+  Mataraman, neither full ngapak nor Jogja-Solo. In practice: write **general Central
+  Javanese (Mataraman) ngoko and krama**, keep ngapak forms out of town characters, and
+  never invent "local" words to sound specific.
 - NPC dialog may use Javanese words (*monggo*, *nuwun sewu*, *matur nuwun*, *nggih*) and must stay understandable to a non-Javanese Indonesian reader. Every such word goes in the glossary in the same PR.
 - **EN translation:** keep culturally loaded nouns in Indonesian or Javanese (italic), and translate everything else naturally. Don't over-exoticise. The *Kamus* carries the load — which is why it moves up to M2.
 - No profanity beyond very mild expressions (*astaga*, *aduh*, *waduh*, *lha*).

@@ -18,10 +18,9 @@ visit can settle.
 
 ## Balé — Mbah Hita's ground (`bale`)
 
-**Look at:** the public Instagram of [Balle Al Jannah](https://www.instagram.com/balle_aljannah/)
-and [Masjid Ar Royyan](https://www.instagram.com/masjid_ar_royyan_purworejo/). This is for
-atmosphere only. The in-game place is Mbah Hita's own and is **not** a copy of that
-venue (round 00, R1).
+**Look at:** any Central Javanese kampung pendopo or joglo, starting with the joglo
+reference below. The balé is fictional: Mbah Hita's own ground, **not** modelled on any
+real venue (owner decision 2026-09-28).
 
 **The look:**
 - A **joglo** pendopo: four *saka guru* holding a raised centre roof, *sunduk* tie-beams,

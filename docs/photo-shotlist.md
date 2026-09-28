@@ -7,8 +7,8 @@
 ## Ground rules
 
 - **Consent first.** Photograph places, not people. Anyone recognisable in frame: ask, or
-  retake without them. No children's faces. At Balé Al Jannah ask the owners before
-  shooting at all — their position on the name is still open (PRD §12.2) — and respect a no.
+  retake without them. No children's faces. On private ground (a venue, someone's
+  pendopo) ask the owners before shooting at all, and respect a no.
 - **Mosques and musholla:** outside only, never during prayer times, never people praying.
   The game shows them as social landmarks, not game spaces (CULTURE_GUIDE), so the
   outside and the gathering space in front are all the art needs.
@@ -24,7 +24,7 @@
 
 Priority: **A** blocks the first art pass (Balé, M2), **B** blocks the town (M2 hub), **C** is nice to have.
 
-### Balé Al Jannah and around it (A)
+### A kampung balé and its garden (A) — any pendopo or joglo in Central Java will do
 - [ ] From four sides, morning (~07:00) and late afternoon (~16:30)
 - [ ] At maghrib, 17:15–17:45: the signature hour — the sky, the light on walls, where lamps come on
 - [ ] Posts, joints, roof underside and tiles, if there is a joglo or pendopo structure — close-ups

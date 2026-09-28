@@ -2,7 +2,7 @@
 
 **An open-source HD-2D farming and life sim set in a real Javanese town.**
 
-Balé is a browser-first game set in **Baledono, Purworejo, Central Java**. You leave Jakarta to take over a patch of ground from your grandfather, **Mbah Hita** — still alive, no longer strong enough to work it, and carrying an unfinished ambition: to make the place *asri, nyaman, tenang*. That is why he named it **Balé Al Jannah**.
+Balé is a browser-first game set in **Baledono, Purworejo, Central Java**. You leave Jakarta to take over a patch of ground from your grandfather, **Mbah Hita** — still alive, no longer strong enough to work it, and carrying an unfinished ambition: to make the place *asri, nyaman, tenang*. Everyone just calls it **the balé**, after the pavilion he began on it.
 
 Farming pays for the work. The goal is not the size of your bank balance but **the quality of the place** — how green it is, how comfortable to be in, how quiet. A low-poly 3D world with 2D sprite characters, a cozy daily rhythm, and systems drawn from how the year actually runs there: the twelve *mangsa* of the Javanese farming calendar, the five-day *pasaran* market cycle, and the lunar calendar that walks Ramadan and Lebaran through the seasons.
 

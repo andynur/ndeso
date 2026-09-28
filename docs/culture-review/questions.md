@@ -10,23 +10,22 @@
 1. Apakah Baledono di paket itu terasa seperti Baledono? Apa yang paling meleset?
 2. Ada tempat penting yang kami lewatkan — yang kalau tidak ada, orang sana akan bilang
    "lho, kok nggak ada …"?
-3. Pasar Baledono: benarkah paling ramai di hari pasaran tertentu, dan tutup menjelang
-   siang? Hari pasaran yang mana?
-4. Apakah wajar kalau tanah seperti Balé Al Jannah punya kalen sendiri, dan gilirannya
+3. Pasar Baledono: benarkah paling ramai di hari pasaran tertentu, dan sayur-mayurnya
+   sudah sepi menjelang siang? Hari pasaran yang mana?
+4. Apakah wajar kalau tanah seperti balé Mbah Hita punya kalen sendiri, dan gilirannya
    diatur ulu-ulu? Atau di Baledono sudah tidak begitu?
 
 ## B. Nama tempat
 
-5. **Ini yang paling penting.** Apakah menurut Anda pantas memakai nama **Balé Al Jannah**
-   untuk lokasi utama di game ini? Kalau iya, siapa yang sebaiknya kami mintai izin?
-   Kalau sebaiknya tidak, nama seperti apa yang lebih tepat?
+5. Lokasi utama kami sebut **Balé** saja — tanah fiktif milik Mbah Hita, sengaja tidak
+   memakai nama tempat nyata mana pun. Apakah itu terasa wajar untuk orang sana?
 6. Ada nama tempat lain di paket itu yang sebaiknya tidak dipakai, atau salah tulis?
 
 ## C. Agama
 
 7. Bagian "aturan soal agama" di paket — ada yang menurut Anda **keliru atau berisiko**?
-8. **"Al Jannah" sebagai nama tanah dan cita-cita "membuat tempat yang mengingatkan pada
-   kebun yang dijanjikan"** — apakah pembingkaian itu bisa diterima? Kalau tidak, apa
+8. **Cita-cita Mbah Hita "membuat tempat yang mengingatkan pada kebun yang dijanjikan"**
+   — apakah pembingkaian itu bisa diterima? Kalau tidak, apa
    yang harus diubah?
 9. Menampilkan Ramadhan sebagai *kota yang berubah* — pasar buka dini hari, siang sepi,
    takjil menjelang maghrib, tarawih — tanpa memodelkan puasa pemain sama sekali. Menurut
@@ -56,10 +55,10 @@
 
 19. Pranata mangsa — masih dipakai petani di sana, atau sudah jadi pengetahuan lama?
 20. Daftar tanaman kami: padi, cabai rawit, singkong, jagung, kacang panjang, kangkung,
-    terong, tomat, ubi, bawang merah, kopi, cengkeh, durian. Ada yang tidak masuk akal
+    terong, tomat, ubi, bawang merah, kopi, cengkeh, durian, manggis, vanili. Ada yang tidak masuk akal
     untuk Purworejo? Ada yang jelas kurang?
-21. Sedekah Bumi sebagai festival panen utama — tepat untuk Baledono, atau ada yang lebih
-    pas?
+21. **Merti Desa** (dengan wayang kulit) sebagai festival utama, sesudah panen — tepat?
+    Di tempat Anda, merti desa diadakan kapan: sesudah panen, bulan Sura, atau Ruwah?
 22. Dolalak — apa yang paling sering salah ditampilkan orang luar tentang tarian ini?
 
 ## G. Bebas

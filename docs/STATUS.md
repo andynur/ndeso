@@ -9,7 +9,7 @@
 - **Next task:** M2-01 (M2 may start: M1-11's desk round unblocks writing, provisionally). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2; it is a live venue with a mosque inside — round 00 R1 recommends our own name for the MVP) · festival name/timing *Merti Desa* vs *Sedekah Bumi* (R2–R3) · add manggis (R4) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · maghrib look needs a phone check (`?clock=17:30`).
+- **Open decisions:** mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
 - **Known issues:** `check:content` (M2-01) and `smoke` (M2-19) are still `tools/todo.ts` stubs. Sim events are drained unread (the HUD clock reads `ClockState`). Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 156 KB brotli of 350 KB.
 
 ## Log
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · round-00 decisions applied · claude/charming-keller-syx5d4
+- Done (owner decisions): the in-game place is just **Balé** (fictional; PRD §12.2 resolved; README/GDD/PLACES/review pack updated, no locale used the old name). Flagship festival **Merti Desa** (wayang kulit night), kept after the harvest. GDD §4.3 gains `manggis` and `vanili`; Dolalak guidance (CULTURE_GUIDE §3.4, GDD §10); pranata mangsa "who uses it" (GDD §3.1). New principle: everyday culture may be general Central Javanese, not Baledono-verified (CULTURE_GUIDE §1.1, PLACES §1); dialect = general Mataraman, no invented local words. Reader questions updated for round 01.
+- Tests: `bun run check` green.
+- Notes/decisions: crop numbers are starting values (rule 5: stated here and in the commit). Calendar data untouched — no festival ids exist in content yet.
+- Next: M2-01.
+
 ### 2026-09-28 · M1-11 + M1-12 (desk substitutes) · claude/charming-keller-syx5d4
 - Done: on the owner's instruction, `culture-review/round-00-desk-2026-09-28.md` answers the 25 reader questions from public sources (confidence-rated, 25 citations; no community voice invented) with 5 sourced corrections applied to PLACES — Balle Al Jannah is a live venue with Masjid Ar Royyan; Pasar Baledono open ~04:30–17:00 (SNI, rebuilt); Klenteng Thong Hwie Kiong beside the pasar; Geger Menjangan ~175 m in Trirejo with the Kyai Imam Puro makam; Baledono on the Bogowonto — and R1–R6 recommendations left for the owner. `visual-references.md`: per-area look + links (no images copied).
 - Tests: `bun run check` green.
