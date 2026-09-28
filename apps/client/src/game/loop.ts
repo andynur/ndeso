@@ -31,6 +31,12 @@ export interface LoopHooks {
 
 export interface Loop {
   readonly running: boolean;
+  /**
+   * Caps the frame rate (PERFORMANCE_BUDGET §4: Low runs at 30); 0 lifts the cap. Display
+   * frames that arrive early are skipped whole — no step, no draw — so a 60 Hz or 120 Hz
+   * screen settles on every 2nd or 4th vsync instead of an uneven cadence.
+   */
+  setFpsCap(fps: number): void;
   start(): void;
   stop(): void;
 }
@@ -51,14 +57,22 @@ export function advance(accumulator: number, realDtMs: number, tickMs = TICK_MS)
   return { steps, accumulator: next };
 }
 
+/**
+ * A capped frame runs once this fraction of its interval has passed, so vsync jitter of a
+ * millisecond or two does not skip a frame that is due.
+ */
+const CAP_SLACK = 0.9;
+
 export function createLoop(hooks: LoopHooks, scheduler: FrameScheduler): Loop {
   let handle = 0;
   let running = false;
   let last = 0;
   let accumulator = 0;
+  let minFrameMs = 0;
 
   function tick(now: number): void {
     handle = scheduler.request(tick);
+    if (now - last < minFrameMs) return;
     const realDtMs = Math.min(Math.max(now - last, 0), MAX_FRAME_MS);
     const result = advance(accumulator, realDtMs);
     last = now;
@@ -70,6 +84,9 @@ export function createLoop(hooks: LoopHooks, scheduler: FrameScheduler): Loop {
   return {
     get running() {
       return running;
+    },
+    setFpsCap(fps) {
+      minFrameMs = fps > 0 ? (1000 / fps) * CAP_SLACK : 0;
     },
     start() {
       if (running) return;

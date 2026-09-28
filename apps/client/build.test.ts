@@ -14,6 +14,15 @@ interface Manifest {
 // would cost seconds for no extra coverage.
 const result = await build({ outdir: OUTDIR, minify: false, publicPath: '/' });
 const manifest = (await Bun.file(join(OUTDIR, 'precache-manifest.json')).json()) as Manifest;
+const assets = (await Bun.file(join(OUTDIR, 'assets/manifest.json')).json()) as Record<
+  string,
+  { url: string; bytes: number }
+>;
+// Read now: the output directory is removed once the tests are registered.
+const assetSizes = Object.values(assets).map((entry) => [
+  entry.bytes,
+  Bun.file(join(OUTDIR, 'assets', entry.url)).size,
+]);
 
 describe('parseArgs', () => {
   test('defaults to the domain root', () => {
@@ -81,6 +90,14 @@ describe('precache-manifest.json', () => {
 
   test('has a revision derived from the shell', () => {
     expect(manifest.revision).toMatch(/^[0-9a-f]+$/);
+  });
+});
+
+describe('generated assets', () => {
+  test('ship the manifest and every model it lists under assets/', () => {
+    expect(Object.keys(assets)).toContain('bale_ground_lvl0');
+    for (const [listed, onDisk] of assetSizes) expect(onDisk).toBe(listed as number);
+    expect(result.files.some((file) => file.path === 'assets/CREDITS.md')).toBe(false);
   });
 });
 

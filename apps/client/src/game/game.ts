@@ -1,4 +1,4 @@
-import type { CalendarData } from '@bale/shared';
+import { type CalendarData, parseClockTime } from '@bale/shared';
 import {
   type Command,
   createContext,
@@ -70,4 +70,16 @@ export function createGame(
       return events;
     },
   };
+}
+
+/**
+ * `?clock=17:30` → the clock minute to start the day at, for looking at one hour's lighting
+ * without waiting for it. Times before the day starts are read as after midnight (00:30 is
+ * minute 1470); anything outside the game day is ignored.
+ */
+export function parseStartClock(value: string | null, cal: CalendarData): number | undefined {
+  const time = parseClockTime(value);
+  if (time === undefined) return undefined;
+  const minute = time < cal.clock.dayStartMinute ? time + 1440 : time;
+  return minute < cal.clock.dayEndMinute ? minute : undefined;
 }

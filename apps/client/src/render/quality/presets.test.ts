@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import { QUALITY_PRESETS } from '@bale/shared';
-import { clampPixelRatio, guessPreset, MAX_DPR } from './presets.ts';
+import {
+  benchmarkVerdict,
+  clampPixelRatio,
+  DynamicResolution,
+  guessPreset,
+  MAX_DPR,
+  QUALITY,
+  RENDER_SCALE_MIN,
+} from './presets.ts';
 
 describe('clampPixelRatio', () => {
   test('caps at the preset budget (PERF §4)', () => {
@@ -44,5 +52,89 @@ describe('preset table', () => {
     for (const preset of QUALITY_PRESETS) {
       expect(MAX_DPR[preset]).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe('QUALITY', () => {
+  test('matches the PERFORMANCE_BUDGET §4 table', () => {
+    expect(QUALITY.low).toEqual({
+      maxDpr: 1,
+      shadowMapSize: 0,
+      softShadows: false,
+      lamps: 0,
+      fpsCap: 30,
+    });
+    expect(QUALITY.medium.shadowMapSize).toBe(512);
+    expect(QUALITY.high.shadowMapSize).toBe(1024);
+    expect(QUALITY.high.softShadows).toBe(true);
+    expect([QUALITY.medium.lamps, QUALITY.high.lamps]).toEqual([2, 4]);
+  });
+});
+
+describe('benchmarkVerdict', () => {
+  test('steps down one preset below 25 fps', () => {
+    expect(benchmarkVerdict('high', 50)).toBe('medium');
+    expect(benchmarkVerdict('low', 50)).toBe('low');
+  });
+
+  test('steps up one preset at a steady 60', () => {
+    expect(benchmarkVerdict('low', 16.7)).toBe('medium');
+    expect(benchmarkVerdict('high', 16.7)).toBe('high');
+  });
+
+  test('keeps the guess in between', () => {
+    expect(benchmarkVerdict('medium', 30)).toBe('medium');
+  });
+
+  test('treats a nonsense measurement as slow', () => {
+    expect(benchmarkVerdict('medium', 0)).toBe('low');
+  });
+});
+
+describe('DynamicResolution', () => {
+  const run = (dr: DynamicResolution, frameMs: number, totalMs: number) => {
+    let changes = 0;
+    for (let t = 0; t < totalMs; t += frameMs) if (dr.update(frameMs)) changes++;
+    return changes;
+  };
+
+  test('holds full scale while the target is met', () => {
+    const dr = new DynamicResolution(30);
+    expect(run(dr, 1000 / 30, 20_000)).toBe(0);
+    expect(dr.scale).toBe(1);
+  });
+
+  test('drops 0.1 per 2 s window below target − 5, down to 0.6', () => {
+    const dr = new DynamicResolution(30);
+    run(dr, 1000 / 20, 2000);
+    expect(dr.scale).toBe(0.9);
+    run(dr, 1000 / 20, 20_000);
+    expect(dr.scale).toBe(RENDER_SCALE_MIN);
+  });
+
+  test('a dip inside the 5 fps margin does nothing', () => {
+    const dr = new DynamicResolution(30);
+    run(dr, 1000 / 26, 10_000);
+    expect(dr.scale).toBe(1);
+  });
+
+  test('climbs back 0.1 after 10 s at target', () => {
+    const dr = new DynamicResolution(30);
+    run(dr, 1000 / 20, 4000);
+    expect(dr.scale).toBe(0.8);
+    run(dr, 1000 / 30, 9900);
+    expect(dr.scale).toBe(0.8);
+    run(dr, 1000 / 30, 200);
+    expect(dr.scale).toBe(0.9);
+    run(dr, 1000 / 30, 30_000);
+    expect(dr.scale).toBe(1);
+  });
+
+  test('reset returns to full scale with a new target', () => {
+    const dr = new DynamicResolution(60);
+    run(dr, 1000 / 40, 4000);
+    dr.reset(30);
+    expect(dr.scale).toBe(1);
+    expect(dr.targetFps).toBe(30);
   });
 });

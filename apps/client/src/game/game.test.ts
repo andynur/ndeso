@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import type { Command } from '@bale/sim';
-import { createGame } from './game.ts';
+import { createGame, parseStartClock } from './game.ts';
 
 const cal = CALENDAR_DATA;
 
@@ -32,4 +32,12 @@ test('submitted commands reach the next tick only, sanitized and in order', () =
   game.step();
   expect(seen[0]).toEqual([{ type: 'move', x: 0.6, z: 0.8 }, { type: 'interact' }]);
   expect(seen[1]).toEqual([]);
+});
+
+test('?clock= reads a time inside the game day, after midnight included', () => {
+  expect(parseStartClock('17:30', cal)).toBe(1050);
+  expect(parseStartClock('00:30', cal)).toBe(1470);
+  expect(parseStartClock('03:00', cal)).toBeUndefined();
+  expect(parseStartClock('evening', cal)).toBeUndefined();
+  expect(parseStartClock(null, cal)).toBeUndefined();
 });

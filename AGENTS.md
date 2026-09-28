@@ -34,6 +34,7 @@ bun install                 # deps (workspace)
 bun run dev                 # dev server + HMR (client), LAN-accessible for phone testing
 bun run check               # types + lint + deps + i18n + content + tests  ← required before commit
 bun test packages/sim       # fast sim tests;  bun test -u  to update snapshots (explain why in PR)
+bun run assets              # generated models → assets/ + manifest (dev and build run it too)
 bun run build && bun run check:size
 bun run ci                  # everything CI runs
 ```

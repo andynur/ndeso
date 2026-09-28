@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-05 done.
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-05 and M1-07…M1-09 done.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-06 (player movement in sim + tile collision grid; render follows; walk anim by direction). The `commands` system it adds is the first consumer of `ctx.commands`: `move {x, z}` is a **held** world-space intent (sent only on change, `{0,0}` = stop), so the sim must keep it in state between ticks. Replace the scene's placeholder walker with the player as the camera's follow target.
+- **Next task:** M1-06 (skipped on request; player movement in sim + tile collision grid; render follows; walk anim by direction). `move {x, z}` is a **held** world-space intent (sent only on change, `{0,0}` = stop), so the sim keeps it in state between ticks. Replace the scene's placeholder walker (circles `area.spawn`) with the player as the camera's follow target. The collision grid should come from `areas/bale.json5` (joglo footprint, kalen).
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
-- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6).
-- **Known issues:** two `bun run` scripts are still `tools/todo.ts` stubs — `check:content` (M2-01) and `smoke` (M2-19). Sim events are drained and dropped each frame until the HUD clock (M1-08) consumes them. `Command`s are queued but no system reads them until M1-06. No menu or gamepad input yet (GDD §12 Esc/I, gamepad column) — add them with the task that needs them. Shell size is 129 KB brotli of a 350 KB budget.
+- **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · maghrib look needs a phone check (`?clock=17:30`).
+- **Known issues:** `check:content` (M2-01) and `smoke` (M2-19) are still `tools/todo.ts` stubs. Sim events are drained unread (the HUD clock reads `ClockState`). No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 156 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,24 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · M1-09 · claude/charming-keller-syx5d4
+- Done: `areas/bale.json5` (field, joglo, kalen, spawn, lamps, `origin`) + `validateArea`, bundled as `@bale/content/areas`. `tools/placeholders/bale.ts` builds the ground (dry kalen cut in, weedy field) and the half-built joglo from it via a small GLB writer (`tools/assets/glb.ts`, `mesh-builder.ts`); `bun run assets` runs `gltf-transform optimize --compress meshopt` under Bun, writes hashed `assets/models/bale/*.glb` + `assets/manifest.json`, incremental via `.cache/assets.json`. Dev server builds + serves `/assets/*`; `build.ts` ships them in `dist/assets/`. Client loads them with `GLTFLoader` + `MeshoptDecoder`, one shared vertex-colour Lambert material, `ground` receives / rest casts shadows; fallback plane until loaded. `first-playable-frame` budget now measured.
+- Tests: `bun run check` green (356 tests); build + `check:size` ok (shell 156 KB, first frame 164 KB). Headless Chromium at noon/maghrib/night on all presets, no console errors.
+- Notes/decisions: new devDependency `@gltf-transform/cli` (TECH_STACK-listed). Placeholder models are generated, never committed. Shell +27 KB brotli for GLTFLoader + meshopt decoder.
+- Next: M1-06 was skipped (user asked for M1-07…M1-09) — do it next; then M1-10.
+
+### 2026-09-28 · M1-08 · claude/charming-keller-syx5d4
+- Done: `QUALITY` table (PERF §4: DPR, shadow map 0/512/1024+soft, lamps 0/2/4, fps cap 30/60/60); `scene.setPreset` switches live (shadow programs recompiled, lamps added/removed), sun shadow box follows the camera. First-run 3 s benchmark (`game/benchmark.ts` + `benchmarkVerdict`, one step up/down, stored as `bale.quality`; `?quality=` overrides unstored). `DynamicResolution` (−0.1 per 2 s below target−5, min 0.6; +0.1 after 10 s at target). `loop.setFpsCap`. `?debug=perf` overlay: fps, frame/cpu ms, calls, tris, tex, geo, heap, preset@DPR. HUD clock `15:40 · Ashar` / `Mangsa Kapat · hari 3/8 · Kliwon` from `game/clock-view.ts`, updated once per game minute.
+- Tests: `bun run check` green (333 tests). Headless Chromium: clock + overlay render, benchmark stepped High → Medium on SwiftShader, maghrib shadows long, no console errors.
+- Notes/decisions: the benchmark runs uncapped on the guessed preset (a 30-capped Low could never show headroom). Medium's "30/60" cap runs at 60. Perf labels are units, not `t()` strings (dev telemetry). Sim events are still drained unread — the clock reads `ClockState` because a minute passes without an event. Low has no blob shadows yet (DESIGN §1); add with the character art.
+- Next: M1-09.
+
+### 2026-09-28 · M1-07 · claude/charming-keller-syx5d4
+- Done: `content/data/lighting.json5` (DESIGN §1.3 keyframes + a `night_hold`, rain modifier) validated by `@bale/shared` `validateLighting`, bundled as `@bale/content/lighting`. `render/lighting/day-night.ts` — pure sampler: linear-space colour blend, wraps past midnight, sun direction from elevation/azimuth, haze (fog + sky) colour and fog distance, lamp level, sprite tint lifted by `SPRITE_LIFT` 0.35 so sprites read at night. Scene drives sun, ambient, fog/sky, sprite tint and a placeholder teras lamp (`MAX_LAMPS` per preset: 0/2/4) from `clockMinute`. `?clock=17:30` opens the day at that hour.
+- Tests: `bun run check` green (309 tests). Headless Chromium screenshots at 05:10/06:30/12:00/15:40/17:30/18:15/21:00, no console errors.
+- Notes/decisions: sun intensities, elevations, `haze`, `fog` are tuning (DESIGN gives only colours + ambient). Maghrib reads warm (orange west light, mauve-to-orange haze) but a flat green field under a 13° sun stays dark olive — judge on a phone. Rain is wired but always 0 until weather (M2). No shadows yet: they are a preset feature (M1-08).
+- Next: M1-08.
+
 ### 2026-09-27 · M1-05 · claude/friendly-curie-r6bxqk
 - Done: `sim/commands.ts` — `Command` union (`move` world-space held intent, `interact`, `selectSlot`, `cycleSlot`) + `sanitizeCommand`; `SimContext.commands`. `game.submit()` queues sanitized commands for the next tick. `platform/input/` — keyboard by `event.code`, floating stick in the left 40 % (DESIGN §5), two-finger swipe turns / pinch zooms, mouse click = interact; one `InputFrame` per frame. `game/commands.ts` maps it through the camera yaw (`screenToWorld`, the inverse of `screenFacing`). `ui/touch-controls.tsx` — stick ring, Use (72 dp) and turn (48 dp) buttons, hidden where the primary pointer is a mouse.
 - Tests: `bun run check` green (288 tests); build + `check:size` ok (shell 129 KB). Headless Chromium: touch stick draws and releases, buttons shown on touch / hidden on desktop, no console errors.
