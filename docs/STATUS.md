@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-05 and M1-07…M1-09 done.
+- **Milestone:** M1 — Tech spike (30 fps on a Low device; first frame ≤ 5 MB). M1-01…M1-09 done; M1-10…M1-12 are human tasks, prepared.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M1-06 (skipped on request; player movement in sim + tile collision grid; render follows; walk anim by direction). `move {x, z}` is a **held** world-space intent (sent only on change, `{0,0}` = stop), so the sim keeps it in state between ticks. Replace the scene's placeholder walker (circles `area.spawn`) with the player as the camera's follow target. The collision grid should come from `areas/bale.json5` (joglo footprint, kalen).
+- **Next task:** the human M1 tasks — M1-10 device test ([`device-test.md`](device-test.md)), M1-11 culture review round ([`culture-review/`](culture-review/README.md)), M1-12 photos ([`photo-shotlist.md`](photo-shotlist.md)). Agents: M2-01 when the user says M2 may start (M1-11 blocks M2 *writing*, not code).
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** permission to use the real name "Balé Al Jannah" (PRD §12.2) · mangsa day-lengths and the prayer-time table are `verified: false` (§12.6) · maghrib look needs a phone check (`?clock=17:30`).
-- **Known issues:** `check:content` (M2-01) and `smoke` (M2-19) are still `tools/todo.ts` stubs. Sim events are drained unread (the HUD clock reads `ClockState`). No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 156 KB brotli of 350 KB.
+- **Known issues:** `check:content` (M2-01) and `smoke` (M2-19) are still `tools/todo.ts` stubs. Sim events are drained unread (the HUD clock reads `ClockState`). Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 156 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · M1-06 (+ M1-10/M1-12 prep) · claude/charming-keller-syx5d4
+- Done: `packages/sim` `collision.ts` — tile grid built from the area file (joglo platform and kalen solid, off-area solid); `systems/movement.ts` holds the `move` intent in state, walks at `player.json5` speed (4 tiles/s, radius 0.3) with per-axis slide-and-snap, 4-way `facing`. `GameState = TimeState & MovementState`. Area schema gains `kalen.crossings` (plank *wot*, `CROSSING_WIDTH` 2): without one the kalen cut the field off; the placeholder draws two boards at `[5.5, 3]`. Client `createGame(cal, area, player)` keeps the pre-tick position and `playerPose(alpha)` interpolates; the scene draws and follows the player (walk/idle tag by facing through the camera yaw; walk cycle restarts on setting off), walker removed. M1-10 checklist `docs/device-test.md`, M1-12 shot list `docs/photo-shotlist.md`.
+- Tests: `bun run check` green (381 tests); build + `check:size` ok. Headless Chromium: walks east over the plank into the field, north to the edge, camera follows, no console errors.
+- Notes/decisions: speed/radius are feel numbers in content (GDD has none). The plank crossing is new area data — say so to the culture/art review, it is invented, not surveyed. No `save.ts` yet, so the player slice has no schema; add it with M2 saves.
+- Next: human M1 tasks; then M2-01.
+
 ### 2026-09-28 · M1-09 · claude/charming-keller-syx5d4
 - Done: `areas/bale.json5` (field, joglo, kalen, spawn, lamps, `origin`) + `validateArea`, bundled as `@bale/content/areas`. `tools/placeholders/bale.ts` builds the ground (dry kalen cut in, weedy field) and the half-built joglo from it via a small GLB writer (`tools/assets/glb.ts`, `mesh-builder.ts`); `bun run assets` runs `gltf-transform optimize --compress meshopt` under Bun, writes hashed `assets/models/bale/*.glb` + `assets/manifest.json`, incremental via `.cache/assets.json`. Dev server builds + serves `/assets/*`; `build.ts` ships them in `dist/assets/`. Client loads them with `GLTFLoader` + `MeshoptDecoder`, one shared vertex-colour Lambert material, `ground` receives / rest casts shadows; fallback plane until loaded. `first-playable-frame` budget now measured.
 - Tests: `bun run check` green (356 tests); build + `check:size` ok (shell 156 KB, first frame 164 KB). Headless Chromium at noon/maghrib/night on all presets, no console errors.

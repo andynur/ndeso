@@ -21,6 +21,9 @@ export interface GroundRect {
 }
 
 export type Vec2 = readonly [number, number];
+
+/** How wide a plank crossing over the kalen is, along the channel, in tiles. */
+export const CROSSING_WIDTH = 2;
 export type Vec3 = readonly [number, number, number];
 
 export interface AreaDef {
@@ -35,8 +38,16 @@ export interface AreaDef {
   readonly field: GroundRect;
   /** The joglo's footprint, platform included. */
   readonly joglo: GroundRect;
-  /** The kalen, a channel of `width` along axis-aligned segments between `points`. */
-  readonly kalen: { readonly points: readonly Vec2[]; readonly width: number };
+  /**
+   * The kalen, a channel of `width` along axis-aligned segments between `points`. It blocks
+   * walking except at `crossings`: points on the channel where a plank (*wot*) spans it,
+   * each `CROSSING_WIDTH` wide.
+   */
+  readonly kalen: {
+    readonly points: readonly Vec2[];
+    readonly width: number;
+    readonly crossings: readonly Vec2[];
+  };
   /** Teras lamps (DESIGN §1.3: max 4 active). */
   readonly lamps: readonly Vec3[];
 }
@@ -57,6 +68,7 @@ type Field =
   | 'lamps'
   | 'points'
   | 'width'
+  | 'crossings'
   | 'x'
   | 'z'
   | 'w'
@@ -76,6 +88,18 @@ const SNAKE_ID = /^[a-z][a-z0-9_]*$/;
 
 /** Max point lights any preset allows (PERFORMANCE_BUDGET §4). */
 const MAX_LAMPS = 4;
+
+/** Whether `point` lies on one of the axis-aligned segments between `points`. */
+function onPolyline(points: readonly Vec2[], [x, z]: Vec2): boolean {
+  for (let i = 1; i < points.length; i++) {
+    const [ax, az] = points[i - 1] as Vec2;
+    const [bx, bz] = points[i] as Vec2;
+    const inX = x >= Math.min(ax, bx) && x <= Math.max(ax, bx);
+    const inZ = z >= Math.min(az, bz) && z <= Math.max(az, bz);
+    if (inX && inZ) return true;
+  }
+  return false;
+}
 
 export function validateArea(raw: unknown, file: string): AreaResult {
   const errors: string[] = [];
@@ -143,7 +167,15 @@ export function validateArea(raw: unknown, file: string): AreaResult {
       if (ax !== bx && az !== bz) err(`kalen segment ${i} must run along x or z`);
       if (ax === bx && az === bz) err(`kalen segment ${i} has zero length`);
     }
-    kalenDef = { points, width: kalen.width };
+    const crossings = kalen.crossings ?? [];
+    if (!Array.isArray(crossings) || !crossings.every((p) => isTuple(p, 2))) {
+      err('kalen.crossings must be a list of [x, z] points');
+    } else {
+      for (const [i, point] of (crossings as unknown as Vec2[]).entries()) {
+        if (!onPolyline(points, point)) err(`kalen crossing ${i} must lie on the kalen`);
+      }
+    }
+    kalenDef = { points, width: kalen.width, crossings: crossings as unknown as Vec2[] };
   }
 
   if (

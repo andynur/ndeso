@@ -15,6 +15,7 @@ const valid = () => ({
       [5.5, 12],
     ],
     width: 1,
+    crossings: [[5.5, 3]],
   },
   lamps: [[0, 2, 0]],
 });
@@ -47,7 +48,21 @@ describe('validateArea', () => {
       [0, 0],
       [3, 4],
     ];
+    raw.kalen.crossings = [];
     expect(errorsOf(raw)).toEqual(['a.json5: kalen segment 1 must run along x or z']);
+  });
+
+  test('a crossing lies on the kalen', () => {
+    const raw = valid();
+    raw.kalen.crossings = [[4, 3]];
+    expect(errorsOf(raw)).toEqual(['a.json5: kalen crossing 0 must lie on the kalen']);
+  });
+
+  test('crossings are optional', () => {
+    const raw: { kalen: { crossings?: unknown } } = valid();
+    delete raw.kalen.crossings;
+    const result = validateArea(raw, 'a.json5');
+    expect(result.ok && result.data.kalen.crossings).toEqual([]);
   });
 
   test('no more lamps than any preset can light', () => {

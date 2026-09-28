@@ -24,13 +24,13 @@
 - [x] **M1-03** Billboard sprite system (instanced, atlas UV, animation by tag) with a placeholder character atlas. (DESIGN §1.2)
 - [x] **M1-04** Camera rig: follow, 4-angle rotation, zoom limits. (DESIGN §1.1)
 - [x] **M1-05** Input abstraction: keyboard + virtual joystick + context button → `Command`s. (GDD §12)
-- [ ] **M1-06** Player movement in sim with a tile collision grid; render follows. Walk anim by direction.
+- [x] **M1-06** Player movement in sim with a tile collision grid; render follows. Walk anim by direction.
 - [x] **M1-07** Day/night lighting from `lighting.json5` keyframes driven by the clock. Maghrib is the signature hour — get it right first. (DESIGN §1.3)
 - [x] **M1-08** Quality presets + DPR cap + perf overlay (`?debug=perf`), plus the **HUD clock** from GDD §3.2 — `15:40 · Ashar · Mangsa Kapat hari 3/8 · Kliwon`, consuming the locale keys M1-01 landed. It rides here because this is the first task that owns a persistent on-screen readout. (PERF §4, §6, GDD §3.2)
 - [x] **M1-09** Placeholder **Balé** terrain — the field, the half-built joglo, the dry *kalen* — with the asset pipeline minimum: gltf-transform meshopt + manifest. (ASSET_PIPELINE, [PLACES](PLACES.md))
-- [ ] **M1-10** Device test on a Low phone plus WhatsApp in-app browser; record in `docs/perf-log.md`. **Human task**, agent prepares the checklist.
+- [ ] **M1-10** Device test on a Low phone plus WhatsApp in-app browser; record in `docs/perf-log.md`. **Human task**, agent prepares the checklist — **done: [`device-test.md`](device-test.md)**.
 - [ ] **M1-11** **Community cultural review round, before any M2 dialog is written** (CULTURE_GUIDE §1.5). The setting is a real kelurahan, so this cannot wait for M4. **The pack and the questions are written** — [`docs/culture-review/`](culture-review/README.md) — so what remains is the part only a human can do: find two or three readers from Purworejo, send it, and record the answers as `round-01-<date>.md`. Includes seeking the owners' position on the name "Balé Al Jannah" (PRD §12.2). **Start now, in parallel** — a review round takes weeks and it blocks all M2 writing.
-- [ ] **M1-12** **Reference photography trip** ([PLACES §5](PLACES.md)): Pasar Baledono at 06:00, the main road after rain and at night, the climb up Geger Menjangan and the view, Balé Al Jannah from several angles, and ordinary textures (warung fronts, kalen, pagar, paving). Almost none of this exists online at usable quality and the art direction is blocked on it. **Human task**, agent prepares the shot list.
+- [ ] **M1-12** **Reference photography trip** ([PLACES §5](PLACES.md)): Pasar Baledono at 06:00, the main road after rain and at night, the climb up Geger Menjangan and the view, Balé Al Jannah from several angles, and ordinary textures (warung fronts, kalen, pagar, paving). Almost none of this exists online at usable quality and the art direction is blocked on it. **Human task**, agent prepares the shot list — **done: [`photo-shotlist.md`](photo-shotlist.md)**.
 
 ## M2 — Vertical slice (exit: GDD §13 "Done when")
 

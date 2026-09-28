@@ -1,11 +1,12 @@
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { LIGHTING_DATA } from '@bale/content/lighting';
+import { PLAYER_DATA } from '@bale/content/player';
 import { parseAssetManifest, TICK_MS } from '@bale/shared';
-import { createTimeState } from '@bale/sim';
+import { createGameState } from '@bale/sim';
 import { clockViewOf } from './game/clock-view.ts';
 import { createCommandMapper } from './game/commands.ts';
-import { createGame, parseStartClock } from './game/game.ts';
+import { createGame, type PlayerPose, parseStartClock } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { PerfMeter } from './game/perf-meter.ts';
 import { createQualityControl, initialPreset, type QualityControl } from './game/quality.ts';
@@ -114,10 +115,11 @@ async function boot(): Promise<void> {
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state = createTimeState(CALENDAR_DATA);
+  const state = createGameState(CALENDAR_DATA, BALE_AREA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
-  const game = createGame(CALENDAR_DATA, state);
+  const game = createGame(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, state);
+  const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const commands = createCommandMapper();
   const now = BROWSER_FRAMES.now;
   const meter = debug ? new PerfMeter() : undefined;
@@ -158,7 +160,12 @@ async function boot(): Promise<void> {
         const { clock } = game.state;
         const clockMinute =
           clock.minute + (clock.tick + alpha) / CALENDAR_DATA.clock.ticksPerMinute;
-        scene.draw(((game.ticks + alpha) * TICK_MS) / 1000, realDtMs / 1000, clockMinute);
+        scene.draw(
+          ((game.ticks + alpha) * TICK_MS) / 1000,
+          realDtMs / 1000,
+          clockMinute,
+          game.playerPose(alpha, playerPose),
+        );
         // Sim events have no consumer yet: the HUD clock reads the clock directly, since a
         // minute passes without one. Drained so the buffer cannot grow.
         game.drainEvents();

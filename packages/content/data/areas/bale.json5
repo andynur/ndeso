@@ -17,8 +17,9 @@
   field: { x: 7, z: -6, w: 8, d: 12 },
   // The half-built joglo, just north of the spawn: 8 × 8 including its stone platform.
   joglo: { x: -4, z: -8, w: 8, d: 8 },
-  // The dead water channel, running north–south along the field's west side.
-  kalen: { points: [[5.5, -12], [5.5, 12]], width: 1 },
+  // The dead water channel, running north–south along the field's west side. It is too
+  // deep to step across; one plank (wot) spans it on the path from the spawn to the field.
+  kalen: { points: [[5.5, -12], [5.5, 12]], width: 1, crossings: [[5.5, 3]] },
   // Teras lamps hung from the joglo's two front corner posts.
   lamps: [[-3.5, 2.3, 0.2], [3.5, 2.3, 0.2]],
 }

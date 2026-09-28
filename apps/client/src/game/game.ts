@@ -1,13 +1,17 @@
-import { type CalendarData, parseClockTime } from '@bale/shared';
+import { type AreaDef, type CalendarData, type PlayerData, parseClockTime } from '@bale/shared';
 import {
+  buildCollisionGrid,
   type Command,
   createContext,
-  createTimeState,
+  createGameState,
+  createMovementSystem,
   createTimeSystem,
+  type Dir,
+  type GameState,
+  isMoving,
   type SimEvent,
   type System,
   sanitizeCommand,
-  type TimeState,
 } from '@bale/sim';
 
 const NO_COMMANDS: readonly Command[] = [];
@@ -15,11 +19,19 @@ const NO_COMMANDS: readonly Command[] = [];
 /**
  * The glue between the loop and the sim (ARCHITECTURE §1, `game/`): owns the state, runs
  * the systems once per tick, and buffers the events they emit until the frame drains them.
- * Only the `time` system exists yet; the rest join in ARCHITECTURE §3.2 order as they land.
+ * `time` and player movement exist so far; the rest join in ARCHITECTURE §3.2 order.
  */
 
+/** Where render draws the player this frame: between the last two ticks (ARCH §4.1). */
+export interface PlayerPose {
+  x: number;
+  z: number;
+  facing: Dir;
+  moving: boolean;
+}
+
 export interface Game {
-  readonly state: Readonly<TimeState>;
+  readonly state: Readonly<GameState>;
   /** Ticks stepped since boot; with `alpha` it gives render a continuous sim time. */
   readonly ticks: number;
   /**
@@ -30,18 +42,26 @@ export interface Game {
   step(): void;
   /** Hands over and clears the events emitted since the last drain, in emission order. */
   drainEvents(): SimEvent[];
+  /** Writes the player's pose `alpha` of the way from the previous tick to the last. */
+  playerPose(alpha: number, out: PlayerPose): PlayerPose;
 }
 
 /**
- * `after` runs after `time` each tick, in ARCHITECTURE §3.2 order. Empty until M1-06 adds
- * the `commands` system; tests use it to observe what a tick receives.
+ * `after` runs after the built-in systems each tick; tests use it to observe what a tick
+ * receives.
  */
 export function createGame(
   cal: CalendarData,
-  state: TimeState = createTimeState(cal),
-  after: readonly System<TimeState>[] = [],
+  area: AreaDef,
+  player: PlayerData,
+  state: GameState = createGameState(cal, area),
+  after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
+  const movement = createMovementSystem(buildCollisionGrid(area), player);
+  // The player's position before the last tick, for render interpolation.
+  let previousX = state.player.x;
+  let previousZ = state.player.z;
   let ticks = 0;
   let pending: SimEvent[] = [];
   let queued: Command[] = [];
@@ -59,7 +79,10 @@ export function createGame(
       const commands = queued.length > 0 ? queued : NO_COMMANDS;
       if (queued.length > 0) queued = [];
       const ctx = createContext(1, commands);
+      previousX = state.player.x;
+      previousZ = state.player.z;
       time(state, ctx);
+      movement(state, ctx);
       for (const system of after) system(state, ctx);
       ticks++;
       if (ctx.events.length > 0) pending.push(...ctx.events);
@@ -68,6 +91,14 @@ export function createGame(
       const events = pending;
       pending = [];
       return events;
+    },
+    playerPose(alpha, out) {
+      const { player } = state;
+      out.x = previousX + (player.x - previousX) * alpha;
+      out.z = previousZ + (player.z - previousZ) * alpha;
+      out.facing = player.facing;
+      out.moving = isMoving(player);
+      return out;
     },
   };
 }

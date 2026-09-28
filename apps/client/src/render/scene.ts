@@ -1,4 +1,5 @@
 import type { AreaDef, LightingData, QualityPreset } from '@bale/shared';
+import type { Dir } from '@bale/sim';
 import {
   AmbientLight,
   DirectionalLight,
@@ -40,13 +41,16 @@ const LAMP_RANGE = 7;
 /** A plain plane to stand on until the area's models have loaded (or if they cannot). */
 const FALLBACK_GROUND_SIZE = 40;
 
-/**
- * Placeholder villagers: one walks a square round the spawn point, four stand in a row
- * west of it, facing each way. The walker is the camera's follow target until M1-06.
- */
-const WALK_HALF_SIDE = 2.5;
-const WALK_SPEED = 1.5;
+/** Placeholder villagers: four stand in a row west of the spawn, facing each way. */
 const IDLE_DXS = [-8.5, -7, -5.5, -4] as const;
+
+/** The player as the sim last left them, interpolated to this frame (`game/game.ts`). */
+export interface PlayerView {
+  readonly x: number;
+  readonly z: number;
+  readonly facing: Dir;
+  readonly moving: boolean;
+}
 
 /**
  * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
@@ -112,9 +116,9 @@ export interface SceneHandle {
    * frame timing; the scene never schedules itself. `realDtSeconds` is wall-clock frame
    * time, which the camera runs on so it still eases while the sim is paused.
    * `clockMinute` is the game clock (`ClockState.minute` plus the fraction of the minute
-   * elapsed), which drives the day/night lighting.
+   * elapsed), which drives the day/night lighting. `player` is drawn and followed.
    */
-  draw(simSeconds: number, realDtSeconds: number, clockMinute: number): void;
+  draw(simSeconds: number, realDtSeconds: number, clockMinute: number, player: PlayerView): void;
   readonly camera: CameraControls;
   dispose(): void;
 }
@@ -178,9 +182,10 @@ export function createScene(options: SceneOptions): SceneHandle {
   const atlasTexture = createAtlasTexture(pixels, atlas);
   const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
   scene.add(sprites.mesh);
-  // The walker stands in for the player (M1-06) as the camera's follow target.
-  const walker = sprites.add({ x: spawnX, y: 0, z: spawnZ + WALK_HALF_SIDE, tag: 'walk_side' });
-  rig.snapTo(walker.x, walker.z);
+  // The player, the camera's follow target; placed by `draw` from the sim every frame.
+  const playerSprite = sprites.add({ x: spawnX, y: 0, z: spawnZ, tag: 'idle_down' });
+  rig.snapTo(spawnX, spawnZ);
+  let playerWasMoving = false;
   // World headings (dx, dz): at yaw 0 these face down, up, right and left.
   const idleHeadings = [
     [0, 1],
@@ -278,13 +283,23 @@ export function createScene(options: SceneOptions): SceneHandle {
     for (const lamp of lamps) lamp.intensity = light.lamps * LAMP_INTENSITY;
   }
 
-  function draw(simSeconds: number, realDtSeconds: number, clockMinute: number): void {
+  function draw(
+    simSeconds: number,
+    realDtSeconds: number,
+    clockMinute: number,
+    player: PlayerView,
+  ): void {
+    playerSprite.x = player.x;
+    playerSprite.z = player.z;
     // The rig keeps easing while the context is lost, so it is settled when it returns.
-    const leg = walkSquare(walker, simSeconds, spawnX, spawnZ);
-    rig.follow(walker.x, walker.z);
+    rig.follow(player.x, player.z);
     rig.update(realDtSeconds);
     if (contextLost) return;
-    face(walker, 'walk', LEG_HEADINGS[leg * 2] ?? 0, LEG_HEADINGS[leg * 2 + 1] ?? 0);
+    // Setting off restarts the walk cycle, so a step begins on the contact frame.
+    if (player.moving && !playerWasMoving) playerSprite.startSeconds = simSeconds;
+    playerWasMoving = player.moving;
+    const heading = HEADINGS[player.facing];
+    face(playerSprite, player.moving ? 'walk' : 'idle', heading[0], heading[1]);
     for (const idler of idlers) face(idler.sprite, 'idle', idler.dx, idler.dz);
     sprites.update(simSeconds);
 
@@ -386,38 +401,10 @@ const TAGS = {
   walk: { down: 'walk_down', up: 'walk_up', side: 'walk_side' },
 } as const;
 
-/** World heading `(dx, dz)` of each leg of the walk: +x, -z, -x, +z. */
-const LEG_HEADINGS = [1, 0, 0, -1, -1, 0, 0, 1] as const;
-
-/**
- * Moves `sprite` round a square centred on `(cx, cz)` and returns which leg (0–3) it is
- * on; the caller turns the leg's heading into a tag for the current camera yaw. Each side
- * restarts the walk cycle so a turn begins on the contact frame.
- */
-function walkSquare(sprite: Sprite, simSeconds: number, cx: number, cz: number): number {
-  const side = WALK_HALF_SIDE * 2;
-  const sideSeconds = side / WALK_SPEED;
-  const leg = Math.floor(simSeconds / sideSeconds) % 4;
-  const along = (simSeconds % sideSeconds) * WALK_SPEED - WALK_HALF_SIDE;
-  const h = WALK_HALF_SIDE;
-  // A switch rather than a table of poses: this runs every frame and must not allocate.
-  switch (leg) {
-    case 0:
-      sprite.x = cx + along;
-      sprite.z = cz + h;
-      break;
-    case 1:
-      sprite.x = cx + h;
-      sprite.z = cz - along;
-      break;
-    case 2:
-      sprite.x = cx - along;
-      sprite.z = cz - h;
-      break;
-    default:
-      sprite.x = cx - h;
-      sprite.z = cz + along;
-  }
-  sprite.startSeconds = simSeconds - (simSeconds % sideSeconds);
-  return leg;
-}
+/** World heading `(dx, dz)` of each sim facing; north is −z. */
+const HEADINGS: Readonly<Record<Dir, readonly [number, number]>> = {
+  north: [0, -1],
+  east: [1, 0],
+  south: [0, 1],
+  west: [-1, 0],
+};
