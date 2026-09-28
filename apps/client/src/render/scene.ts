@@ -8,6 +8,8 @@ import {
   IcosahedronGeometry,
   Mesh,
   MeshLambertMaterial,
+  PCFShadowMap,
+  PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
   PointLight,
@@ -16,12 +18,17 @@ import {
 } from 'three';
 import { type CameraPose, CameraRig, type Facing, FOV_DEG } from './camera/camera-rig.ts';
 import { createDayNight, createLightingSample } from './lighting/day-night.ts';
-import { clampPixelRatio, MAX_LAMPS } from './quality/presets.ts';
+import { clampPixelRatio, QUALITY } from './quality/presets.ts';
 import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
 import { createAtlasTexture, type Sprite, SpriteBatch } from './sprites/sprite-batch.ts';
 
-/** How far the sun sits from what it lights; only the direction matters without shadows. */
+/** How far the sun sits from the follow target, along its direction. */
 const SUN_DISTANCE = 30;
+/**
+ * Half the edge of the sun's shadow box, centred on the follow target: the whole frame at
+ * the widest zoom, and no more, so 512 texels still give crisp edges on Medium.
+ */
+const SHADOW_HALF = 14;
 
 /**
  * Teras lamps (DESIGN §1.3: point lights, max 4 active; PERFORMANCE_BUDGET §4 caps them per
@@ -76,9 +83,25 @@ export interface CameraControls {
   zoomBy(delta: number): void;
 }
 
+/** `renderer.info` for the perf overlay (PERFORMANCE_BUDGET §6). */
+export interface RenderStats {
+  drawCalls: number;
+  triangles: number;
+  textures: number;
+  geometries: number;
+  programs: number;
+}
+
 export interface SceneHandle {
-  /** Current render scale; re-clamped whenever the canvas resizes onto another screen. */
+  /** Device pixel ratio actually rendered: the preset cap × the dynamic render scale. */
   readonly pixelRatio: number;
+  readonly preset: QualityPreset;
+  /** Switches the quality preset live: DPR cap, shadows, and lamp count (PERF §4). */
+  setPreset(preset: QualityPreset): void;
+  /** Dynamic resolution (PERF §4): multiplies the preset's pixel ratio, 0.6–1. */
+  setRenderScale(scale: number): void;
+  /** Copies the last frame's renderer counters into `out`. */
+  stats(out: RenderStats): RenderStats;
   /**
    * Draws one frame at `simSeconds`, the sim time interpolated between ticks
    * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
@@ -98,7 +121,10 @@ export interface SceneHandle {
  * Area streaming (M1-09) and day/night lighting (M1-07) replace the contents; the
  * plumbing here stays.
  */
-export function createScene({ canvas, preset, palette, lighting }: SceneOptions): SceneHandle {
+export function createScene(options: SceneOptions): SceneHandle {
+  const { canvas, palette, lighting } = options;
+  let preset = options.preset;
+  let renderScale = 1;
   const renderer = new WebGLRenderer({
     canvas,
     antialias: false,
@@ -121,21 +147,27 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
   const light = createLightingSample();
   const sun = new DirectionalLight();
   const ambient = new AmbientLight();
-  scene.add(sun, ambient);
-  // A fixed number of lamps for the preset: adding or removing a light recompiles every
-  // lit material, so a lamp that is "off" stays in the scene at intensity 0.
-  const lamps = LAMP_POSITIONS.slice(0, MAX_LAMPS[preset]).map(([x, y, z]) => {
-    const lamp = new PointLight(LAMP_COLOR, 0, LAMP_RANGE, 2);
-    lamp.position.set(x, y, z);
-    scene.add(lamp);
-    return lamp;
-  });
+  // The sun aims at its target, which follows the camera so the shadow box stays on screen.
+  scene.add(sun, sun.target, ambient);
+  const shadowCamera = sun.shadow.camera;
+  shadowCamera.left = -SHADOW_HALF;
+  shadowCamera.right = SHADOW_HALF;
+  shadowCamera.top = SHADOW_HALF;
+  shadowCamera.bottom = -SHADOW_HALF;
+  shadowCamera.near = 1;
+  shadowCamera.far = SUN_DISTANCE * 2;
+  sun.shadow.bias = -0.0005;
+  // A fixed number of lamps per preset: adding or removing a light recompiles every lit
+  // material, so a lamp that is "off" stays in the scene at intensity 0 and the count only
+  // changes with the preset.
+  const lamps: PointLight[] = [];
 
   const ground = new Mesh(
     new PlaneGeometry(GROUND_SIZE, GROUND_SIZE),
     new MeshLambertMaterial({ color: palette.ground }),
   );
   ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
   scene.add(ground);
 
   // Placeholder "house": a terracotta-roofed block. Replaced by real art in M1-09.
@@ -144,12 +176,15 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
     new MeshLambertMaterial({ color: palette.wall }),
   );
   placeholder.position.y = 1;
+  placeholder.castShadow = true;
+  placeholder.receiveShadow = true;
   const roof = new Mesh(
     new CylinderGeometry(0, 1.9, 1.4, 4),
     new MeshLambertMaterial({ color: palette.roof, flatShading: true }),
   );
   roof.position.y = 1.7;
   roof.rotation.y = Math.PI / 4;
+  roof.castShadow = true;
   placeholder.add(roof);
 
   const marker = new Mesh(
@@ -197,11 +232,46 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
 
   let pixelRatio = 0;
 
+  /** Applies everything the preset owns except the pixel ratio, which `resize` sets. */
+  function applyPreset(): void {
+    const quality = QUALITY[preset];
+    const shadows = quality.shadowMapSize > 0;
+    const shadowType = quality.softShadows ? PCFSoftShadowMap : PCFShadowMap;
+    const shadowsChanged =
+      renderer.shadowMap.enabled !== shadows || renderer.shadowMap.type !== shadowType;
+    renderer.shadowMap.enabled = shadows;
+    renderer.shadowMap.type = shadowType;
+    sun.castShadow = shadows;
+    if (shadows && sun.shadow.mapSize.x !== quality.shadowMapSize) {
+      sun.shadow.mapSize.set(quality.shadowMapSize, quality.shadowMapSize);
+      // The next render allocates a map at the new size.
+      sun.shadow.map?.dispose();
+      sun.shadow.map = null;
+    }
+    while (lamps.length > quality.lamps) lamps.pop()?.removeFromParent();
+    for (const [x, y, z] of LAMP_POSITIONS.slice(lamps.length, quality.lamps)) {
+      const lamp = new PointLight(LAMP_COLOR, 0, LAMP_RANGE, 2);
+      lamp.position.set(x, y, z);
+      scene.add(lamp);
+      lamps.push(lamp);
+    }
+    // Toggling the shadow map is baked into every lit program; light counts are not.
+    if (shadowsChanged) {
+      scene.traverse((object) => {
+        if (!(object instanceof Mesh)) return;
+        const { material } = object;
+        for (const slot of Array.isArray(material) ? material : [material]) {
+          slot.needsUpdate = true;
+        }
+      });
+    }
+  }
+
   function resize(): void {
     const width = canvas.clientWidth || 1;
     const height = canvas.clientHeight || 1;
     // Re-read the DPR here: dragging a window between screens changes it.
-    const next = clampPixelRatio(preset, globalThis.devicePixelRatio ?? 1);
+    const next = clampPixelRatio(preset, globalThis.devicePixelRatio ?? 1) * renderScale;
     if (next !== pixelRatio) {
       pixelRatio = next;
       renderer.setPixelRatio(pixelRatio);
@@ -219,7 +289,9 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
     sun.color.setRGB(light.sun[0], light.sun[1], light.sun[2]);
     sun.intensity = light.sunIntensity;
     const [dx, dy, dz] = light.sunDirection;
-    sun.position.set(dx * SUN_DISTANCE, dy * SUN_DISTANCE, dz * SUN_DISTANCE);
+    const { lookX, lookZ } = cameraPose;
+    sun.target.position.set(lookX, 0, lookZ);
+    sun.position.set(lookX + dx * SUN_DISTANCE, dy * SUN_DISTANCE, lookZ + dz * SUN_DISTANCE);
     ambient.color.setRGB(light.ambient[0], light.ambient[1], light.ambient[2]);
     ambient.intensity = light.ambientIntensity;
     sky.setRGB(light.haze[0], light.haze[1], light.haze[2]);
@@ -236,9 +308,9 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
     face(walker, 'walk', LEG_HEADINGS[leg * 2] ?? 0, LEG_HEADINGS[leg * 2 + 1] ?? 0);
     for (const idler of idlers) face(idler.sprite, 'idle', idler.dx, idler.dz);
     sprites.update(simSeconds);
-    applyLighting(clockMinute);
 
     rig.pose(cameraPose);
+    applyLighting(clockMinute);
     camera.position.set(cameraPose.x, cameraPose.y, cameraPose.z);
     camera.lookAt(cameraPose.lookX, cameraPose.lookY, cameraPose.lookZ);
     // Fog starts at the follow target and is total at the keyframe's multiple of the camera
@@ -249,6 +321,7 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
     renderer.render(scene, camera);
   }
 
+  applyPreset();
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
   resize();
@@ -284,6 +357,29 @@ export function createScene({ canvas, preset, palette, lighting }: SceneOptions)
   return {
     get pixelRatio() {
       return pixelRatio;
+    },
+    get preset() {
+      return preset;
+    },
+    setPreset(next) {
+      if (next === preset) return;
+      preset = next;
+      applyPreset();
+      resize();
+    },
+    setRenderScale(scale) {
+      if (scale === renderScale) return;
+      renderScale = scale;
+      resize();
+    },
+    stats(out) {
+      const { render, memory, programs } = renderer.info;
+      out.drawCalls = render.calls;
+      out.triangles = render.triangles;
+      out.textures = memory.textures;
+      out.geometries = memory.geometries;
+      out.programs = programs?.length ?? 0;
+      return out;
     },
     draw,
     camera: {

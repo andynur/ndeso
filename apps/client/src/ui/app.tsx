@@ -1,15 +1,10 @@
-import { type QualityPreset, SUPPORTED_LOCALES } from '@bale/shared';
+import { SUPPORTED_LOCALES } from '@bale/shared';
 import { format, locale, setLocale, t } from '../i18n/index.ts';
+import { HudClock } from './hud-clock.tsx';
+import { PerfOverlay } from './perf-overlay.tsx';
 import { TouchControls, type TouchControlsProps } from './touch-controls.tsx';
 
-export interface RenderStats {
-  readonly preset: QualityPreset;
-  readonly pixelRatio: number;
-}
-
 export interface AppProps {
-  /** Only set under `?debug=perf` (PERFORMANCE_BUDGET §6). */
-  readonly stats?: RenderStats | undefined;
   /** On-screen stick, context button, and camera buttons (GDD §12). */
   readonly controls?: TouchControlsProps | undefined;
 }
@@ -43,16 +38,20 @@ function LocalePicker() {
  * comes from the locale bundles, and the locale can be switched live. The HUD from
  * DESIGN §4 replaces it in M2.
  */
-export function App({ stats, controls }: AppProps) {
+export function App({ controls }: AppProps) {
   return (
     <>
-      <Panel stats={stats} />
+      <div class="hud-top-left">
+        <HudClock />
+        <Panel />
+      </div>
+      <PerfOverlay />
       {controls ? <TouchControls {...controls} /> : null}
     </>
   );
 }
 
-function Panel({ stats }: Pick<AppProps, 'stats'>) {
+function Panel() {
   return (
     <div class="panel">
       <p class="panel__greeting">{t('boot.hello')}</p>
@@ -63,11 +62,6 @@ function Panel({ stats }: Pick<AppProps, 'stats'>) {
         {t('hud.money')}: {format.value.money(12500)}
       </p>
       <LocalePicker />
-      {stats ? (
-        <p class="panel__stats">
-          {locale.value} · {stats.preset} @ {stats.pixelRatio}x
-        </p>
-      ) : null}
     </div>
   );
 }

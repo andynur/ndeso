@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-28 · M1-08 · claude/charming-keller-syx5d4
+- Done: `QUALITY` table (PERF §4: DPR, shadow map 0/512/1024+soft, lamps 0/2/4, fps cap 30/60/60); `scene.setPreset` switches live (shadow programs recompiled, lamps added/removed), sun shadow box follows the camera. First-run 3 s benchmark (`game/benchmark.ts` + `benchmarkVerdict`, one step up/down, stored as `bale.quality`; `?quality=` overrides unstored). `DynamicResolution` (−0.1 per 2 s below target−5, min 0.6; +0.1 after 10 s at target). `loop.setFpsCap`. `?debug=perf` overlay: fps, frame/cpu ms, calls, tris, tex, geo, heap, preset@DPR. HUD clock `15:40 · Ashar` / `Mangsa Kapat · hari 3/8 · Kliwon` from `game/clock-view.ts`, updated once per game minute.
+- Tests: `bun run check` green (333 tests). Headless Chromium: clock + overlay render, benchmark stepped High → Medium on SwiftShader, maghrib shadows long, no console errors.
+- Notes/decisions: the benchmark runs uncapped on the guessed preset (a 30-capped Low could never show headroom). Medium's "30/60" cap runs at 60. Perf labels are units, not `t()` strings (dev telemetry). Sim events are still drained unread — the clock reads `ClockState` because a minute passes without an event. Low has no blob shadows yet (DESIGN §1); add with the character art.
+- Next: M1-09.
+
 ### 2026-09-28 · M1-07 · claude/charming-keller-syx5d4
 - Done: `content/data/lighting.json5` (DESIGN §1.3 keyframes + a `night_hold`, rain modifier) validated by `@bale/shared` `validateLighting`, bundled as `@bale/content/lighting`. `render/lighting/day-night.ts` — pure sampler: linear-space colour blend, wraps past midnight, sun direction from elevation/azimuth, haze (fog + sky) colour and fog distance, lamp level, sprite tint lifted by `SPRITE_LIFT` 0.35 so sprites read at night. Scene drives sun, ambient, fog/sky, sprite tint and a placeholder teras lamp (`MAX_LAMPS` per preset: 0/2/4) from `clockMinute`. `?clock=17:30` opens the day at that hour.
 - Tests: `bun run check` green (309 tests). Headless Chromium screenshots at 05:10/06:30/12:00/15:40/17:30/18:15/21:00, no console errors.

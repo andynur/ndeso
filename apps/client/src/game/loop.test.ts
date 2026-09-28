@@ -102,4 +102,31 @@ describe('createLoop', () => {
     loop.stop();
     expect(loop.running).toBe(false);
   });
+
+  test('a 30 fps cap on a 60 Hz display draws every other vsync, sim time intact', () => {
+    const clock = fakeScheduler();
+    let steps = 0;
+    const dts: number[] = [];
+    const loop = createLoop(
+      { step: () => steps++, frame: (_, dt) => dts.push(dt) },
+      clock.scheduler,
+    );
+    loop.setFpsCap(30);
+    loop.start();
+    for (let i = 1; i <= 60; i++) clock.flush(i * (1000 / 60));
+    expect(dts.length).toBe(30);
+    expect(dts.every((dt) => Math.abs(dt - 1000 / 30) < 1e-6)).toBe(true);
+    expect(steps).toBe(10);
+  });
+
+  test('lifting the cap draws every vsync again', () => {
+    const clock = fakeScheduler();
+    let frames = 0;
+    const loop = createLoop({ step: () => {}, frame: () => frames++ }, clock.scheduler);
+    loop.setFpsCap(30);
+    loop.setFpsCap(0);
+    loop.start();
+    for (let i = 1; i <= 60; i++) clock.flush(i * (1000 / 60));
+    expect(frames).toBe(60);
+  });
 });

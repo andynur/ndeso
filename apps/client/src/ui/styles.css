@@ -126,11 +126,63 @@ body {
   color: var(--kapur-50);
 }
 
-.panel__stats {
-  margin: var(--space-2) 0 0;
-  color: var(--ink-500);
-  font-size: 0.875rem;
+/* DESIGN §5: clock top-left; the M0 placeholder panel sits under it until the M2 HUD. */
+.hud-top-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* GDD §3.2 HUD clock. DESIGN §3: numbers in tabular figures, 16–20 px. */
+.clock {
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--kayu-500);
+  border-radius: var(--radius);
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  box-shadow: 0 2px 0 rgb(27 20 16 / 0.35);
+}
+
+.clock__time {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.clock__date {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* PERFORMANCE_BUDGET §6 `?debug=perf` overlay: developer telemetry, top-right. */
+.perf {
+  position: absolute;
+  top: max(var(--space-2), env(safe-area-inset-top));
+  right: max(var(--space-2), env(safe-area-inset-right));
+  margin: 0;
+  padding: var(--space-2);
+  border-radius: 4px;
+  background: rgb(22 29 56 / 0.8);
+  color: var(--kapur-50);
+  font:
+    12px / 1.3 ui-monospace,
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.perf__row dt,
+.perf__row dd {
+  margin: 0;
 }
 
 /* GDD §12 touch controls, DESIGN §5 layout. */
