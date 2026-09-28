@@ -38,12 +38,16 @@
       "Bash(git rev-parse:*)",
       "Bash(git show:*)",
       "Bash(git status:*)",
-      "Bash(git switch:*)"
+      "Bash(git switch:*)",
+      "Bash(git push -u origin claude/:*)", "Bash(git push origin claude/:*)",
+      "Bash(git restore:*)", "Bash(git stash:*)", "Bash(git merge:*)", "Bash(git pull:*)",
+      "Bash(node:*)", "Bash(bunx playwright:*)", "Bash(mkdir:*)", "Bash(pkill:*)",
+      "Bash(python3:*)", "Bash(jq:*)", "Bash(cd:*)"
     ],
     "ask": [
-      "Bash(git push:*)",
-      "Bash(bun add:*)",
-      "Bash(bun remove:*)",
+      // "Bash(git push:*)",
+      // "Bash(bun add:*)",
+      // "Bash(bun remove:*)",
       "Bash(curl:*)",
       "Bash(wget:*)"
     ],
