@@ -18,8 +18,9 @@ kakeknya, **Mbah Hita** — yang **masih hidup**, sudah sepuh, dan sudah tidak k
 menggarap.
 
 Mbah Hita punya cita-cita yang belum selesai: menjadikan tanah itu **asri, nyaman,
-tenang** — tempat yang mengingatkan pada kebun yang digambarkan dalam Al-Qur'an. Karena
-itu dia menamainya **Balé Al Jannah**.
+tenang** — tempat yang mengingatkan pada kebun yang digambarkan dalam Al-Qur'an. Tanahnya
+tidak punya nama besar; orang cukup menyebutnya **balé**, dari pendopo yang mulai ia
+dirikan.
 
 Pemain bertani untuk hidup, dan dengan hasilnya meneruskan rencana kakeknya: menghidupkan
 kembali kalen yang mati, menanam pohon, mendirikan joglo yang tiangnya sudah berdiri tapi
@@ -58,14 +59,14 @@ Jam di layar terbaca lewat waktu salat: `15:40 · Ashar`.
 
 | Di game | Aslinya |
 |---|---|
-| Balé Al Jannah | base pemain — kebun, joglo, kalen |
+| Balé | base pemain — kebun, joglo, kalen (tempat fiktif milik Mbah Hita) |
 | Kampung Baledono | rumah tetangga, musholla, warung |
 | Pasar Baledono | beli benih, jual panen, ramai di hari pasaran, tutup menjelang siang |
 | Swalayan di jalan raya | **namanya difiksikan** — harga pas, buka lama, tidak beli hasil tani |
 | Geger Menjangan | bukit, taman kota, cari bahan, pemandangan |
 | Kolam renang umum | pemulih tenaga |
 | Alun-alun & Masjid Agung | festival, bedug |
-| Kaligesing | air terjun, kambing Etawa, durian |
+| Kaligesing | air terjun, kambing Etawa, durian, manggis |
 
 **Petanya dipadatkan, bukan disalin.** Jarak diperpendek supaya enak dijalani. Ini disengaja.
 
@@ -92,7 +93,7 @@ Ke Mbah Hita pemain bicara **krama**, dijawab **ngoko**. Ke sesama, ngoko.
 
 | | |
 |---|---|
-| **Sedekah Bumi** | festival utama — syukuran panen, di balé yang dibangun pemain |
+| **Merti Desa** | festival utama — syukuran dan bersih desa sesudah panen, dengan wayang kulit, di balé yang dibangun pemain |
 | **Ramadhan** | **kotanya yang berubah, bukan pemainnya.** Pasar buka jam 3 pagi, siang sepi, lapak takjil menjelang maghrib, tarawih di musholla |
 | **Lebaran** | mudik — kampung kosong lalu penuh; yang merantau pulang; sungkeman, ketupat |
 | Festival Durian | tanam bertahun-tahun, ikutkan buah terbaik |
@@ -109,7 +110,7 @@ Ini bagian yang paling ingin kami minta koreksi.
   Tidak mengunci apa pun.
 - **Adzan hanya suasana**, default mati untuk pemain di luar Indonesia.
 - **Ramadhan mengubah kota, bukan pemain.** Puasa pemain tidak dimodelkan sama sekali.
-- **"Al Jannah" dibingkai sebagai cita-cita seseorang, bukan klaim.** Surga itu pemberian
+- ***Jannah* dibingkai sebagai cita-cita seseorang, bukan klaim.** Surga itu pemberian
   Allah, bukan proyek manusia. Mbah Hita ingin membuat tempat yang *mengingatkan* pada
   kebun itu. Tidak lebih.
 - **Slametan, tahlilan, ziarah, weton** ditampilkan sebagai *apa yang dilakukan kampung
@@ -123,7 +124,7 @@ Ini bagian yang paling ingin kami minta koreksi.
 |---|---|
 | Geografi publik (Baledono, Pasar Baledono, Geger Menjangan, Kaligesing) | pakai nama asli |
 | Usaha milik orang (swalayan, toko, bengkel) | **nama dikarang** |
-| **Balé Al Jannah** | **masih menunggu sikap pemiliknya** — ini salah satu yang ingin kami tanyakan |
+| **Balé** | fiktif — tidak memakai nama atau meniru tempat nyata mana pun (termasuk *Balle Al Jannah*) |
 
 Tidak ada data atau foto dari Google Maps yang dipakai. Foto referensi harus diambil
 sendiri.

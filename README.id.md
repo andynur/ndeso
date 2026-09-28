@@ -11,7 +11,7 @@
 > *Penerbitan menunggu satu setelan repo sekali jalan — lihat [SETUP_AI_AGENT](docs/id/SETUP_AI_AGENT.md).*
 
 ## Ceritanya
-Kamu pulang dari Jakarta ke Purworejo, mengambil alih sebidang tanah dari kakekmu, **Mbah Hita** — masih ada, sudah sepuh, sudah tidak kuat menggarap. Mbah Hita punya cita-cita yang belum selesai: menjadikan tanah itu **asri, nyaman, tenang**. Karena itu namanya **Balé Al Jannah**.
+Kamu pulang dari Jakarta ke Purworejo, mengambil alih sebidang tanah dari kakekmu, **Mbah Hita** — masih ada, sudah sepuh, sudah tidak kuat menggarap. Mbah Hita punya cita-cita yang belum selesai: menjadikan tanah itu **asri, nyaman, tenang**. Orang-orang cukup menyebutnya **balé**, dari pendopo yang mulai ia dirikan di sana.
 
 Bertani itu caranya. Tujuannya bukan seberapa banyak uangmu, tapi **seberapa enak tempatnya** — serindang apa, senyaman apa, setenang apa.
 

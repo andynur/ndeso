@@ -5,7 +5,7 @@
  * assets' ids so Blender exports replace them without a code change.
  */
 
-import type { AreaDef } from '@bale/shared';
+import { type AreaDef, CROSSING_WIDTH } from '@bale/shared';
 import { colorHex } from '../../apps/client/src/ui/tokens.ts';
 import type { GlbMesh } from '../assets/glb.ts';
 import { MeshBuilder, type V3 } from '../assets/mesh-builder.ts';
@@ -22,6 +22,8 @@ const LAMP = colorHex('kunyit400');
 const GROUND_MARGIN = 12;
 /** Depth of the dead kalen: dry now, which is the point (the water system is M3). */
 const KALEN_DEPTH = 0.4;
+/** A crossing's boards sit on the banks, proud of the grass. */
+const PLANK_THICKNESS = 0.06;
 
 /** Deterministic scatter: tools may not share the sim's RNG, but must still be stable. */
 function lcg(seed: number): () => number {
@@ -112,6 +114,13 @@ export function buildGround(area: AreaDef): GlbMesh {
     ],
     STONE,
   );
+
+  // Plank crossings (wot): two boards side by side, resting on the banks.
+  for (const [, cz] of area.kalen.crossings) {
+    const half = CROSSING_WIDTH / 2;
+    mesh.box([kx0 - 0.2, 0, cz - half], [kx1 + 0.2, PLANK_THICKNESS, cz - 0.03], WOOD);
+    mesh.box([kx0 - 0.2, 0, cz + 0.03], [kx1 + 0.2, PLANK_THICKNESS, cz + half], WOOD);
+  }
 
   // The field: bare soil a hair above the grass, gone to weeds — the player clears it.
   const { field } = area;

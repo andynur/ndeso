@@ -145,7 +145,7 @@ Priority: **P0** = required for the vertical slice, **P1** = v1.0, **P2** = nice
 ### 7.7 Festivals & minigames
 | ID | Requirement | Pri |
 |---|---|---|
-| FR-060 | ***Sedekah Bumi*** (harvest thanksgiving) — the flagship festival, hosted at the balé the player built. | P1 |
+| FR-060 | ***Merti Desa*** (village harvest thanksgiving, a.k.a. *sedekah bumi*) — the flagship festival, hosted at the balé the player built. | P1 |
 | FR-061 | **Ramadan (30 days):** the *town* changes — pasar opens ~03:00, midday empties, takjil stalls before maghrib, tarawih at the musholla. The player's own fasting is **never modelled, rewarded, or penalised**. | P1 |
 | FR-062 | **Lebaran:** *mudik* — the kampung empties then fills; NPCs who left come home; sungkeman and ketupat. The emotional peak of the year. | P1 |
 | FR-063 | **Festival Durian** in the durian mangsa: grow one over years, enter your best fruit. | P2 |
@@ -233,7 +233,7 @@ Full budget: [PERFORMANCE_BUDGET](PERFORMANCE_BUDGET.md).
 ## 12. Open questions
 
 1. ~~Final game title~~ — **resolved: Balé** (display `Balé`, identifier `bale`). Domain and trademark still unchecked.
-2. **Permission for Balé Al Jannah.** It is a real venue in Krajan, Baledono. Either its owners bless the use of the name, or the in-game place gets a name of its own ([PLACES §1](PLACES.md)). **Blocks any public release, not development.**
+2. ~~Permission for Balé Al Jannah~~ — **resolved 2026-09-28: the in-game place is just *Balé*,** Mbah Hita's own ground, not named after or modelled on the real *Balle Al Jannah* venue ([PLACES §1](PLACES.md)).
 3. Should the GitHub repository itself be renamed from `ndeso` to `bale`? Owner's call; GitHub redirects the old URL.
 4. Is cloud save worth the operational cost for v1, or should we ship export/import only?
 5. Keep the Play Store TWA as a post-v1 experiment?

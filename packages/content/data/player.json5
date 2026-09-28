@@ -1,0 +1,8 @@
+// Player movement (M1-06). GDD gives no walk speed: these are feel numbers, so judge them
+// on a phone (a field row should take a breath to walk, not a trudge).
+{
+  // Tiles per second at full stick; a half-pushed stick walks at half this.
+  speed: 4,
+  // Half the edge of the collision square: a 1-tile gap between posts stays passable.
+  radius: 0.3,
+}

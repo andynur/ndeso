@@ -39,8 +39,11 @@ profit is rewarded; here the reward is the place itself.
   over a patch of ground from their grandfather, **Mbah Hita** — who is
   **still alive**, elderly, and no longer strong enough to work it. Mbah Hita
   has an unfinished ambition: to make the ground *asri, nyaman, tenang* — a
-  place that calls to mind the garden described in scripture. That is why he
-  named it **Balé Al Jannah**.
+  place that calls to mind the garden described in scripture. The ground has no
+  grand name: everyone just calls it **the balé**, after the pavilion he began
+  on it, because a balé is where people gather.
+  (Owner decision 2026-09-28: the in-game place is Mbah Hita's own and is not
+  named after any real venue — see PLACES §1.)
 - **`jannah` means garden.** The Qur'anic picture of paradise is a concrete
   landscape: gardens with water flowing beneath them, shade, fruit, and peace.
   For a farming game that is not a metaphor, it is a design brief.
@@ -88,6 +91,12 @@ its constraints.
 Lengths live in `packages/content/data/calendar/mangsa.json5` and must sum to
 120. The real proportions are preserved, so Kasa and Kanem are the long mangsa
 and Karo and Dhesta the short ones.
+
+**Who uses it.** The pranata mangsa is still known but increasingly checked
+against the BMKG forecast and the government planting calendar (*Katam*), because
+the seasons have shifted. So the older characters — Mbah Hita, the farmers —
+read the pertanda; the younger ones look at their phones; and the game lets
+both be right sometimes. It is a living habit under strain, not a museum piece.
 
 The **pertanda** column below is design intent, recorded here because this
 document may hold prose and the data file may not. Each becomes
@@ -176,6 +185,8 @@ on the ground the next morning, and a chance of crop damage.
 | `kopi` | Kopi | kebun | semua | 28 (tree) | 7 | 8.000 | 2.500 | Roast at home: +100% |
 | `cengkeh` | Cengkeh | kebun | Kemarau | 28 (tree) | 14 | 10.000 | 6.000 | |
 | `durian` | Durian | kebun | Hujan | 56 (tree) | 14 | 25.000 | 22.000 | Prestige crop; festival entry (§10) |
+| `manggis` | Manggis | kebun | Hujan | 42 (tree) | 14 | 15.000 | 12.000 | Kaligesing's other fruit; ripens with the durian |
+| `vanili` | Vanili | kebun | semua | 35 (vine) | 14 | 12.000 | 8.000 | Climbs a shade tree; cure at home: +80% |
 
 Balancing rule: **gold per day per tile** should rise gently with crop cost and effort. Keep a `bun run balance` script that prints this table from the data (M3).
 
@@ -296,11 +307,11 @@ Marriage candidates are **M4**, not v1. Do not add them to the slice cast.
 
 | When | Festival | Mechanic |
 |---|---|---|
-| Kasadasa (after harvest) | **Sedekah Bumi** ★ | Village thanksgiving for the harvest. Contribute to the shared *tumpeng*. **The flagship festival** — it grows directly out of the core loop, and it happens at the balé the player built |
+| Kasadasa (after harvest) | **Merti Desa** ★ | The village thanksgiving (*merti desa*, also called *sedekah bumi* or *bersih desa*): kerja bakti to clean the kampung, a shared *tumpeng*, and a **wayang kulit** night. **The flagship festival** — it grows directly out of the core loop, and it happens at the balé the player built. Across Central Java villages hold it after the harvest or in Sura/Ruwah; we keep it after the harvest because it closes the farming year |
 | Hijri: Ramadan (9–10 game days; 30 in life) | **Ramadan** | **The world changes, not the player.** Pasar opens ~03:00 for sahur; midday is empty and hot; takjil stalls appear before maghrib; ngabuburit crowds; tarawih at the musholla. A whole month of a different town |
 | Hijri: 1 Syawal | **Lebaran** | **Mudik** — the kampung empties, then fills. NPCs who left come home. Sungkeman, ketupat, halal bihalal. After a year of building relationships, this is the payoff |
 | Kanem (durian season) | **Festival Durian** | Grow one over years, enter your best fruit. Comedy and competition |
-| Kemarau | **Dolalak** | Purworejo's own dance. Visual set piece; a rhythm minigame is P2 |
+| Kemarau | **Dolalak** | Purworejo's own dance. Visual set piece; a rhythm minigame is P2. Show a troupe of men and women in the black, colonial-soldier-style costume; the trance (*ndadi*) is the troupe's own business — shown briefly and respectfully, never as spectacle or a scare (CULTURE_GUIDE §3.4) |
 | Kemarau | **Tujuhbelasan** | *Balap karung*, *makan kerupuk*, *panjat pinang*. Apolitical (CULTURE_GUIDE §6) |
 
 ⚠️ **Ramadan and Lebaran are world-state, never scored.** The game must not

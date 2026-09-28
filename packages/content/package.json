@@ -9,6 +9,7 @@
     "./calendar": "./src/calendar-bundle.ts",
     "./lighting": "./src/lighting-bundle.ts",
     "./areas": "./src/areas-bundle.ts",
+    "./player": "./src/player-bundle.ts",
     "./locales/*": "./locales/*"
   },
   "dependencies": {
