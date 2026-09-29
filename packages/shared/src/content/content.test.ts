@@ -15,6 +15,7 @@ describe('content schemas', () => {
           ...localeFields,
           origin: 'Baledono, Purworejo, Jawa Tengah',
           kind: 'seed',
+          cropId: 'cabai',
           buyPrice: 800,
           sellPrice: null,
           stackSize: 99,

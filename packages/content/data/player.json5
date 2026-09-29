@@ -1,8 +1,17 @@
-// Player movement (M1-06). GDD gives no walk speed: these are feel numbers, so judge them
-// on a phone (a field row should take a breath to walk, not a trudge).
+// Player setup (M1-06 movement, M2-04 inventory). GDD gives no walk speed: judge that
+// feel on a phone (a field row should take a breath to walk, not a trudge).
 {
   // Tiles per second at full stick; a half-pushed stick walks at half this.
   speed: 4,
   // Half the edge of the collision square: a 1-tile gap between posts stays passable.
   radius: 0.3,
+  // The hotbar opens with the tools and seeds needed for the vertical slice. M2-18 will
+  // replace these quantities with the first-ten-minutes handoff from Mbah Hita's note.
+  inventory: [
+    { kind: 'tool', id: 'hoe' },
+    { kind: 'tool', id: 'watering_can' },
+    { kind: 'item', id: 'cabai_seed', quantity: 6 },
+    { kind: 'item', id: 'singkong_seed', quantity: 6 },
+    { kind: 'item', id: 'padi_seed', quantity: 6 },
+  ],
 }

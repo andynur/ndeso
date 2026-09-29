@@ -1,8 +1,10 @@
 import type { CalendarData, MusimId } from '@bale/shared';
-import type { CropDef } from '@bale/shared/content';
+import type { CropDef, ItemDef, ToolDef } from '@bale/shared/content';
 import { projectDay } from '../calendar.ts';
 import type { TileTarget } from '../commands.ts';
 import type { SimContext, System } from '../types.ts';
+import { consumeSelectedItem, type InventoryState, inventorySpaceFor } from './inventory.ts';
+import type { MovementState } from './movement.ts';
 
 /** A stable key for the serializable farm record (ARCHITECTURE §3.3). */
 export type TileKey = `${string}:${number},${number}`;
@@ -79,6 +81,79 @@ export function createFarmCommandSystem(crops: readonly CropDef[]): System<Farmi
         if (tile?.phase === 'mature') harvest(state, key, tile, cropById.get(tile.cropId), ctx);
       }
     }
+  };
+}
+
+/** Resolves the context action from the selected hotbar slot onto the adjacent front tile. */
+export function createFarmInteractionSystem(
+  crops: readonly CropDef[],
+  items: readonly ItemDef[],
+  tools: readonly ToolDef[],
+): System<FarmingState & InventoryState & MovementState> {
+  const cropById = indexCrops(crops);
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const productByCrop = new Map(
+    items
+      .filter((item): item is Extract<ItemDef, { kind: 'produce' }> => item.kind === 'produce')
+      .map((item) => [item.cropId, item]),
+  );
+  const toolById = new Map(tools.map((tool) => [tool.id, tool]));
+  return (state, ctx) => {
+    for (const command of ctx.commands) {
+      if (command.type !== 'interact') continue;
+      const target = frontTarget(state.player);
+      const key = tileKey(target);
+      const tile = state.farm.tiles[key];
+      if (!tile) continue;
+
+      // A ripe crop is always the context action; the player need not hunt for an empty hand.
+      if (tile.phase === 'mature') {
+        const crop = cropById.get(tile.cropId);
+        const product = productByCrop.get(tile.cropId);
+        if (!crop || !product) continue;
+        if (
+          inventorySpaceFor(state.player.inventory, product.id, product.stackSize) <
+          crop.harvestYield
+        ) {
+          ctx.emit({ type: 'inventoryFull', itemId: product.id, quantity: crop.harvestYield });
+          continue;
+        }
+        harvest(state, key, tile, crop, ctx);
+        continue;
+      }
+
+      const selected = state.player.inventory[state.player.selectedSlot];
+      if (selected?.kind === 'tool') {
+        const action = toolById.get(selected.id)?.action;
+        if (action === 'hoe') hoe(state, key, tile, ctx);
+        else if (action === 'water') water(state, key, tile, ctx);
+        continue;
+      }
+      if (selected?.kind !== 'item') continue;
+      const item = itemById.get(selected.id);
+      if (item?.kind !== 'seed') continue;
+      const crop = cropById.get(item.cropId);
+      if (!crop) continue;
+      const before = state.farm.tiles[key];
+      plant(state, key, tile, crop, ctx);
+      if (state.farm.tiles[key] !== before) consumeSelectedItem(state, selected.id, ctx);
+    }
+  };
+}
+
+function frontTarget(player: MovementState['player']): TileTarget {
+  const offset =
+    player.facing === 'north'
+      ? { x: 0, z: -1 }
+      : player.facing === 'east'
+        ? { x: 1, z: 0 }
+        : player.facing === 'south'
+          ? { x: 0, z: 1 }
+          : { x: -1, z: 0 };
+  return {
+    area: player.area,
+    x: Math.floor(player.x) + offset.x,
+    z: Math.floor(player.z) + offset.z,
   };
 }
 

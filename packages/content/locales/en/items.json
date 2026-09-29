@@ -4,5 +4,21 @@
   "crop.padi.desc": "Rice grown in a flooded sawah and harvested as gabah.",
   "crop.padi.name": "Rice",
   "crop.singkong.desc": "A drought-tolerant root crop that takes time to grow.",
-  "crop.singkong.name": "Cassava"
+  "crop.singkong.name": "Cassava",
+  "item.cabai.desc": "Fresh bird's eye chillies from the field.",
+  "item.cabai.name": "Bird's eye chilli",
+  "item.cabai_seed.desc": "Seeds for bird's eye chillies.",
+  "item.cabai_seed.name": "Chilli seed",
+  "item.gabah.desc": "Unhusked rice harvested from the sawah.",
+  "item.gabah.name": "Unhusked rice",
+  "item.padi_seed.desc": "Rice seed for a flooded sawah.",
+  "item.padi_seed.name": "Rice seed",
+  "item.singkong.desc": "Freshly harvested cassava root.",
+  "item.singkong.name": "Cassava",
+  "item.singkong_seed.desc": "Stem cuttings used to grow cassava.",
+  "item.singkong_seed.name": "Cassava cutting",
+  "tool.hoe.desc": "Turns an empty field tile into prepared soil.",
+  "tool.hoe.name": "Hoe",
+  "tool.watering_can.desc": "Waters prepared soil and growing crops.",
+  "tool.watering_can.name": "Watering can"
 }

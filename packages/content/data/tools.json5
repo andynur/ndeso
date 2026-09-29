@@ -1,0 +1,18 @@
+[
+  {
+    id: 'hoe',
+    nameKey: 'items:tool.hoe.name',
+    descKey: 'items:tool.hoe.desc',
+    origin: 'Central Java, Indonesia',
+    action: 'hoe',
+    staminaCost: 4,
+  },
+  {
+    id: 'watering_can',
+    nameKey: 'items:tool.watering_can.name',
+    descKey: 'items:tool.watering_can.desc',
+    origin: 'Central Java, Indonesia',
+    action: 'water',
+    staminaCost: 2,
+  },
+]

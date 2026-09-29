@@ -15,6 +15,7 @@ const SKIN = 1e-4;
 export type Dir = 'north' | 'east' | 'south' | 'west';
 
 export interface PlayerState {
+  area: string;
   x: number;
   z: number;
   facing: Dir;
@@ -29,7 +30,7 @@ export interface MovementState {
 
 export function createPlayerState(area: AreaDef): PlayerState {
   const [x, z] = area.spawn;
-  return { x, z, facing: 'south', moveX: 0, moveZ: 0 };
+  return { area: area.id, x, z, facing: 'south', moveX: 0, moveZ: 0 };
 }
 
 /** Whether the player is walking: render plays the walk cycle while this is true. */

@@ -65,6 +65,8 @@ export function validateContentSet(
   const problems: ContentProblem[] = [];
   const areaIds = new Set<string>();
   const npcIds = new Set<string>();
+  const cropIds = new Set<string>();
+  const toolIds = new Set<string>();
 
   for (const [file, raw] of files) {
     if (file.startsWith('areas/') && file.endsWith('.json5')) {
@@ -104,6 +106,12 @@ export function validateContentSet(
                   : undefined;
     if (schema !== undefined) {
       problems.push(...zodProblems(file, schema, raw));
+      const result = schema.safeParse(raw);
+      if (result.success && Array.isArray(result.data)) {
+        const ids = result.data as { readonly id: string }[];
+        if (file === 'crops.json5') for (const entry of ids) cropIds.add(entry.id);
+        if (file === 'tools.json5') for (const entry of ids) toolIds.add(entry.id);
+      }
     } else if (file === 'lighting.json5') {
       const result = validateLighting(raw);
       if (!result.ok) problems.push(...result.errors.map((message) => ({ file, message })));
@@ -112,6 +120,94 @@ export function validateContentSet(
       if (!result.ok) problems.push(...result.errors.map((message) => ({ file, message })));
     } else {
       problems.push({ file, message: 'no content schema registered for this file' });
+    }
+  }
+
+  for (const file of ['items.json5', 'tools.json5'] as const) {
+    if (!files.has(file)) problems.push({ file, message: 'required inventory file is missing' });
+  }
+
+  const crops = cropsSchema.safeParse(files.get('crops.json5'));
+  const items = itemsSchema.safeParse(files.get('items.json5'));
+  if (items.success) {
+    const cropById = new Map(crops.success ? crops.data.map((crop) => [crop.id, crop]) : []);
+    const seeds = new Set<string>();
+    const products = new Set<string>();
+    for (const item of items.data) {
+      if (item.kind !== 'seed' && item.kind !== 'produce') continue;
+      if (!cropIds.has(item.cropId)) {
+        problems.push({
+          file: 'items.json5',
+          message: `${item.id}.cropId references missing crop '${item.cropId}'`,
+        });
+      }
+      if (item.kind === 'produce') {
+        if (products.has(item.cropId)) {
+          problems.push({
+            file: 'items.json5',
+            message: `more than one produce item references crop '${item.cropId}'`,
+          });
+        }
+        products.add(item.cropId);
+        const crop = cropById.get(item.cropId);
+        if (crop && item.sellPrice !== crop.sellPrice) {
+          problems.push({
+            file: 'items.json5',
+            message: `${item.id}.sellPrice must match crop '${item.cropId}' sellPrice`,
+          });
+        }
+      } else {
+        if (seeds.has(item.cropId)) {
+          problems.push({
+            file: 'items.json5',
+            message: `more than one seed item references crop '${item.cropId}'`,
+          });
+        }
+        seeds.add(item.cropId);
+        const crop = cropById.get(item.cropId);
+        if (crop && item.buyPrice !== crop.seedPrice) {
+          problems.push({
+            file: 'items.json5',
+            message: `${item.id}.buyPrice must match crop '${item.cropId}' seedPrice`,
+          });
+        }
+      }
+    }
+    for (const cropId of cropIds) {
+      if (!products.has(cropId)) {
+        problems.push({ file: 'items.json5', message: `crop '${cropId}' has no produce item` });
+      }
+      if (!seeds.has(cropId)) {
+        problems.push({ file: 'items.json5', message: `crop '${cropId}' has no seed item` });
+      }
+    }
+  }
+
+  const player = validatePlayer(files.get('player.json5'));
+  if (player.ok && items.success) {
+    const itemById = new Map(items.data.map((item) => [item.id, item]));
+    for (const [index, entry] of player.data.inventory.entries()) {
+      if (entry.kind === 'tool') {
+        if (!toolIds.has(entry.id)) {
+          problems.push({
+            file: 'player.json5',
+            message: `inventory.${index}.id references missing tool '${entry.id}'`,
+          });
+        }
+        continue;
+      }
+      const item = itemById.get(entry.id);
+      if (!item) {
+        problems.push({
+          file: 'player.json5',
+          message: `inventory.${index}.id references missing item '${entry.id}'`,
+        });
+      } else if (entry.quantity > item.stackSize) {
+        problems.push({
+          file: 'player.json5',
+          message: `inventory.${index}.quantity exceeds ${entry.id} stack size ${item.stackSize}`,
+        });
+      }
     }
   }
 

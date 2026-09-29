@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
+import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { PLAYER_DATA } from '@bale/content/player';
 import type { Command } from '@bale/sim';
 import { createGame, type PlayerPose, parseStartClock } from './game.ts';
@@ -9,7 +10,7 @@ import { createGame, type PlayerPose, parseStartClock } from './game.ts';
 const cal = CALENDAR_DATA;
 
 test('one game minute per ticksPerMinute steps', () => {
-  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA);
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA);
   const start = game.state.clock.minute;
   for (let i = 0; i < cal.clock.ticksPerMinute * 3; i++) game.step();
   expect(game.state.clock.minute).toBe(start + 3);
@@ -17,7 +18,7 @@ test('one game minute per ticksPerMinute steps', () => {
 });
 
 test('events are buffered across steps and drained once', () => {
-  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA);
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA);
   const minutesToHour = 60 - (game.state.clock.minute % 60);
   for (let i = 0; i < cal.clock.ticksPerMinute * minutesToHour; i++) game.step();
   const events = game.drainEvents();
@@ -27,7 +28,7 @@ test('events are buffered across steps and drained once', () => {
 
 test('submitted commands reach the next tick only, sanitized and in order', () => {
   const seen: (readonly Command[])[] = [];
-  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, undefined, [
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA, undefined, [
     (_state, ctx) => seen.push(ctx.commands),
   ]);
   game.submit({ type: 'move', x: 3, z: 4 });
@@ -40,7 +41,7 @@ test('submitted commands reach the next tick only, sanitized and in order', () =
 });
 
 test('the player walks on held intent and render interpolates between ticks', () => {
-  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA);
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA);
   const [spawnX, spawnZ] = BALE_AREA.spawn;
   const pose: PlayerPose = { x: 0, z: 0, facing: 'north', moving: false };
   expect(game.playerPose(0.5, pose)).toEqual({
@@ -65,7 +66,7 @@ test('the player walks on held intent and render interpolates between ticks', ()
 });
 
 test('farm commands run against the area field', () => {
-  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA);
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA);
   const target = { area: 'bale', x: BALE_AREA.field.x, z: BALE_AREA.field.z };
   game.submit({ type: 'useTool', tool: 'hoe', target });
   game.submit({ type: 'plantSeed', cropId: 'cabai', target });
@@ -75,6 +76,77 @@ test('farm commands run against the area field', () => {
     phase: 'seeded',
     cropId: 'cabai',
     watered: true,
+  });
+});
+
+test('hotbar selection resolves Use in front of the player and consumes only planted seed', () => {
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA);
+  const target = { area: 'bale', x: BALE_AREA.field.x, z: BALE_AREA.field.z };
+  const player = game.state.player as typeof game.state.player;
+  player.x = target.x - 0.5;
+  player.z = target.z + 0.5;
+  player.facing = 'east';
+
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.farm.tiles[`bale:${target.x},${target.z}`]).toMatchObject({ phase: 'tilled' });
+
+  game.submit({ type: 'selectSlot', slot: 2 });
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.farm.tiles[`bale:${target.x},${target.z}`]).toMatchObject({
+    phase: 'seeded',
+    cropId: 'cabai',
+  });
+  expect(game.state.player.inventory[2]).toMatchObject({ quantity: 5 });
+
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.player.inventory[2]).toMatchObject({ quantity: 5 });
+
+  game.submit({ type: 'selectSlot', slot: 1 });
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.farm.tiles[`bale:${target.x},${target.z}`]).toMatchObject({ watered: true });
+});
+
+test('a full inventory leaves a ripe crop intact until its whole yield fits', () => {
+  const game = createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA);
+  const target = { area: 'bale', x: BALE_AREA.field.x, z: BALE_AREA.field.z };
+  const key = `bale:${target.x},${target.z}` as const;
+  game.state.player.x = target.x - 0.5;
+  game.state.player.z = target.z + 0.5;
+  game.state.player.facing = 'east';
+  game.state.farm.tiles[key] = {
+    ...target,
+    plot: 'tegalan',
+    watered: false,
+    phase: 'mature',
+    cropId: 'cabai',
+    growthDays: 8,
+    dryDays: 0,
+  };
+  for (let slot = 0; slot < game.state.player.inventory.length; slot++) {
+    game.state.player.inventory[slot] = { kind: 'tool', id: `full_${slot}` };
+  }
+
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.farm.tiles[key]).toMatchObject({ phase: 'mature' });
+  expect(game.drainEvents()).toContainEqual({
+    type: 'inventoryFull',
+    itemId: 'cabai',
+    quantity: 3,
+  });
+
+  game.state.player.inventory[8] = null;
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.farm.tiles[key]).toMatchObject({ phase: 'seeded' });
+  expect(game.state.player.inventory.at(8)).toEqual({
+    kind: 'item',
+    id: 'cabai',
+    quantity: 3,
   });
 });
 

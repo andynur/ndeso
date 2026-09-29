@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M2 — Vertical slice. M2-03 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
+- **Milestone:** M2 — Vertical slice. M2-04 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-04 (inventory + hotbar). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
+- **Next task:** M2-05 (weather). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
-- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. Item/tool/NPC schemas exist but their M2 data files land with the owning system tasks. Farm inventory consumption, stamina costs and rain auto-watering land in M2-04/05/06. Sim events are drained unread (the HUD clock reads `ClockState`). Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 158.3 KB brotli of 350 KB.
+- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. NPC data lands with its owning task. Stamina costs and rain auto-watering land in M2-06/05. Inventory-full is an event without a toast until the UI feedback pass. Sim events are otherwise drained unread (the HUD clock reads `ClockState`). Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 161.4 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-29 · M2-04 · feat/M2-04-inventory-hotbar
+- Done: serializable nine-slot inventory with content-driven starting loadout; direct and occupied-slot cycling; contextual front-tile hoe, water, seed and harvest actions; seeds consume only on accepted planting, harvests stack without deleting a crop when its full yield cannot fit. Added validated item/tool content and EN/ID names. The responsive hotbar projects sim state, supports touch, 1–9 and wheel selection, and uses generated placeholder icons.
+- Tests: `bun run check` green (430 tests); build + `check:size` green (shell 161.4 KB brotli, first frame 169.8 KB). Browser visual QA was not completed because Chrome automation was blocked by an open extension panel.
+- Notes/decisions: seed and produce definitions link to crops explicitly; `check:content` enforces one seed and product per crop plus price parity. Starting quantities are vertical-slice placeholders for M2-18, not balance decisions. Inventory-full emits no player-facing toast yet.
+- Next: M2-05.
+
 ### 2026-09-29 · M2-03 · feat/M2-03-crop-rendering
 - Done: procedural placeholder crop atlas for all crop definitions with four growth stages and distinct withered art; one instanced sprite batch per crop/stage; patterned instanced watered-soil decals; event-gated farm sync including every `dayStarted`; crop tint follows the day/night light.
 - Tests: `bun run check` green (420 tests); build + `check:size` green (shell 159.6 KB brotli, first frame 167.9 KB). Browser visual QA was not completed because Chrome automation was blocked by an open extension panel and the in-app browser was unavailable.

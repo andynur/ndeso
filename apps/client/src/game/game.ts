@@ -1,16 +1,19 @@
 import { type AreaDef, type CalendarData, type PlayerData, parseClockTime } from '@bale/shared';
-import type { CropDef } from '@bale/shared/content';
+import type { CropDef, ItemDef, ToolDef } from '@bale/shared/content';
 import {
   buildCollisionGrid,
   type Command,
   createContext,
   createFarmCommandSystem,
+  createFarmInteractionSystem,
   createFarmingSystem,
   createGameState,
+  createInventoryEventSystem,
   createMovementSystem,
   createTimeSystem,
   type Dir,
   type GameState,
+  inventoryCommandSystem,
   isMoving,
   type SimEvent,
   type System,
@@ -58,12 +61,16 @@ export function createGame(
   area: AreaDef,
   player: PlayerData,
   crops: readonly CropDef[],
-  state: GameState = createGameState(cal, area),
+  items: readonly ItemDef[],
+  tools: readonly ToolDef[],
+  state: GameState = createGameState(cal, area, player),
   after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
   const movement = createMovementSystem(buildCollisionGrid(area), player);
   const farmCommands = createFarmCommandSystem(crops);
+  const farmInteraction = createFarmInteractionSystem(crops, items, tools);
+  const inventoryEvents = createInventoryEventSystem(items);
   const farming = createFarmingSystem(crops, cal);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
@@ -89,7 +96,10 @@ export function createGame(
       previousZ = state.player.z;
       time(state, ctx);
       movement(state, ctx);
+      inventoryCommandSystem(state, ctx);
       farmCommands(state, ctx);
+      farmInteraction(state, ctx);
+      inventoryEvents(state, ctx);
       farming(state, ctx);
       for (const system of after) system(state, ctx);
       ticks++;

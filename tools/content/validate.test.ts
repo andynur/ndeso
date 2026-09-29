@@ -50,4 +50,32 @@ describe('validateContentSet', () => {
       true,
     );
   });
+
+  test('cross-checks inventory crop links, prices, and the starting loadout', () => {
+    const files = new Map<string, unknown>([
+      ['crops.json5', [crop]],
+      [
+        'items.json5',
+        [
+          {
+            id: 'cabai_seed',
+            nameKey: 'items:item.cabai_seed.name',
+            descKey: 'items:item.cabai_seed.desc',
+            origin: crop.origin,
+            kind: 'seed',
+            cropId: 'cabai',
+            buyPrice: 999,
+            sellPrice: null,
+            stackSize: 99,
+          },
+        ],
+      ],
+      ['tools.json5', []],
+      ['player.json5', { speed: 4, radius: 0.3, inventory: [{ kind: 'tool', id: 'hoe' }] }],
+    ]);
+    const messages = validateContentSet(files, new Set()).map((problem) => problem.message);
+    expect(messages).toContain("cabai_seed.buyPrice must match crop 'cabai' seedPrice");
+    expect(messages).toContain("crop 'cabai' has no produce item");
+    expect(messages).toContain("inventory.0.id references missing tool 'hoe'");
+  });
 });

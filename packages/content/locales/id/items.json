@@ -4,5 +4,21 @@
   "crop.padi.desc": "Padi yang ditanam di sawah tergenang dan dipanen sebagai gabah.",
   "crop.padi.name": "Padi",
   "crop.singkong.desc": "Tanaman umbi tahan kering yang perlu waktu untuk tumbuh.",
-  "crop.singkong.name": "Singkong"
+  "crop.singkong.name": "Singkong",
+  "item.cabai.desc": "Cabai rawit segar dari kebun.",
+  "item.cabai.name": "Cabai rawit",
+  "item.cabai_seed.desc": "Benih untuk menanam cabai rawit.",
+  "item.cabai_seed.name": "Benih cabai",
+  "item.gabah.desc": "Padi yang baru dipanen dan belum digiling.",
+  "item.gabah.name": "Gabah",
+  "item.padi_seed.desc": "Benih padi untuk sawah tergenang.",
+  "item.padi_seed.name": "Benih padi",
+  "item.singkong.desc": "Umbi singkong yang baru dipanen.",
+  "item.singkong.name": "Singkong",
+  "item.singkong_seed.desc": "Potongan batang untuk menanam singkong.",
+  "item.singkong_seed.name": "Stek singkong",
+  "tool.hoe.desc": "Menyiapkan petak kosong untuk ditanami.",
+  "tool.hoe.name": "Cangkul",
+  "tool.watering_can.desc": "Menyiram tanah dan tanaman.",
+  "tool.watering_can.name": "Penyiram"
 }

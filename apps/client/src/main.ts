@@ -1,6 +1,7 @@
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
+import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { LIGHTING_DATA } from '@bale/content/lighting';
 import { PLAYER_DATA } from '@bale/content/player';
 import { parseAssetManifest, TICK_MS } from '@bale/shared';
@@ -23,6 +24,7 @@ import {
   type ScenePalette,
 } from './render/scene.ts';
 import { loadAreaModels } from './render/world/area-models.ts';
+import { hotbarView, inventoryViewOf } from './ui/hotbar.tsx';
 import { clockView } from './ui/hud-clock.tsx';
 import { mountOverlay } from './ui/mount.ts';
 import { perfView } from './ui/perf-overlay.tsx';
@@ -89,6 +91,7 @@ async function boot(): Promise<void> {
   await initI18n(navigator.languages);
   // The HUD clock names the months (GDD §3.2).
   await loadNamespace('calendar');
+  await loadNamespace('items');
   // `subscribe` fires immediately and again on every switch, so this covers both the
   // initial paint and a live locale change.
   locale.subscribe(() => {
@@ -127,13 +130,31 @@ async function boot(): Promise<void> {
   attachInput(window, canvas, input);
   mountOverlay(overlay, {
     controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
+    hotbar: { onSelect: input.pressSlot },
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state = createGameState(CALENDAR_DATA, BALE_AREA);
+  const state = createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
-  const game = createGame(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, CROP_DATA, state);
+  const game = createGame(
+    CALENDAR_DATA,
+    BALE_AREA,
+    PLAYER_DATA,
+    CROP_DATA,
+    ITEM_DATA,
+    TOOL_DATA,
+    state,
+  );
+  const syncHotbar = () => {
+    hotbarView.value = inventoryViewOf(
+      game.state.player.inventory,
+      game.state.player.selectedSlot,
+      ITEM_DATA,
+      TOOL_DATA,
+    );
+  };
+  syncHotbar();
   scene.syncFarm(game.state.farm.tiles);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const commands = createCommandMapper();
@@ -186,6 +207,11 @@ async function boot(): Promise<void> {
         // Crop batches are rebuilt only when the farm changes. `dayStarted` matters even
         // when no crop-specific event fires because ordinary growth can cross a stage.
         if (cropViewNeedsSync(events)) scene.syncFarm(game.state.farm.tiles);
+        if (
+          events.some((event) => event.type === 'slotSelected' || event.type === 'inventoryChanged')
+        ) {
+          syncHotbar();
+        }
         // ui.sync (ARCHITECTURE §4.1): the clock view changes once per game minute at most.
         if (clock.minute !== lastMinute || clock.day !== lastDay) {
           lastMinute = clock.minute;
