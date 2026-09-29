@@ -7,6 +7,7 @@ import {
   npcSchema,
   prayerTimesFileSchema,
   toolsSchema,
+  weatherFileSchema,
 } from '@bale/shared/content';
 
 interface Schema {
@@ -103,7 +104,9 @@ export function validateContentSet(
                 ? clockFileSchema
                 : file === 'calendar/prayer-times.json5'
                   ? prayerTimesFileSchema
-                  : undefined;
+                  : file === 'weather.json5'
+                    ? weatherFileSchema
+                    : undefined;
     if (schema !== undefined) {
       problems.push(...zodProblems(file, schema, raw));
       const result = schema.safeParse(raw);

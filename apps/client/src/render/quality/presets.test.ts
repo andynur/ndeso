@@ -63,11 +63,13 @@ describe('QUALITY', () => {
       softShadows: false,
       lamps: 0,
       fpsCap: 30,
+      rainParticles: 300,
     });
     expect(QUALITY.medium.shadowMapSize).toBe(512);
     expect(QUALITY.high.shadowMapSize).toBe(1024);
     expect(QUALITY.high.softShadows).toBe(true);
     expect([QUALITY.medium.lamps, QUALITY.high.lamps]).toEqual([2, 4]);
+    expect([QUALITY.medium.rainParticles, QUALITY.high.rainParticles]).toEqual([800, 2000]);
   });
 });
 

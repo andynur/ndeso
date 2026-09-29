@@ -12,6 +12,7 @@ import {
   type FarmingState,
   tileKey,
 } from './farming.ts';
+import type { WeatherState } from './weather.ts';
 
 let crops: readonly CropDef[];
 let cal: CalendarData;
@@ -22,10 +23,17 @@ beforeAll(async () => {
 const target = { area: 'bale', x: 8, z: -2 } as const;
 const key = tileKey(target);
 
-function fresh(plot: 'tegalan' | 'sawah' = 'tegalan', waterLevel: 0 | 1 | 2 | 3 = 0) {
-  return createFarmingState([
-    plot === 'sawah' ? { ...target, plot, waterLevel } : { ...target, plot },
-  ]);
+function fresh(
+  plot: 'tegalan' | 'sawah' = 'tegalan',
+  waterLevel: 0 | 1 | 2 | 3 = 0,
+): FarmingState & WeatherState {
+  return {
+    ...createFarmingState([
+      plot === 'sawah' ? { ...target, plot, waterLevel } : { ...target, plot },
+    ]),
+    seed: 0,
+    weather: { today: 'clear', tomorrow: 'clear' },
+  };
 }
 
 function command(state: FarmingState, ...commands: Command[]): SimEvent[] {
@@ -34,7 +42,7 @@ function command(state: FarmingState, ...commands: Command[]): SimEvent[] {
   return ctx.events;
 }
 
-function day(state: FarmingState, absoluteDay: number): SimEvent[] {
+function day(state: FarmingState & WeatherState, absoluteDay: number): SimEvent[] {
   const ctx = createContext();
   ctx.emit({ type: 'dayStarted', day: absoluteDay });
   createFarmingSystem(crops, cal)(state, ctx);
@@ -162,6 +170,20 @@ describe('daily growth', () => {
     // The next clear day dries to 1, so growth pauses.
     day(state, 41);
     expect(state.farm.tiles[key]).toMatchObject({ waterLevel: 1, growthDays: 1, dryDays: 1 });
+  });
+
+  test('rain grows tegalan without manual watering and keeps sawah from drying', () => {
+    const tegalan = fresh();
+    prepare(tegalan, 'cabai');
+    tegalan.weather.today = 'rain';
+    day(tegalan, 1);
+    expect(tegalan.farm.tiles[key]).toMatchObject({ growthDays: 1, dryDays: 0 });
+
+    const sawah = fresh('sawah', 2);
+    prepare(sawah, 'padi');
+    sawah.weather.today = 'storm';
+    day(sawah, 40);
+    expect(sawah.farm.tiles[key]).toMatchObject({ waterLevel: 2, growthDays: 1, dryDays: 0 });
   });
 });
 

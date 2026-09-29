@@ -1,0 +1,19 @@
+// Daily weather weights from GDD §3.3. Each row totals 100 and is rolled from the save
+// seed plus absolute day, so reloading cannot change the forecast. January deliberately has
+// the heaviest rain; the other rows follow their month's musim from calendar/months.json5.
+{
+  byMonth: [
+    { month: 'jan', weights: { clear: 10, cloudy: 20, rain: 50, storm: 20 } },
+    { month: 'feb', weights: { clear: 20, cloudy: 25, rain: 45, storm: 10 } },
+    { month: 'mar', weights: { clear: 20, cloudy: 25, rain: 45, storm: 10 } },
+    { month: 'apr', weights: { clear: 35, cloudy: 30, rain: 30, storm: 5 } },
+    { month: 'may', weights: { clear: 65, cloudy: 25, rain: 10, storm: 0 } },
+    { month: 'jun', weights: { clear: 65, cloudy: 25, rain: 10, storm: 0 } },
+    { month: 'jul', weights: { clear: 65, cloudy: 25, rain: 10, storm: 0 } },
+    { month: 'aug', weights: { clear: 65, cloudy: 25, rain: 10, storm: 0 } },
+    { month: 'sep', weights: { clear: 65, cloudy: 25, rain: 10, storm: 0 } },
+    { month: 'oct', weights: { clear: 35, cloudy: 30, rain: 30, storm: 5 } },
+    { month: 'nov', weights: { clear: 20, cloudy: 25, rain: 45, storm: 10 } },
+    { month: 'dec', weights: { clear: 20, cloudy: 25, rain: 45, storm: 10 } },
+  ],
+}

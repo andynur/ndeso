@@ -8,6 +8,7 @@ import {
   createFarmingSystem,
   tileKey,
 } from './systems/farming.ts';
+import type { WeatherState } from './systems/weather.ts';
 import { loadCalendarForTests } from './testing/calendar-data.ts';
 import { loadCropsForTests } from './testing/crop-data.ts';
 import { createContext, type SimEvent } from './types.ts';
@@ -32,10 +33,14 @@ function isHarvestEvent(
 test('a scripted 14-day cabai and singkong plot', () => {
   const cabai = { area: 'bale', x: 8, z: -2 } as const;
   const singkong = { area: 'bale', x: 9, z: -2 } as const;
-  const state = createFarmingState([
-    { ...cabai, plot: 'tegalan' },
-    { ...singkong, plot: 'tegalan' },
-  ]);
+  const state = {
+    ...createFarmingState([
+      { ...cabai, plot: 'tegalan' },
+      { ...singkong, plot: 'tegalan' },
+    ]),
+    seed: 0,
+    weather: { today: 'clear', tomorrow: 'clear' },
+  } satisfies ReturnType<typeof createFarmingState> & WeatherState;
   const commands = createFarmCommandSystem(crops);
   const growth = createFarmingSystem(crops, cal);
   const harvests: string[] = [];

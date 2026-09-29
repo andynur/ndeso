@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { cropsSchema, itemsSchema, monthsFileSchema, npcSchema, toolsSchema } from './index.ts';
+import {
+  cropsSchema,
+  itemsSchema,
+  monthsFileSchema,
+  npcSchema,
+  toolsSchema,
+  weatherFileSchema,
+} from './index.ts';
 
 const localeFields = {
   nameKey: 'items:crop.cabai.name',
@@ -107,6 +114,36 @@ describe('content schemas', () => {
     if (!bad.success) {
       const messages = bad.error.issues.map((issue) => issue.message).join('\n');
       expect(messages).toContain('multiple of 5');
+      expect(messages).toContain('in order');
+    }
+  });
+
+  test('requires one ordered 100-percent weather row per month', () => {
+    const byMonth = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec',
+    ].map((month) => ({ month, weights: { clear: 20, cloudy: 25, rain: 45, storm: 10 } }));
+    expect(weatherFileSchema.safeParse({ byMonth }).success).toBe(true);
+    const bad = weatherFileSchema.safeParse({
+      byMonth: [
+        { ...byMonth[0], weights: { clear: 20, cloudy: 20, rain: 20, storm: 20 } },
+        ...byMonth.slice(1).reverse(),
+      ],
+    });
+    expect(bad.success).toBe(false);
+    if (!bad.success) {
+      const messages = bad.error.issues.map((issue) => issue.message).join('\n');
+      expect(messages).toContain('total 100');
       expect(messages).toContain('in order');
     }
   });

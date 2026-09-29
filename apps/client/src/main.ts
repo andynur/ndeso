@@ -4,11 +4,12 @@ import { CROP_DATA } from '@bale/content/crops';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { LIGHTING_DATA } from '@bale/content/lighting';
 import { PLAYER_DATA } from '@bale/content/player';
+import { WEATHER_DATA } from '@bale/content/weather';
 import { parseAssetManifest, TICK_MS } from '@bale/shared';
 import { createGameState } from '@bale/sim';
 import { clockViewOf } from './game/clock-view.ts';
 import { createCommandMapper } from './game/commands.ts';
-import { createGame, type PlayerPose, parseStartClock } from './game/game.ts';
+import { createGame, type PlayerPose, parseStartClock, parseStartWeather } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { PerfMeter } from './game/perf-meter.ts';
 import { createQualityControl, initialPreset, type QualityControl } from './game/quality.ts';
@@ -134,9 +135,11 @@ async function boot(): Promise<void> {
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state = createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA);
+  const state = createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
+  const startWeather = parseStartWeather(params.get('weather'));
+  if (startWeather !== undefined) state.weather.today = startWeather;
   const game = createGame(
     CALENDAR_DATA,
     BALE_AREA,
@@ -144,6 +147,7 @@ async function boot(): Promise<void> {
     CROP_DATA,
     ITEM_DATA,
     TOOL_DATA,
+    WEATHER_DATA,
     state,
   );
   const syncHotbar = () => {
@@ -201,6 +205,7 @@ async function boot(): Promise<void> {
           ((game.ticks + alpha) * TICK_MS) / 1000,
           realDtMs / 1000,
           clockMinute,
+          game.state.weather.today,
           game.playerPose(alpha, playerPose),
         );
         const events = game.drainEvents();

@@ -5,6 +5,7 @@ import type { TileTarget } from '../commands.ts';
 import type { SimContext, System } from '../types.ts';
 import { consumeSelectedItem, type InventoryState, inventorySpaceFor } from './inventory.ts';
 import type { MovementState } from './movement.ts';
+import type { WeatherState } from './weather.ts';
 
 /** A stable key for the serializable farm record (ARCHITECTURE §3.3). */
 export type TileKey = `${string}:${number},${number}`;
@@ -161,17 +162,18 @@ function frontTarget(player: MovementState['player']): TileTarget {
 export function createFarmingSystem(
   crops: readonly CropDef[],
   cal: CalendarData,
-): System<FarmingState> {
+): System<FarmingState & WeatherState> {
   const cropById = indexCrops(crops);
   return (state, ctx) => {
     for (const event of ctx.events) {
       const { day } = event as { readonly day?: unknown };
       if (event.type !== 'dayStarted' || typeof day !== 'number') continue;
       const musim = projectDay(day, cal).musim;
+      const rainy = state.weather.today === 'rain' || state.weather.today === 'storm';
       for (const [key, current] of Object.entries(state.farm.tiles) as [TileKey, FarmTile][]) {
-        // A clear day lowers a sawah before growth. Tegalan consumes yesterday's watering,
-        // then resets after growth so it must be watered again for tomorrow.
-        const tile = current.plot === 'sawah' ? resetDailyWater(current) : current;
+        // A dry day lowers sawah before growth. Rain supplies tegalan for this growth pass;
+        // ordinary watering is consumed, then reset so the next day still needs water.
+        const tile = current.plot === 'sawah' && !rainy ? resetDailyWater(current) : current;
         if (tile.phase !== 'seeded' && tile.phase !== 'mature') {
           state.farm.tiles[key] = tile.plot === 'sawah' ? tile : resetDailyWater(tile);
           continue;
@@ -181,7 +183,7 @@ export function createFarmingSystem(
           state.farm.tiles[key] = tile.plot === 'sawah' ? tile : resetDailyWater(tile);
           continue;
         }
-        const advanced = advanceCrop(tile, crop, musim, key, ctx);
+        const advanced = advanceCrop(tile, crop, musim, rainy, key, ctx);
         state.farm.tiles[key] = advanced.plot === 'sawah' ? advanced : resetDailyWater(advanced);
       }
     }
@@ -268,6 +270,7 @@ function advanceCrop(
   tile: Extract<FarmTile, { phase: 'seeded' | 'mature' }>,
   crop: CropDef,
   musim: MusimId,
+  rainy: boolean,
   key: TileKey,
   ctx: SimContext,
 ): FarmTile {
@@ -276,7 +279,7 @@ function advanceCrop(
     return { ...tile, phase: 'withered' };
   }
 
-  const hasWater = tile.plot === 'sawah' ? tile.waterLevel >= 2 : tile.watered;
+  const hasWater = tile.plot === 'sawah' ? tile.waterLevel >= 2 : tile.watered || rainy;
   if (!hasWater) {
     const dryDays = tile.dryDays + 1;
     if (tile.plot !== 'sawah' && dryDays >= crop.dryDaysToWither) {

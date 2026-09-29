@@ -6,3 +6,4 @@ export * from './lighting.ts';
 export * from './message.ts';
 export * from './player.ts';
 export * from './quality.ts';
+export * from './weather.ts';

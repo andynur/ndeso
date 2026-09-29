@@ -1,4 +1,4 @@
-import type { AreaDef, LightingData, QualityPreset } from '@bale/shared';
+import type { AreaDef, LightingData, QualityPreset, WeatherId } from '@bale/shared';
 import type { CropDef } from '@bale/shared/content';
 import type { Dir } from '@bale/sim';
 import {
@@ -23,6 +23,7 @@ import { createDayNight, createLightingSample } from './lighting/day-night.ts';
 import { clampPixelRatio, QUALITY } from './quality/presets.ts';
 import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
 import { createAtlasTexture, type Sprite, SpriteBatch } from './sprites/sprite-batch.ts';
+import { RainField } from './weather/rain-field.ts';
 
 /** How far the sun sits from the follow target, along its direction. */
 const SUN_DISTANCE = 30;
@@ -127,7 +128,13 @@ export interface SceneHandle {
    * `clockMinute` is the game clock (`ClockState.minute` plus the fraction of the minute
    * elapsed), which drives the day/night lighting. `player` is drawn and followed.
    */
-  draw(simSeconds: number, realDtSeconds: number, clockMinute: number, player: PlayerView): void;
+  draw(
+    simSeconds: number,
+    realDtSeconds: number,
+    clockMinute: number,
+    weather: WeatherId,
+    player: PlayerView,
+  ): void;
   readonly camera: CameraControls;
   dispose(): void;
 }
@@ -199,6 +206,9 @@ export function createScene(options: SceneOptions): SceneHandle {
     soilPalette: palette.wateredSoil,
   });
   scene.add(cropView.group);
+  const rain = new RainField();
+  scene.add(rain.points);
+  let weather: WeatherId = 'clear';
   // The player, the camera's follow target; placed by `draw` from the sim every frame.
   const playerSprite = sprites.add({ x: spawnX, y: 0, z: spawnZ, tag: 'idle_down' });
   rig.snapTo(spawnX, spawnZ);
@@ -236,6 +246,7 @@ export function createScene(options: SceneOptions): SceneHandle {
   /** Applies everything the preset owns except the pixel ratio, which `resize` sets. */
   function applyPreset(): void {
     const quality = QUALITY[preset];
+    rain.setWeather(weather, quality.rainParticles);
     const shadows = quality.shadowMapSize > 0;
     const shadowType = quality.softShadows ? PCFSoftShadowMap : PCFShadowMap;
     const shadowsChanged =
@@ -285,8 +296,9 @@ export function createScene(options: SceneOptions): SceneHandle {
   let contextLost = false;
 
   function applyLighting(clockMinute: number): void {
-    // Weather does not exist yet (M2), so rain is always 0.
-    dayNight.sample(clockMinute, 0, light);
+    const cover =
+      weather === 'cloudy' ? 0.35 : weather === 'rain' ? 0.8 : weather === 'storm' ? 1 : 0;
+    dayNight.sample(clockMinute, cover, light);
     sun.color.setRGB(light.sun[0], light.sun[1], light.sun[2]);
     sun.intensity = light.sunIntensity;
     const [dx, dy, dz] = light.sunDirection;
@@ -305,8 +317,13 @@ export function createScene(options: SceneOptions): SceneHandle {
     simSeconds: number,
     realDtSeconds: number,
     clockMinute: number,
+    nextWeather: WeatherId,
     player: PlayerView,
   ): void {
+    if (nextWeather !== weather) {
+      weather = nextWeather;
+      rain.setWeather(weather, QUALITY[preset].rainParticles);
+    }
     playerSprite.x = player.x;
     playerSprite.z = player.z;
     // The rig keeps easing while the context is lost, so it is settled when it returns.
@@ -322,6 +339,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     sprites.update(simSeconds);
 
     rig.pose(cameraPose);
+    rain.update(simSeconds, cameraPose.lookX, cameraPose.lookZ);
     applyLighting(clockMinute);
     camera.position.set(cameraPose.x, cameraPose.y, cameraPose.z);
     camera.lookAt(cameraPose.lookX, cameraPose.lookY, cameraPose.lookZ);
@@ -358,6 +376,8 @@ export function createScene(options: SceneOptions): SceneHandle {
     atlasTexture.dispose();
     cropView.group.removeFromParent();
     cropView.dispose();
+    rain.points.removeFromParent();
+    rain.dispose();
     scene.traverse((object) => {
       if (!(object instanceof Mesh) || object === sprites.mesh) return;
       object.geometry.dispose();

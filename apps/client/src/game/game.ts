@@ -1,4 +1,11 @@
-import { type AreaDef, type CalendarData, type PlayerData, parseClockTime } from '@bale/shared';
+import {
+  type AreaDef,
+  type CalendarData,
+  type PlayerData,
+  parseClockTime,
+  type WeatherData,
+  type WeatherId,
+} from '@bale/shared';
 import type { CropDef, ItemDef, ToolDef } from '@bale/shared/content';
 import {
   buildCollisionGrid,
@@ -11,6 +18,7 @@ import {
   createInventoryEventSystem,
   createMovementSystem,
   createTimeSystem,
+  createWeatherSystem,
   type Dir,
   type GameState,
   inventoryCommandSystem,
@@ -63,11 +71,13 @@ export function createGame(
   crops: readonly CropDef[],
   items: readonly ItemDef[],
   tools: readonly ToolDef[],
-  state: GameState = createGameState(cal, area, player),
+  weatherData: WeatherData,
+  state: GameState = createGameState(cal, area, player, weatherData),
   after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
   const movement = createMovementSystem(buildCollisionGrid(area), player);
+  const weather = createWeatherSystem(cal, weatherData);
   const farmCommands = createFarmCommandSystem(crops);
   const farmInteraction = createFarmInteractionSystem(crops, items, tools);
   const inventoryEvents = createInventoryEventSystem(items);
@@ -95,6 +105,7 @@ export function createGame(
       previousX = state.player.x;
       previousZ = state.player.z;
       time(state, ctx);
+      weather(state, ctx);
       movement(state, ctx);
       inventoryCommandSystem(state, ctx);
       farmCommands(state, ctx);
@@ -131,4 +142,11 @@ export function parseStartClock(value: string | null, cal: CalendarData): number
   if (time === undefined) return undefined;
   const minute = time < cal.clock.dayStartMinute ? time + 1440 : time;
   return minute < cal.clock.dayEndMinute ? minute : undefined;
+}
+
+/** `?weather=rain` pins the opening day for visual QA; later days return to seeded weather. */
+export function parseStartWeather(value: string | null): WeatherId | undefined {
+  return value === 'clear' || value === 'cloudy' || value === 'rain' || value === 'storm'
+    ? value
+    : undefined;
 }

@@ -12,6 +12,7 @@
     "./lighting": "./src/lighting-bundle.ts",
     "./areas": "./src/areas-bundle.ts",
     "./player": "./src/player-bundle.ts",
+    "./weather": "./src/weather-bundle.ts",
     "./locales/*": "./locales/*"
   },
   "dependencies": {

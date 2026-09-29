@@ -23,12 +23,35 @@ export interface QualitySettings {
   readonly lamps: number;
   /** Frame-rate cap. Medium's "30/60" runs at 60 and lets dynamic resolution hold it. */
   readonly fpsCap: number;
+  /** Maximum rain particles (PERFORMANCE_BUDGET §4). */
+  readonly rainParticles: number;
 }
 
 export const QUALITY: Record<QualityPreset, QualitySettings> = {
-  low: { maxDpr: 1, shadowMapSize: 0, softShadows: false, lamps: 0, fpsCap: 30 },
-  medium: { maxDpr: 1.5, shadowMapSize: 512, softShadows: false, lamps: 2, fpsCap: 60 },
-  high: { maxDpr: 2, shadowMapSize: 1024, softShadows: true, lamps: 4, fpsCap: 60 },
+  low: {
+    maxDpr: 1,
+    shadowMapSize: 0,
+    softShadows: false,
+    lamps: 0,
+    fpsCap: 30,
+    rainParticles: 300,
+  },
+  medium: {
+    maxDpr: 1.5,
+    shadowMapSize: 512,
+    softShadows: false,
+    lamps: 2,
+    fpsCap: 60,
+    rainParticles: 800,
+  },
+  high: {
+    maxDpr: 2,
+    shadowMapSize: 1024,
+    softShadows: true,
+    lamps: 4,
+    fpsCap: 60,
+    rainParticles: 2000,
+  },
 };
 
 /** PERFORMANCE_BUDGET §4: render resolution cap per preset. */
