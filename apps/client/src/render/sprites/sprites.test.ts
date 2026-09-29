@@ -166,6 +166,15 @@ describe('SpriteBatch', () => {
     expect(batch.mesh.instanceMatrix.array[12]).toBe(3);
   });
 
+  test('clear empties the live range without changing capacity', () => {
+    const batch = makeBatch(3);
+    batch.add({ x: 1, y: 0, z: 0, tag: 'idle_down' });
+    batch.clear();
+    expect(batch.size).toBe(0);
+    expect(batch.capacity).toBe(3);
+    expect(batch.mesh.count).toBe(0);
+  });
+
   test('rejects an unknown tag and an overfull batch', () => {
     const batch = makeBatch(1);
     expect(() => batch.add({ x: 0, y: 0, z: 0, tag: 'dance' })).toThrow(RangeError);

@@ -4,9 +4,9 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M2 — Vertical slice. M2-02 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
+- **Milestone:** M2 — Vertical slice. M2-03 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-03 (crop rendering). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
+- **Next task:** M2-04 (inventory + hotbar). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-09-29 · M2-03 · feat/M2-03-crop-rendering
+- Done: procedural placeholder crop atlas for all crop definitions with four growth stages and distinct withered art; one instanced sprite batch per crop/stage; patterned instanced watered-soil decals; event-gated farm sync including every `dayStarted`; crop tint follows the day/night light.
+- Tests: `bun run check` green (420 tests); build + `check:size` green (shell 159.6 KB brotli, first frame 167.9 KB). Browser visual QA was not completed because Chrome automation was blocked by an open extension panel and the in-app browser was unavailable.
+- Notes/decisions: stages are a render projection of `growthDays` at thirds, with mature as stage 3; no balance/content values changed. The shipped art remains generated placeholder art, not a final asset.
+- Next: M2-04.
+
 ### 2026-09-28 · M2-02 · feat/M2-02-farming-system
 - Done: serializable farm tiles with exclusive untilled/tilled/seeded/mature/withered phases; sanitized hoe, seed, water and harvest commands; `dayStarted` growth, daily water reset, sawah levels, musim/drought withering and regrowth. Added the three vertical-slice crop definitions and EN/ID text; the Balé field starts as 96 tegalan tiles.
 - Tests: `bun run check` green (414 tests); build + `check:size` green (shell 158.3 KB brotli). The 14-day golden records three cabai harvests plus one singkong harvest.

@@ -14,6 +14,7 @@ import { createQualityControl, initialPreset, type QualityControl } from './game
 import { initI18n, loadNamespace, locale, t } from './i18n/index.ts';
 import { attachInput, createInput } from './platform/input/input.ts';
 import { localSettings } from './platform/settings.ts';
+import { cropViewNeedsSync } from './render/crops/crop-view.ts';
 import { guessPreset } from './render/quality/presets.ts';
 import {
   createScene,
@@ -45,6 +46,18 @@ const PALETTE: ScenePalette = {
     hair: colorHex('indigo900'),
     shirt: colorHex('hujan400'),
     trousers: colorHex('indigo700'),
+  },
+  crop: {
+    leaf: colorHex('sawah500'),
+    leafDark: colorHex('sawah700'),
+    ripe: colorHex('kunyit400'),
+    fruit: colorHex('bahaya500'),
+    earth: colorHex('kayu500'),
+    withered: colorHex('ink500'),
+  },
+  wateredSoil: {
+    earth: colorHex('kayu500'),
+    water: colorHex('hujan400'),
   },
 };
 
@@ -99,6 +112,7 @@ async function boot(): Promise<void> {
     palette: PALETTE,
     lighting: LIGHTING_DATA,
     area: BALE_AREA,
+    crops: CROP_DATA,
   });
   // ASSET_PIPELINE §3: the area's models come from the generated manifest. The game runs
   // on the fallback ground meanwhile, and stays on it if the models cannot be had.
@@ -120,6 +134,7 @@ async function boot(): Promise<void> {
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
   const game = createGame(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, CROP_DATA, state);
+  scene.syncFarm(game.state.farm.tiles);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const commands = createCommandMapper();
   const now = BROWSER_FRAMES.now;
@@ -167,9 +182,10 @@ async function boot(): Promise<void> {
           clockMinute,
           game.playerPose(alpha, playerPose),
         );
-        // Sim events have no consumer yet: the HUD clock reads the clock directly, since a
-        // minute passes without one. Drained so the buffer cannot grow.
-        game.drainEvents();
+        const events = game.drainEvents();
+        // Crop batches are rebuilt only when the farm changes. `dayStarted` matters even
+        // when no crop-specific event fires because ordinary growth can cross a stage.
+        if (cropViewNeedsSync(events)) scene.syncFarm(game.state.farm.tiles);
         // ui.sync (ARCHITECTURE §4.1): the clock view changes once per game minute at most.
         if (clock.minute !== lastMinute || clock.day !== lastDay) {
           lastMinute = clock.minute;

@@ -100,6 +100,8 @@ export interface SpriteBatchOptions {
   readonly texture: Texture;
   /** Fixed instance capacity; the GPU buffers are sized once. */
   readonly capacity: number;
+  /** Optional shared light tint, for several batches backed by one atlas. */
+  readonly tint?: Color;
 }
 
 /**
@@ -110,7 +112,7 @@ export interface SpriteBatchOptions {
 export class SpriteBatch {
   readonly mesh: InstancedMesh<PlaneGeometry, ShaderMaterial>;
   /** Light colour multiplied into every sprite; M1-07 drives it from the clock. */
-  readonly tint = new Color(1, 1, 1);
+  readonly tint: Color;
   private readonly sprites: Sprite[] = [];
   private readonly uvRects: InstancedBufferAttribute;
   /** Every frame's unflipped UV rect, computed once so `update` allocates nothing. */
@@ -118,6 +120,7 @@ export class SpriteBatch {
 
   constructor(private readonly options: SpriteBatchOptions) {
     const { atlas, texture, capacity } = options;
+    this.tint = options.tint ?? new Color(1, 1, 1);
     this.frameUvs = new Float32Array(atlas.frames.length * 4);
     for (let index = 0; index < atlas.frames.length; index++) {
       this.frameUvs.set(frameUv(atlas, index), index * 4);
@@ -177,6 +180,12 @@ export class SpriteBatch {
     if (index < 0) return;
     const last = this.sprites.pop();
     if (last && last !== sprite) this.sprites[index] = last;
+  }
+
+  /** Clears the live range without reallocating its GPU buffers. */
+  clear(): void {
+    this.sprites.length = 0;
+    this.mesh.count = 0;
   }
 
   /** Writes every sprite's position and current frame for sim time `simSeconds`. */

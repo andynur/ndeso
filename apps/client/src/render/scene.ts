@@ -1,4 +1,5 @@
 import type { AreaDef, LightingData, QualityPreset } from '@bale/shared';
+import type { CropDef } from '@bale/shared/content';
 import type { Dir } from '@bale/sim';
 import {
   AmbientLight,
@@ -16,6 +17,8 @@ import {
   WebGLRenderer,
 } from 'three';
 import { type CameraPose, CameraRig, type Facing, FOV_DEG } from './camera/camera-rig.ts';
+import { CropView, type FarmTilesView, type WateredSoilPalette } from './crops/crop-view.ts';
+import type { CropPalette } from './crops/placeholder-crop-atlas.ts';
 import { createDayNight, createLightingSample } from './lighting/day-night.ts';
 import { clampPixelRatio, QUALITY } from './quality/presets.ts';
 import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
@@ -61,6 +64,8 @@ export interface ScenePalette {
   /** The fallback ground plane shown before the area's models arrive. */
   readonly ground: number;
   readonly character: CharPalette;
+  readonly crop: CropPalette;
+  readonly wateredSoil: WateredSoilPalette;
 }
 
 export interface SceneOptions {
@@ -71,6 +76,8 @@ export interface SceneOptions {
   readonly lighting: LightingData;
   /** The area on screen: its spawn frames the camera and its lamp points light the night. */
   readonly area: AreaDef;
+  /** Crop definitions determine the placeholder atlas tags and growth-stage thresholds. */
+  readonly crops: readonly CropDef[];
 }
 
 /** What the input layer may do to the camera (DESIGN §1.1). */
@@ -110,6 +117,8 @@ export interface SceneHandle {
    * ground. The scene owns and disposes them from then on.
    */
   setWorld(world: Group): void;
+  /** Rebuilds farm instances after a farm event; never called every render frame. */
+  syncFarm(tiles: FarmTilesView): void;
   /**
    * Draws one frame at `simSeconds`, the sim time interpolated between ticks
    * (`(ticks + alpha) * TICK_MS / 1000`, ARCHITECTURE §4.1). The game loop owns the
@@ -129,7 +138,7 @@ export interface SceneHandle {
  * fallback ground plane and swaps in the area once its models have loaded.
  */
 export function createScene(options: SceneOptions): SceneHandle {
-  const { canvas, palette, lighting, area } = options;
+  const { canvas, palette, lighting, area, crops } = options;
   const [spawnX, spawnZ] = area.spawn;
   let preset = options.preset;
   let renderScale = 1;
@@ -182,6 +191,14 @@ export function createScene(options: SceneOptions): SceneHandle {
   const atlasTexture = createAtlasTexture(pixels, atlas);
   const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
   scene.add(sprites.mesh);
+  const cropView = new CropView({
+    areaId: area.id,
+    crops,
+    capacity: area.field.w * area.field.d,
+    cropPalette: palette.crop,
+    soilPalette: palette.wateredSoil,
+  });
+  scene.add(cropView.group);
   // The player, the camera's follow target; placed by `draw` from the sim every frame.
   const playerSprite = sprites.add({ x: spawnX, y: 0, z: spawnZ, tag: 'idle_down' });
   rig.snapTo(spawnX, spawnZ);
@@ -280,6 +297,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     ambient.intensity = light.ambientIntensity;
     sky.setRGB(light.haze[0], light.haze[1], light.haze[2]);
     sprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
+    cropView.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
     for (const lamp of lamps) lamp.intensity = light.lamps * LAMP_INTENSITY;
   }
 
@@ -338,6 +356,8 @@ export function createScene(options: SceneOptions): SceneHandle {
     canvas.removeEventListener('webglcontextrestored', onContextRestored);
     sprites.dispose();
     atlasTexture.dispose();
+    cropView.group.removeFromParent();
+    cropView.dispose();
     scene.traverse((object) => {
       if (!(object instanceof Mesh) || object === sprites.mesh) return;
       object.geometry.dispose();
@@ -374,6 +394,7 @@ export function createScene(options: SceneOptions): SceneHandle {
       }
       scene.add(world);
     },
+    syncFarm: (tiles) => cropView.sync(tiles),
     stats(out) {
       const { render, memory, programs } = renderer.info;
       out.drawCalls = render.calls;
