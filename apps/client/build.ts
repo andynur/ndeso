@@ -18,6 +18,7 @@ import { existsSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
 import { isAbsolute, join, relative } from 'node:path';
 import { ASSETS_DIR, buildAssets } from '../../tools/assets/build.ts';
+import { inkPlugin } from '../../tools/ink/plugin.ts';
 import { shellFiles } from '../../tools/size/shell.ts';
 
 const CLIENT_DIR = import.meta.dir;
@@ -95,6 +96,7 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
       asset: '[name]-[hash].[ext]',
     },
     define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+    plugins: [inkPlugin],
   });
 
   if (!result.success) {

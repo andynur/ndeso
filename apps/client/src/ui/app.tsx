@@ -1,5 +1,6 @@
 import { SUPPORTED_LOCALES } from '@bale/shared';
 import { locale, setLocale, t } from '../i18n/index.ts';
+import { DialogBox, type DialogBoxProps } from './dialog-box.tsx';
 import { Hotbar, type HotbarProps } from './hotbar.tsx';
 import { HudClock } from './hud-clock.tsx';
 import { Market, type MarketProps } from './market.tsx';
@@ -10,6 +11,7 @@ import { TouchControls, type TouchControlsProps } from './touch-controls.tsx';
 export interface AppProps {
   /** On-screen stick, context button, and camera buttons (GDD §12). */
   readonly controls?: TouchControlsProps | undefined;
+  readonly dialog?: DialogBoxProps | undefined;
   readonly hotbar?: HotbarProps | undefined;
   readonly playerStatus?: PlayerStatusProps | undefined;
   readonly market?: MarketProps | undefined;
@@ -44,7 +46,7 @@ function LocalePicker() {
  * comes from the locale bundles, and the locale can be switched live. The HUD from
  * DESIGN §4 replaces it in M2.
  */
-export function App({ controls, hotbar, playerStatus, market }: AppProps) {
+export function App({ controls, dialog, hotbar, playerStatus, market }: AppProps) {
   return (
     <>
       <div class="hud-top-left">
@@ -54,6 +56,7 @@ export function App({ controls, hotbar, playerStatus, market }: AppProps) {
       <PerfOverlay />
       {playerStatus ? <PlayerStatus {...playerStatus} /> : null}
       {market ? <Market {...market} /> : null}
+      {dialog ? <DialogBox {...dialog} /> : null}
       {hotbar ? <Hotbar {...hotbar} /> : null}
       {controls ? <TouchControls {...controls} /> : null}
     </>

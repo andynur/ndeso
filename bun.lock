@@ -10,6 +10,7 @@
         "@gltf-transform/cli": "4.5.0",
         "@types/three": "~0.186.0",
         "bun-types": "1.4.1",
+        "inkjs": "2.4.0",
         "typescript": "5.9.3",
       },
     },
@@ -21,6 +22,7 @@
         "@bale/shared": "workspace:*",
         "@bale/sim": "workspace:*",
         "@preact/signals": "2.11.2",
+        "inkjs": "2.4.0",
         "preact": "10.29.8",
         "three": "0.186.1",
       },
@@ -269,6 +271,8 @@
     "has-flag": ["has-flag@4.0.0", "", {}, "sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ=="],
 
     "inherits": ["inherits@2.0.4", "", {}, "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ=="],
+
+    "inkjs": ["inkjs@2.4.0", "", { "bin": { "inkjs-compiler": "bin/inkjs-compiler.js" } }, "sha512-EoPCYESIbMtfI8SqEDZCJwn+A5is0QozMLw250iic1ReJCgZpRKIezWj0VqgRUzAx0f3MmEbsUjY/ILe2815JQ=="],
 
     "iota-array": ["iota-array@1.0.0", "", {}, "sha512-pZ2xT+LOHckCatGQ3DcG/a+QuEqvoxqkiL7tvE8nn3uuu+f6i1TtpB5/FtWFbxUuVr5PZCx8KskuGatbJDXOWA=="],
 

@@ -1,6 +1,7 @@
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
+import { loadDialogStories } from '@bale/content/dialog';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { LIGHTING_DATA } from '@bale/content/lighting';
 import { MARKET_DATA } from '@bale/content/market';
@@ -11,6 +12,8 @@ import { parseAssetManifest, TICK_MS } from '@bale/shared';
 import { createGameState } from '@bale/sim';
 import { clockViewOf } from './game/clock-view.ts';
 import { createCommandMapper } from './game/commands.ts';
+import { createDialogController } from './game/dialog.ts';
+import { dialogScriptAt, npcInFront } from './game/dialog-target.ts';
 import {
   createGame,
   type NpcPose,
@@ -135,6 +138,7 @@ async function boot(): Promise<void> {
   // The HUD clock names the months (GDD §3.2).
   await loadNamespace('calendar');
   await loadNamespace('items');
+  await loadNamespace('npcs');
   // `subscribe` fires immediately and again on every switch, so this covers both the
   // initial paint and a live locale change.
   locale.subscribe(() => {
@@ -170,9 +174,14 @@ async function boot(): Promise<void> {
   const input = createInput((view) => {
     stickView.value = view;
   });
+  const dialog = createDialogController({
+    locale: () => locale.value,
+    loadStories: loadDialogStories,
+  });
   attachInput(window, canvas, input);
   mountOverlay(overlay, {
     controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
+    dialog: { onAdvance: dialog.advance, onChoose: dialog.choose },
     hotbar: { onSelect: input.pressSlot },
     playerStatus: { onSleep: input.pressSleep, onContinue: input.continueDay },
     market: {
@@ -265,10 +274,12 @@ async function boot(): Promise<void> {
       step: meter
         ? () => {
             const start = now();
-            game.step();
+            if (!dialog.active) game.step();
             stepMs += now() - start;
           }
-        : game.step,
+        : () => {
+            if (!dialog.active) game.step();
+          },
       frame(alpha, realDtMs) {
         const frameStart = meter ? now() : 0;
         const frame = input.sample();
@@ -279,8 +290,21 @@ async function boot(): Promise<void> {
           scene.camera.rotate(frame.rotate > 0 ? 1 : -1);
         }
         if (frame.zoom !== 0) scene.camera.zoomBy(frame.zoom);
-        commands.map(frame, scene.camera.yaw, game.submit);
         const { clock } = game.state;
+        if (dialog.active) {
+          commands.stop(game.submit);
+          if (frame.interact) dialog.advance();
+        } else {
+          const target = frame.interact
+            ? npcInFront(game.state.player, game.state.npcs)
+            : undefined;
+          if (target) {
+            commands.stop(game.submit);
+            void dialog.start(target.id, dialogScriptAt(clock.minute));
+          } else {
+            commands.map(frame, scene.camera.yaw, game.submit);
+          }
+        }
         const clockMinute =
           clock.minute + (clock.tick + alpha) / CALENDAR_DATA.clock.ticksPerMinute;
         scene.draw(

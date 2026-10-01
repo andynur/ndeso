@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M2 — Vertical slice. M2-09 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
+- **Milestone:** M2 — Vertical slice. M2-10 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-10 (Ink dialog runtime, DialogBox UI, localized scripts, and `check-ink`). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
+- **Next task:** M2-11 (chicken: coop, feed, egg production, affection). Human: M1-10 device test ([`device-test.md`](device-test.md)).
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
-- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. NPC schedules contain Balé visits only until M2-13 authors the `kampung` and `pasar` areas. The market panel opens from a temporary HUD button until then; haggling/friendship modifiers remain deferred to the social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s and NPC speed 2 tiles/s are untuned. Villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 167.3 KB brotli of 350 KB.
+- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. NPC schedules contain Balé visits only until M2-13 authors the `kampung` and `pasar` areas. The market panel opens from a temporary HUD button until then; haggling/friendship modifiers remain deferred to the social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s and NPC speed 2 tiles/s are untuned. Villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 194.9 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-10-01 · M2-10 · feat/M2-10-ink-dialog
+- Done: added a build-time Ink compiler and lazy EN/ID dialog chunks, three morning/day/evening scripts for each slice NPC, compiled knot/choice/tag parity checks, front-tile NPC targeting, and a responsive dialog box that pauses sim input and time while open.
+- Tests: `bun run check` green (479 tests); build + `check:size` green (shell 194.9 KB brotli, first frame 204.1 KB). Browser visual QA could not run because no in-app or connected browser was available.
+- Notes/decisions: dialog continuation is ephemeral client state; NPC position and targeting continue to project the sim. Friendship effects remain deferred, so this task adds no Ink gameplay tags beyond stable speaker/script metadata.
+- Next: M2-11.
+
 ### 2026-10-01 · M2-09 · feat/M2-09-npc-schedules
 - Done: authored localized profiles and Balé visit schedules for Mbah Hita, Pak Harjo, and Bu Ratna; added deterministic first-match schedule resolution and shortest-path movement over a collision-derived nav grid. The renderer now projects their interpolated sim state through one distinct-palette placeholder sprite batch.
 - Tests: `bun run check` green (469 tests); build + `check:size` green (shell 167.3 KB brotli, first frame 176.5 KB). Browser visual QA could not run because no in-app or connected browser was available.

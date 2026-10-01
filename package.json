@@ -12,11 +12,12 @@
     "dev": "bun tools/dev.ts",
     "assets": "bun tools/assets/build.ts",
     "build": "bun apps/client/build.ts",
-    "check": "bun run check:types && bun run check:lint && bun run check:deps && bun run check:i18n && bun run check:content && bun run check:links && bun run test",
+    "check": "bun run check:types && bun run check:lint && bun run check:deps && bun run check:i18n && bun run check:ink && bun run check:content && bun run check:links && bun run test",
     "check:types": "tsc -b --noEmit && tsc -b apps/client --noEmit",
     "check:lint": "biome check .",
     "check:deps": "bun tools/check-deps.ts",
     "check:i18n": "bun tools/i18n/check.ts",
+    "check:ink": "bun tools/i18n/check-ink.ts",
     "check:content": "bun tools/check-content.ts",
     "check:links": "bun tools/check-links.ts",
     "check:size": "bun tools/check-size.ts",
@@ -32,6 +33,7 @@
     "@gltf-transform/cli": "4.5.0",
     "@types/three": "~0.186.0",
     "bun-types": "1.4.1",
+    "inkjs": "2.4.0",
     "typescript": "5.9.3"
   }
 }

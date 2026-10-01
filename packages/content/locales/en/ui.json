@@ -64,6 +64,8 @@
   "market.item_detail": "{price} · You have {owned}",
   "market.buy": "Buy {item} for {price}",
   "market.sell": "Sell {item} for {price}",
+  "dialog.continue": "Continue",
+  "dialog.close": "Close",
   "settings.language": "Language",
   "settings.graphics": "Graphics",
   "settings.graphics.preset_low": "Low",

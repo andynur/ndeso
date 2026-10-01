@@ -84,4 +84,16 @@ describe('createCommandMapper', () => {
       { type: 'cycleSlot', delta: -1 },
     ]);
   });
+
+  test('stop releases held movement once for modal input', () => {
+    const mapper = createCommandMapper();
+    const out: Command[] = [];
+    mapper.map({ ...createInputFrame(), moveX: 1 }, 0, (command) => out.push(command));
+    mapper.stop((command) => out.push(command));
+    mapper.stop((command) => out.push(command));
+    expect(out).toEqual([
+      { type: 'move', x: 1, z: 0 },
+      { type: 'move', x: 0, z: 0 },
+    ]);
+  });
 });

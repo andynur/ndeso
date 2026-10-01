@@ -8,6 +8,7 @@
     "@bale/shared": "workspace:*",
     "@bale/sim": "workspace:*",
     "@preact/signals": "2.11.2",
+    "inkjs": "2.4.0",
     "preact": "10.29.8",
     "three": "0.186.1"
   }

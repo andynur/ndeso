@@ -120,6 +120,8 @@ export type UiKey =
   | 'day_end.sleep'
   | 'day_end.stamina'
   | 'day_end.title'
+  | 'dialog.close'
+  | 'dialog.continue'
   | 'hud.clock'
   | 'hud.date'
   | 'hud.date_sub'

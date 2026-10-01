@@ -413,6 +413,87 @@ body {
   }
 }
 
+/* M2-10: readable bottom dialog on landscape phones, with input isolated by the scrim. */
+.dialog-box {
+  position: absolute;
+  z-index: 11;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-4), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  background: rgb(22 29 56 / 0.45);
+  pointer-events: auto;
+}
+
+.dialog-box__panel {
+  width: min(48rem, 100%);
+  padding: var(--space-4);
+  border: 2px solid var(--kayu-500);
+  border-radius: 12px;
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  box-shadow: 0 3px 0 rgb(27 20 16 / 0.4);
+}
+
+.dialog-box__panel h2,
+.dialog-box__panel p {
+  margin: 0;
+}
+
+.dialog-box__panel h2 {
+  color: var(--indigo-700);
+  font-size: 1.125rem;
+}
+
+.dialog-box__panel p {
+  min-height: 2.8em;
+  margin-top: var(--space-2);
+  font-size: 1.125rem;
+}
+
+.dialog-box__choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.dialog-box__choices button,
+.dialog-box__advance {
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--sawah-500);
+  border-radius: 8px;
+  background: var(--sawah-500);
+  color: var(--kapur-50);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dialog-box__advance {
+  display: block;
+  min-width: 8rem;
+  margin: var(--space-3) 0 0 auto;
+}
+
+@media (max-width: 700px), (max-height: 500px) {
+  .dialog-box__panel {
+    padding: var(--space-3);
+  }
+
+  .dialog-box__panel p {
+    font-size: 1rem;
+  }
+
+  .dialog-box__choices {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* M2-04 hotbar: 16 px placeholder icons at 3×, centred above the safe-area edge. */
 .hotbar {
   position: absolute;

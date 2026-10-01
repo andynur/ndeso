@@ -83,6 +83,12 @@ describe('precache-manifest.json', () => {
     for (const chunk of localeChunks) expect(manifest.shell).not.toContain(`/${chunk.path}`);
   });
 
+  test('compiles localized Ink into lazy dialog chunks', () => {
+    const dialogChunks = result.files.filter((file) => /^dialog-(en|id)-.+\.js$/.test(file.path));
+    expect(dialogChunks).toHaveLength(2);
+    for (const chunk of dialogChunks) expect(manifest.shell).not.toContain(`/${chunk.path}`);
+  });
+
   test('never lists a file the build did not emit', () => {
     const emitted = new Set(result.files.map((file) => `/${file.path}`));
     for (const path of manifest.shell) expect(emitted.has(path)).toBe(true);

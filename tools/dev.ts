@@ -11,8 +11,11 @@
 
 import { networkInterfaces } from 'node:os';
 import { join, normalize } from 'node:path';
-import index from '../apps/client/index.html';
 import { ASSETS_DIR, buildAssets } from './assets/build.ts';
+import { inkPlugin } from './ink/plugin.ts';
+
+Bun.plugin(inkPlugin);
+const { default: index } = await import('../apps/client/index.html');
 
 const { PORT } = process.env;
 const port = Number(PORT ?? 3000);

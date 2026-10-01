@@ -32,7 +32,14 @@ export function screenToWorld(
 
 export interface CommandMapper {
   /** Emits this frame's commands through `submit`, in a fixed order. */
-  map(frame: Readonly<InputFrame>, yaw: number, submit: (command: Command) => void): void;
+  map(
+    frame: Readonly<InputFrame>,
+    yaw: number,
+    submit: (command: Command) => void,
+    allowInteract?: boolean,
+  ): void;
+  /** Release held movement while a modal client interaction owns input. */
+  stop(submit: (command: Command) => void): void;
 }
 
 export function createCommandMapper(): CommandMapper {
@@ -41,7 +48,7 @@ export function createCommandMapper(): CommandMapper {
   let lastZ = 0;
 
   return {
-    map(frame, yaw, submit) {
+    map(frame, yaw, submit, allowInteract = true) {
       screenToWorld(frame.moveX, frame.moveY, yaw, world);
       // `+ 0` folds −0 into 0, so a stop always reads as `{ x: 0, z: 0 }`.
       const x = world.x + 0;
@@ -61,9 +68,15 @@ export function createCommandMapper(): CommandMapper {
       for (let i = 0; i < Math.abs(steps); i++) {
         submit({ type: 'cycleSlot', delta: steps > 0 ? 1 : -1 });
       }
-      if (frame.interact) submit({ type: 'interact' });
+      if (frame.interact && allowInteract) submit({ type: 'interact' });
       if (frame.sleep) submit({ type: 'sleep' });
       if (frame.continueDay) submit({ type: 'continueDay' });
+    },
+    stop(submit) {
+      if (lastX === 0 && lastZ === 0) return;
+      lastX = 0;
+      lastZ = 0;
+      submit({ type: 'move', x: 0, z: 0 });
     },
   };
 }

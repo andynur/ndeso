@@ -64,6 +64,8 @@
   "market.item_detail": "{price} · Kamu punya {owned}",
   "market.buy": "Beli {item} seharga {price}",
   "market.sell": "Jual {item} seharga {price}",
+  "dialog.continue": "Lanjut",
+  "dialog.close": "Tutup",
   "settings.language": "Bahasa",
   "settings.graphics": "Grafis",
   "settings.graphics.preset_low": "Rendah",
