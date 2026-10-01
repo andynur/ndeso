@@ -3,6 +3,7 @@ import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
+import { MARKET_DATA } from '@bale/content/market';
 import { PLAYER_DATA } from '@bale/content/player';
 import { WEATHER_DATA } from '@bale/content/weather';
 import type { Command } from '@bale/sim';
@@ -10,7 +11,16 @@ import { createGame, type PlayerPose, parseStartClock, parseStartWeather } from 
 
 const cal = CALENDAR_DATA;
 const freshGame = () =>
-  createGame(cal, BALE_AREA, PLAYER_DATA, CROP_DATA, ITEM_DATA, TOOL_DATA, WEATHER_DATA);
+  createGame(
+    cal,
+    BALE_AREA,
+    PLAYER_DATA,
+    CROP_DATA,
+    ITEM_DATA,
+    TOOL_DATA,
+    WEATHER_DATA,
+    MARKET_DATA,
+  );
 
 test('one game minute per ticksPerMinute steps', () => {
   const game = freshGame();
@@ -39,6 +49,7 @@ test('submitted commands reach the next tick only, sanitized and in order', () =
     ITEM_DATA,
     TOOL_DATA,
     WEATHER_DATA,
+    MARKET_DATA,
     undefined,
     [(_state, ctx) => seen.push(ctx.commands)],
   );
@@ -204,6 +215,32 @@ test('setoran removes selected produce and pays its base price the next morning'
   expect(game.state.shipping.items).toEqual({});
   expect(game.state.player.money).toBe(2_100);
   expect(game.drainEvents()).toContainEqual({ type: 'shipmentPaid', count: 3, money: 2_100 });
+});
+
+test('market commands buy seeds and sell produce through sim-authoritative state', () => {
+  const game = freshGame();
+  game.state.player.money = 1_000;
+  game.submit({
+    type: 'buyItem',
+    marketId: MARKET_DATA.id,
+    itemId: 'cabai_seed',
+    quantity: 1,
+  });
+  game.step();
+  expect(game.state.player.money).toBe(200);
+  expect(game.state.player.inventory[2]).toMatchObject({ id: 'cabai_seed', quantity: 7 });
+
+  game.state.player.inventory[8] = { kind: 'item', id: 'cabai', quantity: 2 };
+  game.submit({
+    type: 'sellItem',
+    marketId: MARKET_DATA.id,
+    itemId: 'cabai',
+    quantity: 1,
+  });
+  game.step();
+  expect(game.state.player.inventory[8]).toMatchObject({ id: 'cabai', quantity: 1 });
+  expect(game.state.player.money).toBeGreaterThan(200);
+  expect(game.drainEvents().some((event) => event.type === 'marketSold')).toBe(true);
 });
 
 test('?clock= reads a time inside the game day, after midnight included', () => {

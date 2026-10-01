@@ -272,6 +272,147 @@ body {
   transform: translateY(2px);
 }
 
+/* M2-08: temporary market entry until M2-13 places Bu Ratna's stall in the pasar area. */
+.market-launch {
+  position: absolute;
+  top: max(11.5rem, calc(env(safe-area-inset-top) + 11.5rem));
+  right: max(var(--space-4), env(safe-area-inset-right));
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--kayu-500);
+  border-radius: 8px;
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 2px 0 rgb(27 20 16 / 0.35);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.market {
+  position: absolute;
+  z-index: 9;
+  inset: 0;
+  display: grid;
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-4), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  place-items: center;
+  background: rgb(22 29 56 / 0.82);
+  pointer-events: auto;
+}
+
+.market__panel {
+  width: min(46rem, 100%);
+  max-height: 100%;
+  padding: var(--space-4);
+  overflow: auto;
+  border: 2px solid var(--kayu-500);
+  border-radius: 12px;
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  box-shadow: 0 2px 0 rgb(27 20 16 / 0.35);
+}
+
+.market__header,
+.market__item,
+.market__money {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.market__header h2,
+.market__header p,
+.market__section h3,
+.market__money {
+  margin: 0;
+}
+
+.market__header p,
+.market__item small {
+  color: var(--ink-500);
+}
+
+.market__close,
+.market__item button {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--sawah-500);
+  border-radius: 8px;
+  background: var(--sawah-500);
+  color: var(--kapur-50);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.market__status {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  background: rgb(94 158 58 / 0.18);
+  color: var(--sawah-700);
+  font-weight: 700;
+}
+
+.market__status--closed {
+  background: rgb(107 91 78 / 0.15);
+  color: var(--ink-500);
+}
+
+.market__money {
+  margin-top: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.market__section {
+  margin-top: var(--space-4);
+}
+
+.market__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.market__item {
+  min-height: 56px;
+  padding: var(--space-2);
+  border-top: 1px solid rgb(107 91 78 / 0.25);
+}
+
+.market__item span,
+.market__item small {
+  display: block;
+}
+
+.market__item button:disabled {
+  border-color: var(--ink-500);
+  background: var(--ink-500);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .market-launch {
+    top: max(10.5rem, calc(env(safe-area-inset-top) + 10.5rem));
+    max-width: 32vw;
+  }
+
+  .market__panel {
+    padding: var(--space-3);
+  }
+
+  .market__item button {
+    max-width: 50%;
+  }
+}
+
 /* M2-04 hotbar: 16 px placeholder icons at 3×, centred above the safe-area edge. */
 .hotbar {
   position: absolute;

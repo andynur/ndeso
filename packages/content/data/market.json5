@@ -1,0 +1,12 @@
+{
+  id: 'pasar_baledono',
+  nameKey: 'ui:market.name',
+  sellerNameKey: 'ui:market.seller',
+  // The market building remains open later; Bu Ratna's fresh-produce trade is morning-only.
+  open: '04:30',
+  close: '11:30',
+  favorablePasaran: ['legi', 'kliwon'],
+  // GDD §7: ordinary daily variance is ±15%; favorable days pay 110–140% of base.
+  regularSellPercent: [85, 115],
+  favorableSellPercent: [110, 140],
+}

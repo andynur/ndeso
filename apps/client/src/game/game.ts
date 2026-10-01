@@ -1,6 +1,7 @@
 import {
   type AreaDef,
   type CalendarData,
+  type MarketData,
   type PlayerData,
   parseClockTime,
   type WeatherData,
@@ -75,6 +76,7 @@ export function createGame(
   items: readonly ItemDef[],
   tools: readonly ToolDef[],
   weatherData: WeatherData,
+  market: MarketData,
   state: GameState = createGameState(cal, area, player, weatherData),
   after: readonly System<GameState>[] = [],
 ): Game {
@@ -87,7 +89,7 @@ export function createGame(
   const inventoryEvents = createInventoryEventSystem(items);
   const farming = createFarmingSystem(crops, cal);
   const stamina = createStaminaSystem(tools);
-  const economy = createEconomySystem(area, items);
+  const economy = createEconomySystem(area, items, cal, market);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
   let previousZ = state.player.z;

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   cropsSchema,
   itemsSchema,
+  marketFileSchema,
   monthsFileSchema,
   npcSchema,
   toolsSchema,
@@ -146,6 +147,24 @@ describe('content schemas', () => {
       expect(messages).toContain('total 100');
       expect(messages).toContain('in order');
     }
+  });
+
+  test('validates market hours and favorable price bounds', () => {
+    const market = {
+      id: 'pasar_baledono',
+      nameKey: 'ui:market.name',
+      sellerNameKey: 'ui:market.seller',
+      open: '04:30',
+      close: '11:30',
+      favorablePasaran: ['legi', 'kliwon'],
+      regularSellPercent: [85, 115],
+      favorableSellPercent: [110, 140],
+    };
+    expect(marketFileSchema.safeParse(market).success).toBe(true);
+    expect(marketFileSchema.safeParse({ ...market, close: '04:00' }).success).toBe(false);
+    expect(marketFileSchema.safeParse({ ...market, regularSellPercent: [115, 85] }).success).toBe(
+      false,
+    );
   });
 
   test('rejects an NPC schedule whose entries run backwards', () => {

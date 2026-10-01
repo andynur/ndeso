@@ -72,6 +72,38 @@ describe('sanitizeCommand', () => {
     ).toBeNull();
   });
 
+  test('validates market transaction ids and bounded quantities', () => {
+    expect(
+      sanitizeCommand({
+        type: 'buyItem',
+        marketId: 'pasar_baledono',
+        itemId: 'cabai_seed',
+        quantity: 3,
+      }),
+    ).toEqual({
+      type: 'buyItem',
+      marketId: 'pasar_baledono',
+      itemId: 'cabai_seed',
+      quantity: 3,
+    });
+    expect(
+      sanitizeCommand({
+        type: 'sellItem',
+        marketId: '../pasar',
+        itemId: 'cabai',
+        quantity: 1,
+      }),
+    ).toBeNull();
+    expect(
+      sanitizeCommand({
+        type: 'sellItem',
+        marketId: 'pasar_baledono',
+        itemId: 'cabai',
+        quantity: 0,
+      }),
+    ).toBeNull();
+  });
+
   test('returns a copy, never the caller’s object', () => {
     const input: Command = { type: 'interact' };
     expect(sanitizeCommand(input)).not.toBe(input);

@@ -243,7 +243,8 @@ Daily care: feed (*dedak*), pet (affection +), let out on clear days. Neglect lo
 - **Setoran (shipping box):** pays 100% of base price overnight.
 - **Pasar Baledono:** cheaper to buy from, buys your harvest, haggling works,
   best on its *pasaran* day (default *Legi* and *Kliwon*: 110–140% of base,
-  ±15% per-item daily variance, seeded). **Shuts by late morning.**
+  ±15% per-item daily variance, seeded). **Fresh-produce trading ends by late
+  morning; the market building remains open later.**
 - **Swalayan (fictionalised name):** fixed prices, higher, open 08:30–20:30,
   does not buy produce. Convenient and never punished for being used.
 - The pasar/swalayan choice is a **time-and-relationship** trade, not a moral

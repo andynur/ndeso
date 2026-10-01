@@ -10,6 +10,7 @@
     "./crops": "./src/crops-bundle.ts",
     "./inventory": "./src/inventory-bundle.ts",
     "./lighting": "./src/lighting-bundle.ts",
+    "./market": "./src/market-bundle.ts",
     "./areas": "./src/areas-bundle.ts",
     "./player": "./src/player-bundle.ts",
     "./weather": "./src/weather-bundle.ts",

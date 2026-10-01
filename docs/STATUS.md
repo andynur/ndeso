@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M2 — Vertical slice. M2-07 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
+- **Milestone:** M2 — Vertical slice. M2-08 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-08 (Pasar Baledono seed buying and produce selling, pasaran-day prices, late-morning close). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
+- **Next task:** M2-09 (NPC schedules, nav grid, and placeholder sprites for Mbah Hita, Pak Harjo, and Bu Ratna). Human: M1-10 device test ([`device-test.md`](device-test.md)). Read [round 00](culture-review/round-00-desk-2026-09-28.md) before writing any M2 content.
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
-- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. NPC data lands with its owning task. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 163.7 KB brotli of 350 KB.
+- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. NPC data lands with its owning task. Until M2-13 authors the `pasar` area, the market panel opens from a temporary HUD button; haggling/friendship modifiers remain deferred to the NPC/social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s is untuned (`player.json5`). Idle villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 165.7 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-10-01 · M2-08 · feat/M2-08-pasar-baledono
+- Done: added sim-authoritative seed buying and produce selling with atomic money/inventory updates; deterministic per-item daily prices use the save seed and pay 110–140% of base on Legi/Kliwon. Authored Bu Ratna's fresh-produce hours as 04:30–11:30 and added a responsive EN/ID market panel.
+- Tests: `bun run check` green (456 tests); build + `check:size` green (shell 165.7 KB brotli, first frame 174.9 KB). Browser visual QA could not run because no browser was connected to the session.
+- Notes/decisions: the real market building remains open later; only Bu Ratna's fresh-produce trade closes at 11:30. A temporary HUD launcher exposes the feature until M2-13 adds the `pasar` area; market state remains authoritative in the sim.
+- Next: M2-09.
+
 ### 2026-10-01 · M2-07 · feat/M2-07-setoran-payout
 - Done: authored and rendered the Balé setoran box; interacting while facing it deposits the selected produce stack into serializable sim state. `dayStarted` pays the shipment once at each item's base price, emits economy events and updates the sim-authoritative wallet. The top-right HUD now formats the live balance with `format.money`.
 - Tests: `bun run check` green (448 tests); build + `check:size` green (shell 163.7 KB brotli, first frame 172.5 KB). Browser visual QA could not run because no browser was connected to the session.

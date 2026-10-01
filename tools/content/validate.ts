@@ -3,6 +3,7 @@ import {
   clockFileSchema,
   cropsSchema,
   itemsSchema,
+  marketFileSchema,
   monthsFileSchema,
   npcSchema,
   prayerTimesFileSchema,
@@ -106,7 +107,9 @@ export function validateContentSet(
                   ? prayerTimesFileSchema
                   : file === 'weather.json5'
                     ? weatherFileSchema
-                    : undefined;
+                    : file === 'market.json5'
+                      ? marketFileSchema
+                      : undefined;
     if (schema !== undefined) {
       problems.push(...zodProblems(file, schema, raw));
       const result = schema.safeParse(raw);

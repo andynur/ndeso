@@ -3,6 +3,7 @@ import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { LIGHTING_DATA } from '@bale/content/lighting';
+import { MARKET_DATA } from '@bale/content/market';
 import { PLAYER_DATA } from '@bale/content/player';
 import { WEATHER_DATA } from '@bale/content/weather';
 import { parseAssetManifest, TICK_MS } from '@bale/shared';
@@ -27,6 +28,7 @@ import {
 import { loadAreaModels } from './render/world/area-models.ts';
 import { hotbarView, inventoryViewOf } from './ui/hotbar.tsx';
 import { clockView } from './ui/hud-clock.tsx';
+import { marketView, marketViewOf } from './ui/market.tsx';
 import { mountOverlay } from './ui/mount.ts';
 import { perfView } from './ui/perf-overlay.tsx';
 import { playerStatusView } from './ui/player-status.tsx';
@@ -134,6 +136,22 @@ async function boot(): Promise<void> {
     controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
     hotbar: { onSelect: input.pressSlot },
     playerStatus: { onSleep: input.pressSleep, onContinue: input.continueDay },
+    market: {
+      onBuy: (itemId) =>
+        game.submit({
+          type: 'buyItem',
+          marketId: MARKET_DATA.id,
+          itemId,
+          quantity: 1,
+        }),
+      onSell: (itemId) =>
+        game.submit({
+          type: 'sellItem',
+          marketId: MARKET_DATA.id,
+          itemId,
+          quantity: 1,
+        }),
+    },
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
@@ -150,6 +168,7 @@ async function boot(): Promise<void> {
     ITEM_DATA,
     TOOL_DATA,
     WEATHER_DATA,
+    MARKET_DATA,
     state,
   );
   const syncHotbar = () => {
@@ -168,8 +187,19 @@ async function boot(): Promise<void> {
       summary: game.state.player.dayEndSummary,
     };
   };
+  const syncMarket = () => {
+    marketView.value = marketViewOf(
+      game.state.player,
+      game.state.clock,
+      game.state.seed,
+      ITEM_DATA,
+      CALENDAR_DATA,
+      MARKET_DATA,
+    );
+  };
   syncHotbar();
   syncPlayerStatus();
+  syncMarket();
   scene.syncFarm(game.state.farm.tiles);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const commands = createCommandMapper();
@@ -238,6 +268,18 @@ async function boot(): Promise<void> {
           )
         ) {
           syncPlayerStatus();
+        }
+        if (
+          events.some(
+            (event) =>
+              event.type === 'inventoryChanged' ||
+              event.type === 'moneyChanged' ||
+              event.type === 'dayStarted',
+          ) ||
+          clock.minute !== lastMinute ||
+          clock.day !== lastDay
+        ) {
+          syncMarket();
         }
         // ui.sync (ARCHITECTURE §4.1): the clock view changes once per game minute at most.
         if (clock.minute !== lastMinute || clock.day !== lastDay) {

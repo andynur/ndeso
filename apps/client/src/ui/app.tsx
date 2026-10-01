@@ -2,6 +2,7 @@ import { SUPPORTED_LOCALES } from '@bale/shared';
 import { locale, setLocale, t } from '../i18n/index.ts';
 import { Hotbar, type HotbarProps } from './hotbar.tsx';
 import { HudClock } from './hud-clock.tsx';
+import { Market, type MarketProps } from './market.tsx';
 import { PerfOverlay } from './perf-overlay.tsx';
 import { PlayerStatus, type PlayerStatusProps } from './player-status.tsx';
 import { TouchControls, type TouchControlsProps } from './touch-controls.tsx';
@@ -11,6 +12,7 @@ export interface AppProps {
   readonly controls?: TouchControlsProps | undefined;
   readonly hotbar?: HotbarProps | undefined;
   readonly playerStatus?: PlayerStatusProps | undefined;
+  readonly market?: MarketProps | undefined;
 }
 
 /** M0-04 acceptance criterion: picking a locale re-renders every string below. */
@@ -42,7 +44,7 @@ function LocalePicker() {
  * comes from the locale bundles, and the locale can be switched live. The HUD from
  * DESIGN §4 replaces it in M2.
  */
-export function App({ controls, hotbar, playerStatus }: AppProps) {
+export function App({ controls, hotbar, playerStatus, market }: AppProps) {
   return (
     <>
       <div class="hud-top-left">
@@ -51,6 +53,7 @@ export function App({ controls, hotbar, playerStatus }: AppProps) {
       </div>
       <PerfOverlay />
       {playerStatus ? <PlayerStatus {...playerStatus} /> : null}
+      {market ? <Market {...market} /> : null}
       {hotbar ? <Hotbar {...hotbar} /> : null}
       {controls ? <TouchControls {...controls} /> : null}
     </>

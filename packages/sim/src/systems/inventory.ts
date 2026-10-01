@@ -94,7 +94,12 @@ export function createInventoryEventSystem(items: readonly ItemDef[]): System<In
   };
 }
 
-function addItem(slots: InventorySlot[], item: ItemDef, quantity: number, ctx: SimContext): number {
+export function addItem(
+  slots: InventorySlot[],
+  item: ItemDef,
+  quantity: number,
+  ctx: SimContext,
+): number {
   let remaining = quantity;
   for (let index = 0; index < slots.length && remaining > 0; index++) {
     const slot = slots[index];

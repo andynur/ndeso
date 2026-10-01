@@ -32,6 +32,20 @@ export type Command =
   | { readonly type: 'selectSlot'; readonly slot: number }
   /** Step the hotbar selection by one, wrapping. */
   | { readonly type: 'cycleSlot'; readonly delta: 1 | -1 }
+  /** Buy a stackable item from an authored market. */
+  | {
+      readonly type: 'buyItem';
+      readonly marketId: string;
+      readonly itemId: string;
+      readonly quantity: number;
+    }
+  /** Sell a stackable item to an authored market. */
+  | {
+      readonly type: 'sellItem';
+      readonly marketId: string;
+      readonly itemId: string;
+      readonly quantity: number;
+    }
   /** Use a soil tool on one farm tile. Inventory chooses the tool in M2-04. */
   | { readonly type: 'useTool'; readonly tool: 'hoe' | 'watering_can'; readonly target: TileTarget }
   /** Put one seed into a prepared tile. Inventory consumption arrives in M2-04. */
@@ -66,6 +80,20 @@ export function sanitizeCommand(command: Command): Command | null {
     case 'cycleSlot':
       return command.delta === 1 || command.delta === -1
         ? { type: 'cycleSlot', delta: command.delta }
+        : null;
+    case 'buyItem':
+    case 'sellItem':
+      return CONTENT_ID.test(command.marketId) &&
+        CONTENT_ID.test(command.itemId) &&
+        Number.isInteger(command.quantity) &&
+        command.quantity > 0 &&
+        command.quantity <= 99
+        ? {
+            type: command.type,
+            marketId: command.marketId,
+            itemId: command.itemId,
+            quantity: command.quantity,
+          }
         : null;
     case 'useTool': {
       const target = sanitizeTarget(command.target);
