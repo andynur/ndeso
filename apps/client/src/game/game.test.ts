@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { ANIMAL_DATA } from '@bale/content/animals';
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
@@ -28,6 +29,7 @@ const freshGame = () =>
     WEATHER_DATA,
     MARKET_DATA,
     NPC_DATA,
+    ANIMAL_DATA,
   );
 
 test('every authored Balé schedule leg has a walkable nav route', () => {
@@ -78,6 +80,7 @@ test('submitted commands reach the next tick only, sanitized and in order', () =
     WEATHER_DATA,
     MARKET_DATA,
     NPC_DATA,
+    ANIMAL_DATA,
     undefined,
     [(_state, ctx) => seen.push(ctx.commands)],
   );
@@ -261,6 +264,22 @@ test('setoran removes selected produce and pays its base price the next morning'
   expect(game.state.shipping.items).toEqual({});
   expect(game.state.player.money).toBe(2_100);
   expect(game.drainEvents()).toContainEqual({ type: 'shipmentPaid', count: 3, money: 2_100 });
+});
+
+test('coop interaction feeds the sim-owned chicken from the selected dedak stack', () => {
+  const game = freshGame();
+  const [x, z] = BALE_AREA.coop;
+  game.state.player.x = x + 1.5;
+  game.state.player.z = z + 0.5;
+  game.state.player.facing = 'west';
+  game.submit({ type: 'selectSlot', slot: 5 });
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(Object.values(game.state.animals).find((animal) => animal.id === 'pitik')).toMatchObject({
+    fed: true,
+    affection: 1,
+  });
+  expect(game.state.player.inventory[5]).toMatchObject({ id: 'dedak', quantity: 5 });
 });
 
 test('market commands buy seeds and sell produce through sim-authoritative state', () => {

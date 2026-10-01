@@ -10,6 +10,7 @@ const valid = () => ({
   field: { x: 7, z: -6, w: 8, d: 12 },
   joglo: { x: -4, z: -10, w: 8, d: 8 },
   setoran: [2, -3],
+  coop: [-6, 2],
   kalen: {
     points: [
       [5.5, -12],
@@ -49,6 +50,18 @@ describe('validateArea', () => {
     ]);
     expect(errorsOf({ ...valid(), setoran: [5, -3] })).toEqual([
       'a.json5: setoran tile must lie on the joglo',
+    ]);
+  });
+
+  test('keeps the coop on one free integer tile inside the area', () => {
+    expect(errorsOf({ ...valid(), coop: [-6.5, 2] })).toEqual([
+      'a.json5: coop must be an integer [x, z] tile',
+    ]);
+    expect(errorsOf({ ...valid(), coop: [7, -6] })).toEqual([
+      'a.json5: coop tile overlaps the field',
+    ]);
+    expect(errorsOf({ ...valid(), coop: [0, 2] })).toEqual([
+      'a.json5: coop tile overlaps the spawn',
     ]);
   });
 

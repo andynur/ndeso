@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  animalsFileSchema,
   cropsSchema,
   itemsSchema,
   marketFileSchema,
@@ -15,6 +16,45 @@ const localeFields = {
 };
 
 describe('content schemas', () => {
+  test('links animal residents to bounded species definitions', () => {
+    const file = {
+      species: [
+        {
+          id: 'ayam_kampung',
+          nameKey: 'items:animal.ayam_kampung.name',
+          origin: 'Central Java, Indonesia',
+          feedItemId: 'dedak',
+          productItemId: 'telur',
+          goodProductItemId: 'telur_bagus',
+          maxAffection: 5,
+          goodProductChancePerAffection: 0.1,
+        },
+      ],
+      residents: [
+        {
+          id: 'pitik',
+          nameKey: 'items:animal.pitik.name',
+          speciesId: 'ayam_kampung',
+          area: 'bale',
+          initialAffection: 1,
+        },
+      ],
+    };
+    expect(animalsFileSchema.safeParse(file).success).toBe(true);
+    expect(
+      animalsFileSchema.safeParse({
+        ...file,
+        residents: [{ ...file.residents[0], initialAffection: 6 }],
+      }).success,
+    ).toBe(false);
+    expect(
+      animalsFileSchema.safeParse({
+        ...file,
+        species: [{ ...file.species[0], goodProductChancePerAffection: 0.3 }],
+      }).success,
+    ).toBe(false);
+  });
+
   test('accepts linked crop, item, and tool definitions', () => {
     expect(
       itemsSchema.safeParse([

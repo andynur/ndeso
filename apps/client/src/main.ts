@@ -1,3 +1,4 @@
+import { ANIMAL_DATA } from '@bale/content/animals';
 import { BALE_AREA } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
@@ -30,12 +31,14 @@ import { localSettings } from './platform/settings.ts';
 import { cropViewNeedsSync } from './render/crops/crop-view.ts';
 import { guessPreset } from './render/quality/presets.ts';
 import {
+  type AnimalView,
   createScene,
   type RenderStats,
   type SceneHandle,
   type ScenePalette,
 } from './render/scene.ts';
 import { loadAreaModels } from './render/world/area-models.ts';
+import { animalStatusView, animalStatusViewOf } from './ui/animal-status.tsx';
 import { hotbarView, inventoryViewOf } from './ui/hotbar.tsx';
 import { clockView } from './ui/hud-clock.tsx';
 import { marketView, marketViewOf } from './ui/market.tsx';
@@ -106,6 +109,12 @@ const PALETTE: ScenePalette = {
   wateredSoil: {
     earth: colorHex('kayu500'),
     water: colorHex('hujan400'),
+  },
+  animal: {
+    outline: colorHex('ink900'),
+    body: colorHex('kapur50'),
+    comb: colorHex('bahaya500'),
+    beak: colorHex('kunyit400'),
   },
 };
 
@@ -203,7 +212,14 @@ async function boot(): Promise<void> {
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state = createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA, NPC_DATA);
+  const state = createGameState(
+    CALENDAR_DATA,
+    BALE_AREA,
+    PLAYER_DATA,
+    WEATHER_DATA,
+    NPC_DATA,
+    ANIMAL_DATA,
+  );
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
   const startWeather = parseStartWeather(params.get('weather'));
@@ -218,6 +234,7 @@ async function boot(): Promise<void> {
     WEATHER_DATA,
     MARKET_DATA,
     NPC_DATA,
+    ANIMAL_DATA,
     state,
   );
   const syncHotbar = () => {
@@ -236,6 +253,13 @@ async function boot(): Promise<void> {
       summary: game.state.player.dayEndSummary,
     };
   };
+  const chickenSpecies = ANIMAL_DATA.species[0];
+  const chickenResident = ANIMAL_DATA.residents[0];
+  const syncAnimalStatus = () => {
+    const animal = chickenResident ? game.state.animals[chickenResident.id] : undefined;
+    if (!animal || !chickenSpecies || !chickenResident) return;
+    animalStatusView.value = animalStatusViewOf(animal, chickenResident, chickenSpecies);
+  };
   const syncMarket = () => {
     marketView.value = marketViewOf(
       game.state.player,
@@ -248,10 +272,12 @@ async function boot(): Promise<void> {
   };
   syncHotbar();
   syncPlayerStatus();
+  syncAnimalStatus();
   syncMarket();
   scene.syncFarm(game.state.farm.tiles);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const npcPoses: NpcPose[] = [];
+  const animalViews: AnimalView[] = Object.values(game.state.animals);
   const commands = createCommandMapper();
   const now = BROWSER_FRAMES.now;
   const meter = debug ? new PerfMeter() : undefined;
@@ -314,6 +340,7 @@ async function boot(): Promise<void> {
           game.state.weather.today,
           game.playerPose(alpha, playerPose),
           game.npcPoses(alpha, npcPoses),
+          animalViews,
         );
         const events = game.drainEvents();
         // Crop batches are rebuilt only when the farm changes. `dayStarted` matters even
@@ -334,6 +361,19 @@ async function boot(): Promise<void> {
           )
         ) {
           syncPlayerStatus();
+        }
+        if (
+          events.some((event) =>
+            [
+              'animalFed',
+              'animalPetted',
+              'animalNeglected',
+              'animalProductProduced',
+              'animalProductCollected',
+            ].includes(event.type),
+          )
+        ) {
+          syncAnimalStatus();
         }
         if (
           events.some(

@@ -1,5 +1,6 @@
 import { SUPPORTED_LOCALES } from '@bale/shared';
 import { locale, setLocale, t } from '../i18n/index.ts';
+import { AnimalStatus } from './animal-status.tsx';
 import { DialogBox, type DialogBoxProps } from './dialog-box.tsx';
 import { Hotbar, type HotbarProps } from './hotbar.tsx';
 import { HudClock } from './hud-clock.tsx';
@@ -55,6 +56,7 @@ export function App({ controls, dialog, hotbar, playerStatus, market }: AppProps
       </div>
       <PerfOverlay />
       {playerStatus ? <PlayerStatus {...playerStatus} /> : null}
+      <AnimalStatus />
       {market ? <Market {...market} /> : null}
       {dialog ? <DialogBox {...dialog} /> : null}
       {hotbar ? <Hotbar {...hotbar} /> : null}

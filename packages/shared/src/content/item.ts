@@ -15,7 +15,7 @@ const itemBase = z.strictObject({
 export const itemSchema = z.discriminatedUnion('kind', [
   itemBase.extend({ kind: z.literal('seed'), cropId: contentIdSchema }),
   itemBase.extend({ kind: z.literal('produce'), cropId: contentIdSchema }),
-  itemBase.extend({ kind: z.enum(['food', 'material', 'quest']) }),
+  itemBase.extend({ kind: z.enum(['food', 'material', 'quest', 'feed', 'animal_product']) }),
 ]);
 
 export const itemsSchema = z.array(itemSchema).superRefine(uniqueIds);

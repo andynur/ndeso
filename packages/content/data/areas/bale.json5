@@ -19,6 +19,8 @@
   joglo: { x: -4, z: -8, w: 8, d: 8 },
   // Setoran box on the front edge of the platform; interact from the south.
   setoran: [2, -1],
+  // A small authored kandang ayam west of the arrival path; interact from beside it.
+  coop: [-6, 2],
   // The dead water channel, running north–south along the field's west side. It is too
   // deep to step across; one plank (wot) spans it on the path from the spawn to the field.
   kalen: { points: [[5.5, -12], [5.5, 12]], width: 1, crossings: [[5.5, 3]] },

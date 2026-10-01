@@ -1,0 +1,54 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`a scripted 14-day chicken care cycle 1`] = `
+{
+  "animal": {
+    "affection": 5,
+    "area": "bale",
+    "fed": false,
+    "id": "pitik",
+    "petted": false,
+    "products": {},
+    "speciesId": "ayam_kampung",
+  },
+  "inventory": [
+    {
+      "id": "dedak",
+      "kind": "item",
+      "quantity": 6,
+    },
+    {
+      "id": "telur",
+      "kind": "item",
+      "quantity": 6,
+    },
+    {
+      "id": "telur_bagus",
+      "kind": "item",
+      "quantity": 8,
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "produced": [
+    "telur",
+    "telur",
+    "telur",
+    "telur_bagus",
+    "telur_bagus",
+    "telur_bagus",
+    "telur_bagus",
+    "telur_bagus",
+    "telur",
+    "telur_bagus",
+    "telur",
+    "telur_bagus",
+    "telur_bagus",
+    "telur",
+  ],
+}
+`;

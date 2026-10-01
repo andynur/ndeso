@@ -1,3 +1,4 @@
+export * from './animal.ts';
 export * from './calendar-schema.ts';
 export * from './common.ts';
 export * from './crop.ts';

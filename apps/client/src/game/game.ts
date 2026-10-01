@@ -7,11 +7,12 @@ import {
   type WeatherData,
   type WeatherId,
 } from '@bale/shared';
-import type { CropDef, ItemDef, NpcDef, ToolDef } from '@bale/shared/content';
+import type { AnimalData, CropDef, ItemDef, NpcDef, ToolDef } from '@bale/shared/content';
 import {
   buildCollisionGrid,
   buildNavGrid,
   type Command,
+  createAnimalsSystem,
   createContext,
   createDayTransitionSystem,
   createEconomySystem,
@@ -93,7 +94,8 @@ export function createGame(
   weatherData: WeatherData,
   market: MarketData,
   npcs: readonly NpcDef[],
-  state: GameState = createGameState(cal, area, player, weatherData, npcs),
+  animals: AnimalData,
+  state: GameState = createGameState(cal, area, player, weatherData, npcs, animals),
   after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
@@ -105,6 +107,7 @@ export function createGame(
   const farmInteraction = createFarmInteractionSystem(crops, items, tools);
   const inventoryEvents = createInventoryEventSystem(items);
   const farming = createFarmingSystem(crops, cal);
+  const animal = createAnimalsSystem(area, animals, items);
   const stamina = createStaminaSystem(tools);
   const npc = createNpcSystem(npcs, cal, { [area.id]: buildNavGrid(collision) });
   const economy = createEconomySystem(area, items, cal, market);
@@ -167,6 +170,7 @@ export function createGame(
       }
       inventoryEvents(state, ctx);
       farming(state, ctx);
+      animal(state, ctx);
       npc(state, ctx);
       for (let index = 0; index < state.npcs.length; index++) {
         const actor = state.npcs[index];

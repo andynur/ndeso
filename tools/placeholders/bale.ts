@@ -132,6 +132,19 @@ export function buildGround(area: AreaDef): GlbMesh {
     const z = field.z + 0.3 + random() * (field.d - 0.6);
     mesh.pyramid([x, 0.02, z], 0.12 + random() * 0.12, 0.25 + random() * 0.35, WEEDS);
   }
+
+  // Kandang ayam: a one-tile, low open-sided placeholder around the authored coop tile.
+  const [coopX, coopZ] = area.coop;
+  mesh.box([coopX + 0.08, 0, coopZ + 0.08], [coopX + 0.92, 0.12, coopZ + 0.92], EARTH);
+  for (const [x, z] of [
+    [coopX + 0.12, coopZ + 0.12],
+    [coopX + 0.88, coopZ + 0.12],
+    [coopX + 0.12, coopZ + 0.88],
+    [coopX + 0.88, coopZ + 0.88],
+  ] as const) {
+    mesh.box([x - 0.04, 0.12, z - 0.04], [x + 0.04, 0.9, z + 0.04], WOOD);
+  }
+  mesh.box([coopX + 0.02, 0.88, coopZ + 0.02], [coopX + 0.98, 1.02, coopZ + 0.98], TILE);
   return mesh.build();
 }
 

@@ -228,6 +228,29 @@ body {
   margin-top: var(--space-2);
 }
 
+/* M2-11: compact projection of daily chicken care; the sim owns every value. */
+.animal-status {
+  position: absolute;
+  top: calc(max(var(--space-4), env(safe-area-inset-top)) + 11.75rem);
+  right: max(var(--space-4), env(safe-area-inset-right));
+  display: flex;
+  width: min(13rem, 32vw);
+  flex-direction: column;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--kayu-500);
+  border-radius: 12px;
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  box-shadow: 0 2px 0 rgb(27 20 16 / 0.35);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.animal-status strong {
+  color: var(--indigo-700);
+  font-size: 1rem;
+}
+
 .day-end {
   position: absolute;
   z-index: 10;

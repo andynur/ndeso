@@ -33,19 +33,16 @@ export function createEconomySystem(
   market: MarketData,
 ): System<EconomySystemState> {
   const itemById = new Map(items.map((item) => [item.id, item]));
-  const produceById = new Map(
+  const sellableById = new Map(
     items
-      .filter(
-        (item): item is Extract<ItemDef, { kind: 'produce' }> =>
-          item.kind === 'produce' && item.sellPrice !== null,
-      )
+      .filter((item): item is ItemDef & { sellPrice: number } => item.sellPrice !== null)
       .map((item) => [item.id, item]),
   );
 
   return (state, ctx) => {
     for (const event of ctx.events) {
       if (event.type !== 'dayStarted') continue;
-      payShipment(state, produceById, ctx);
+      payShipment(state, sellableById, ctx);
       break;
     }
 
@@ -59,7 +56,7 @@ export function createEconomySystem(
       ctx.commands.some((command) => command.type === 'interact') &&
       facesSetoran(state.player, area)
     ) {
-      depositSelectedProduce(state, produceById, ctx);
+      depositSelectedProduct(state, sellableById, ctx);
     }
   };
 }
@@ -168,14 +165,14 @@ function removeItem(
   }
 }
 
-function depositSelectedProduce(
+function depositSelectedProduct(
   state: EconomySystemState,
-  produceById: ReadonlyMap<string, Extract<ItemDef, { kind: 'produce' }>>,
+  sellableById: ReadonlyMap<string, ItemDef & { sellPrice: number }>,
   ctx: SimContext,
 ): void {
   const slotIndex = state.player.selectedSlot;
   const slot = state.player.inventory[slotIndex];
-  if (slot?.kind !== 'item' || !produceById.has(slot.id) || slot.quantity <= 0) return;
+  if (slot?.kind !== 'item' || !sellableById.has(slot.id) || slot.quantity <= 0) return;
   const quantity = slot.quantity;
   state.shipping.items[slot.id] = (state.shipping.items[slot.id] ?? 0) + quantity;
   state.player.inventory[slotIndex] = null;
@@ -195,13 +192,13 @@ function unitHash(seed: number, day: number, itemId: string): number {
 
 function payShipment(
   state: EconomySystemState,
-  produceById: ReadonlyMap<string, Extract<ItemDef, { kind: 'produce' }>>,
+  sellableById: ReadonlyMap<string, ItemDef & { sellPrice: number }>,
   ctx: SimContext,
 ): void {
   let count = 0;
   let money = 0;
   for (const [itemId, quantity] of Object.entries(state.shipping.items)) {
-    const item = produceById.get(itemId);
+    const item = sellableById.get(itemId);
     if (!item || item.sellPrice === null || quantity <= 0) continue;
     count += quantity;
     money += quantity * item.sellPrice;

@@ -64,6 +64,8 @@ export type GlossaryKey =
   | 'tengkulak.term';
 
 export type ItemsKey =
+  | 'animal.ayam_kampung.name'
+  | 'animal.pitik.name'
   | 'crop.cabai.desc'
   | 'crop.cabai.name'
   | 'crop.padi.desc'
@@ -74,6 +76,8 @@ export type ItemsKey =
   | 'item.cabai.name'
   | 'item.cabai_seed.desc'
   | 'item.cabai_seed.name'
+  | 'item.dedak.desc'
+  | 'item.dedak.name'
   | 'item.gabah.desc'
   | 'item.gabah.name'
   | 'item.padi_seed.desc'
@@ -82,6 +86,10 @@ export type ItemsKey =
   | 'item.singkong.name'
   | 'item.singkong_seed.desc'
   | 'item.singkong_seed.name'
+  | 'item.telur.desc'
+  | 'item.telur.name'
+  | 'item.telur_bagus.desc'
+  | 'item.telur_bagus.name'
   | 'tool.hoe.desc'
   | 'tool.hoe.name'
   | 'tool.watering_can.desc'
@@ -99,6 +107,10 @@ export type NpcsKey =
   | 'pak_harjo.title';
 
 export type UiKey =
+  | 'animal.affection'
+  | 'animal.fed'
+  | 'animal.hungry'
+  | 'animal.products'
   | 'app.tagline'
   | 'app.title'
   | 'boot.hello'

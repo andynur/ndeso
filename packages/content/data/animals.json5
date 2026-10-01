@@ -1,0 +1,24 @@
+{
+  species: [
+    {
+      id: 'ayam_kampung',
+      nameKey: 'items:animal.ayam_kampung.name',
+      origin: 'Central Java, Indonesia',
+      feedItemId: 'dedak',
+      productItemId: 'telur',
+      goodProductItemId: 'telur_bagus',
+      maxAffection: 5,
+      // Each affection point adds 10%; at full affection, half the eggs are good eggs.
+      goodProductChancePerAffection: 0.1,
+    },
+  ],
+  residents: [
+    {
+      id: 'pitik',
+      nameKey: 'items:animal.pitik.name',
+      speciesId: 'ayam_kampung',
+      area: 'bale',
+      initialAffection: 1,
+    },
+  ],
+}

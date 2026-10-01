@@ -22,6 +22,10 @@ import type { CropPalette } from './crops/placeholder-crop-atlas.ts';
 import { createDayNight, createLightingSample } from './lighting/day-night.ts';
 import { clampPixelRatio, QUALITY } from './quality/presets.ts';
 import {
+  type AnimalPalette,
+  buildPlaceholderAnimalAtlas,
+} from './sprites/placeholder-animal-atlas.ts';
+import {
   buildPlaceholderCharAtlas,
   buildPlaceholderCharAtlasVariants,
   type CharPalette,
@@ -65,6 +69,13 @@ export interface NpcView extends PlayerView {
   readonly active: boolean;
 }
 
+export interface AnimalView {
+  readonly id: string;
+  readonly area: string;
+  readonly affection: number;
+  readonly fed: boolean;
+}
+
 /**
  * World colours the scene paints with, passed in rather than imported: ARCHITECTURE §2
  * forbids `render/` from importing `ui/`, so `main.ts` reads `ui/tokens.ts` and hands
@@ -77,6 +88,7 @@ export interface ScenePalette {
   readonly npcCharacters: readonly { readonly id: string; readonly palette: CharPalette }[];
   readonly crop: CropPalette;
   readonly wateredSoil: WateredSoilPalette;
+  readonly animal: AnimalPalette;
 }
 
 export interface SceneOptions {
@@ -145,6 +157,7 @@ export interface SceneHandle {
     weather: WeatherId,
     player: PlayerView,
     npcs: readonly NpcView[],
+    animals: readonly AnimalView[],
   ): void;
   readonly camera: CameraControls;
   dispose(): void;
@@ -217,6 +230,20 @@ export function createScene(options: SceneOptions): SceneHandle {
     capacity: palette.npcCharacters.length,
   });
   scene.add(npcSprites.mesh);
+  const animalAtlasData = buildPlaceholderAnimalAtlas(palette.animal);
+  const animalAtlasTexture = createAtlasTexture(animalAtlasData.pixels, animalAtlasData.atlas);
+  const animalSprites = new SpriteBatch({
+    atlas: animalAtlasData.atlas,
+    texture: animalAtlasTexture,
+    capacity: 1,
+  });
+  scene.add(animalSprites.mesh);
+  const animalSprite = animalSprites.add({
+    x: area.coop[0] + 0.5,
+    y: 0.35,
+    z: area.coop[1] + 0.5,
+    tag: 'hungry',
+  });
   const cropView = new CropView({
     areaId: area.id,
     crops,
@@ -330,6 +357,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     sky.setRGB(light.haze[0], light.haze[1], light.haze[2]);
     sprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
     npcSprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
+    animalSprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
     cropView.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
     for (const lamp of lamps) lamp.intensity = light.lamps * LAMP_INTENSITY;
   }
@@ -341,6 +369,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     nextWeather: WeatherId,
     player: PlayerView,
     npcs: readonly NpcView[],
+    animals: readonly AnimalView[],
   ): void {
     if (nextWeather !== weather) {
       weather = nextWeather;
@@ -373,6 +402,12 @@ export function createScene(options: SceneOptions): SceneHandle {
     }
     sprites.update(simSeconds);
     npcSprites.update(simSeconds);
+    const chicken = animals[0];
+    animalSprite.visible = chicken?.area === area.id;
+    if (chicken) {
+      animalSprite.tag = chicken.fed ? (chicken.affection >= 4 ? 'happy' : 'idle') : 'hungry';
+    }
+    animalSprites.update(simSeconds);
 
     rig.pose(cameraPose);
     rain.update(simSeconds, cameraPose.lookX, cameraPose.lookZ);
@@ -412,12 +447,19 @@ export function createScene(options: SceneOptions): SceneHandle {
     atlasTexture.dispose();
     npcSprites.dispose();
     npcAtlasTexture.dispose();
+    animalSprites.dispose();
+    animalAtlasTexture.dispose();
     cropView.group.removeFromParent();
     cropView.dispose();
     rain.points.removeFromParent();
     rain.dispose();
     scene.traverse((object) => {
-      if (!(object instanceof Mesh) || object === sprites.mesh || object === npcSprites.mesh)
+      if (
+        !(object instanceof Mesh) ||
+        object === sprites.mesh ||
+        object === npcSprites.mesh ||
+        object === animalSprites.mesh
+      )
         return;
       object.geometry.dispose();
       const { material } = object;

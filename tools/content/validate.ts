@@ -1,5 +1,6 @@
 import { validateArea, validateCalendar, validateLighting, validatePlayer } from '@bale/shared';
 import {
+  animalsFileSchema,
   clockFileSchema,
   cropsSchema,
   itemsSchema,
@@ -69,6 +70,7 @@ export function validateContentSet(
   const npcIds = new Set<string>();
   const cropIds = new Set<string>();
   const toolIds = new Set<string>();
+  const itemIds = new Set<string>();
 
   for (const [file, raw] of files) {
     if (file.startsWith('areas/') && file.endsWith('.json5')) {
@@ -93,29 +95,32 @@ export function validateContentSet(
       continue;
     }
     const schema =
-      file === 'crops.json5'
-        ? cropsSchema
-        : file === 'items.json5'
-          ? itemsSchema
-          : file === 'tools.json5'
-            ? toolsSchema
-            : file === 'calendar/months.json5'
-              ? monthsFileSchema
-              : file === 'calendar/clock.json5'
-                ? clockFileSchema
-                : file === 'calendar/prayer-times.json5'
-                  ? prayerTimesFileSchema
-                  : file === 'weather.json5'
-                    ? weatherFileSchema
-                    : file === 'market.json5'
-                      ? marketFileSchema
-                      : undefined;
+      file === 'animals.json5'
+        ? animalsFileSchema
+        : file === 'crops.json5'
+          ? cropsSchema
+          : file === 'items.json5'
+            ? itemsSchema
+            : file === 'tools.json5'
+              ? toolsSchema
+              : file === 'calendar/months.json5'
+                ? monthsFileSchema
+                : file === 'calendar/clock.json5'
+                  ? clockFileSchema
+                  : file === 'calendar/prayer-times.json5'
+                    ? prayerTimesFileSchema
+                    : file === 'weather.json5'
+                      ? weatherFileSchema
+                      : file === 'market.json5'
+                        ? marketFileSchema
+                        : undefined;
     if (schema !== undefined) {
       problems.push(...zodProblems(file, schema, raw));
       const result = schema.safeParse(raw);
       if (result.success && Array.isArray(result.data)) {
         const ids = result.data as { readonly id: string }[];
         if (file === 'crops.json5') for (const entry of ids) cropIds.add(entry.id);
+        if (file === 'items.json5') for (const entry of ids) itemIds.add(entry.id);
         if (file === 'tools.json5') for (const entry of ids) toolIds.add(entry.id);
       }
     } else if (file === 'lighting.json5') {
@@ -212,6 +217,62 @@ export function validateContentSet(
         problems.push({
           file: 'player.json5',
           message: `inventory.${index}.quantity exceeds ${entry.id} stack size ${item.stackSize}`,
+        });
+      }
+    }
+  }
+
+  const animals = animalsFileSchema.safeParse(files.get('animals.json5'));
+  if (!files.has('animals.json5')) {
+    problems.push({ file: 'animals.json5', message: 'required animal file is missing' });
+  } else if (animals.success) {
+    const itemById = new Map(items.success ? items.data.map((item) => [item.id, item]) : []);
+    for (const species of animals.data.species) {
+      for (const field of ['feedItemId', 'productItemId', 'goodProductItemId'] as const) {
+        if (!itemIds.has(species[field])) {
+          problems.push({
+            file: 'animals.json5',
+            message: `${species.id}.${field} references missing item '${species[field]}'`,
+          });
+        }
+      }
+      const feed = itemById.get(species.feedItemId);
+      const product = itemById.get(species.productItemId);
+      const goodProduct = itemById.get(species.goodProductItemId);
+      if (feed && feed.kind !== 'feed') {
+        problems.push({
+          file: 'animals.json5',
+          message: `${species.id}.feedItemId must reference a feed item`,
+        });
+      }
+      if (product && product.kind !== 'animal_product') {
+        problems.push({
+          file: 'animals.json5',
+          message: `${species.id}.productItemId must reference an animal_product item`,
+        });
+      }
+      if (goodProduct && goodProduct.kind !== 'animal_product') {
+        problems.push({
+          file: 'animals.json5',
+          message: `${species.id}.goodProductItemId must reference an animal_product item`,
+        });
+      }
+      if (
+        product?.sellPrice !== null &&
+        product?.sellPrice !== undefined &&
+        goodProduct?.sellPrice !== Math.round(product.sellPrice * 1.5)
+      ) {
+        problems.push({
+          file: 'animals.json5',
+          message: `${species.id}.goodProductItemId must be worth 150% of its ordinary product`,
+        });
+      }
+    }
+    for (const resident of animals.data.residents) {
+      if (!areaIds.has(resident.area)) {
+        problems.push({
+          file: 'animals.json5',
+          message: `${resident.id}.area references missing area '${resident.area}'`,
         });
       }
     }

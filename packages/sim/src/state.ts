@@ -1,5 +1,6 @@
 import type { AreaDef, CalendarData, PlayerData, WeatherData } from '@bale/shared';
-import type { NpcDef } from '@bale/shared/content';
+import type { AnimalData, NpcDef } from '@bale/shared/content';
+import { type AnimalsState, createAnimalsState } from './systems/animals.ts';
 import { createEconomyState, type EconomyState } from './systems/economy.ts';
 import { createFarmingState, type FarmingState, type FarmPlot } from './systems/farming.ts';
 import { createInventoryPlayerState, type InventoryState } from './systems/inventory.ts';
@@ -20,6 +21,7 @@ export type GameState = TimeState &
   InventoryState &
   EconomyState &
   NpcState &
+  AnimalsState &
   WeatherState;
 
 export function createGameState(
@@ -27,7 +29,8 @@ export function createGameState(
   area: AreaDef,
   playerData: PlayerData,
   weather: WeatherData,
-  npcs: readonly NpcDef[] = [],
+  npcs: readonly NpcDef[],
+  animals: AnimalData,
   seed = DEFAULT_GAME_SEED,
 ): GameState {
   const plots: FarmPlot[] = [];
@@ -49,6 +52,7 @@ export function createGameState(
     },
     ...createEconomyState(),
     ...createNpcState(npcs),
+    ...createAnimalsState(animals),
     ...createFarmingState(plots),
   };
 }

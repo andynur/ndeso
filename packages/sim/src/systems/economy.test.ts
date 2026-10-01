@@ -47,6 +47,16 @@ const items: ItemDef[] = [
     sellPrice: null,
     stackSize: 99,
   },
+  {
+    id: 'telur',
+    nameKey: 'items:item.telur.name',
+    descKey: 'items:item.telur.desc',
+    origin: 'Central Java, Indonesia',
+    kind: 'animal_product',
+    buyPrice: null,
+    sellPrice: 1200,
+    stackSize: 99,
+  },
 ];
 
 const fresh = () => ({
@@ -100,6 +110,19 @@ test('pays base prices once on the next dayStarted event', () => {
 
   system(state, ctx);
   expect(state.player.money).toBe(2_100);
+});
+
+test('setoran accepts a sellable animal product', () => {
+  const system = createEconomySystem(area, items, cal, market);
+  const state = fresh();
+  state.player.inventory[0] = { kind: 'item', id: 'telur', quantity: 2 };
+  system(state, createContext(1, [{ type: 'interact' }]));
+  expect(state.shipping.items).toEqual({ telur: 2 });
+
+  const morning = createContext();
+  morning.emit({ type: 'dayStarted', day: 1 });
+  system(state, morning);
+  expect(state.player.money).toBe(2400);
 });
 
 test('buys seeds atomically and rejects closed, unaffordable, or full purchases', () => {

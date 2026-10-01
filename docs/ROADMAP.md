@@ -44,7 +44,7 @@
 - [x] **M2-08** **Pasar Baledono**: buy seeds and sell produce, prices better on the *pasaran* day, **closes late morning**. (Bu Ratna)
 - [x] **M2-09** NPC schedules + nav grid + **3 NPCs (Mbah Hita, Pak Harjo, Bu Ratna)** with placeholder sprites. Mbah Hita gets the writing budget of three.
 - [x] **M2-10** Ink dialog runtime + DialogBox UI + 3 scripts per NPC in EN and ID + `check-ink`.
-- [ ] **M2-11** Chicken: coop, feed, egg production, affection.
+- [x] **M2-11** Chicken: coop, feed, egg production, affection.
 - [ ] **M2-12** Save/load: 3 slots, Zod validation, backup, migrations scaffold, autosave on day end and on hide.
 - [ ] **M2-13** `pasar` area + area transitions (streaming load, fade), plus a `kampung` façade.
 - [ ] **M2-14** Audio platform: unlock, music stream (day/night), SFX for hoe, water, and coin; volume settings. Adzan ambience **off by default outside `id`** (CULTURE_GUIDE §3.1).

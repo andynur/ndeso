@@ -40,6 +40,8 @@ export interface AreaDef {
   readonly joglo: GroundRect;
   /** Shipping-box tile on the joglo platform (GDD §7). */
   readonly setoran: Vec2;
+  /** Chicken-coop tile (GDD §6); solid, with interaction from an adjacent tile. */
+  readonly coop: Vec2;
   /**
    * The kalen, a channel of `width` along axis-aligned segments between `points`. It blocks
    * walking except at `crossings`: points on the channel where a plank (*wot*) spans it,
@@ -67,6 +69,7 @@ type Field =
   | 'field'
   | 'joglo'
   | 'setoran'
+  | 'coop'
   | 'kalen'
   | 'lamps'
   | 'points'
@@ -109,7 +112,7 @@ export function validateArea(raw: unknown, file: string): AreaResult {
   const err = (message: string) => errors.push(`${file}: ${message}`);
   if (!isObj(raw)) return { ok: false, errors: [`${file}: is not an object`] };
 
-  const { id, origin, size, models, spawn, setoran, kalen, lamps } = raw;
+  const { id, origin, size, models, spawn, setoran, coop, kalen, lamps } = raw;
   if (typeof id !== 'string' || !SNAKE_ID.test(id)) err('id must be a snake_case id');
   if (origin !== AREA_ORIGIN) err(`origin must be '${AREA_ORIGIN}' (PLACES §1)`);
   if (!isTuple(size, 2) || size.some((n) => n <= 0)) err('size must be [w, d], both > 0');
@@ -165,6 +168,24 @@ export function validateArea(raw: unknown, file: string): AreaResult {
     }
   }
 
+  if (!isTuple(coop, 2) || !coop.every(Number.isInteger)) {
+    err('coop must be an integer [x, z] tile');
+  } else {
+    const [x, z] = coop as [number, number];
+    if (!inside(x, z) || !inside(x + 1, z + 1)) err('coop tile lies outside the area');
+    if (isTuple(spawn, 2)) {
+      const [spawnX, spawnZ] = spawn as [number, number];
+      if (spawnX >= x && spawnX < x + 1 && spawnZ >= z && spawnZ < z + 1) {
+        err('coop tile overlaps the spawn');
+      }
+    }
+    for (const [name, rect] of Object.entries(rects)) {
+      if (rect && x < rect.x + rect.w && x + 1 > rect.x && z < rect.z + rect.d && z + 1 > rect.z) {
+        err(`coop tile overlaps the ${name}`);
+      }
+    }
+  }
+
   let kalenDef: AreaDef['kalen'] | undefined;
   if (
     !isObj(kalen) ||
@@ -214,6 +235,7 @@ export function validateArea(raw: unknown, file: string): AreaResult {
       field: rects.field as GroundRect,
       joglo: rects.joglo as GroundRect,
       setoran: setoran as unknown as Vec2,
+      coop: coop as unknown as Vec2,
       kalen: kalenDef as AreaDef['kalen'],
       lamps: lamps as unknown as Vec3[],
     },
