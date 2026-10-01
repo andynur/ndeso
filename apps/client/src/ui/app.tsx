@@ -3,12 +3,14 @@ import { format, locale, setLocale, t } from '../i18n/index.ts';
 import { Hotbar, type HotbarProps } from './hotbar.tsx';
 import { HudClock } from './hud-clock.tsx';
 import { PerfOverlay } from './perf-overlay.tsx';
+import { PlayerStatus, type PlayerStatusProps } from './player-status.tsx';
 import { TouchControls, type TouchControlsProps } from './touch-controls.tsx';
 
 export interface AppProps {
   /** On-screen stick, context button, and camera buttons (GDD §12). */
   readonly controls?: TouchControlsProps | undefined;
   readonly hotbar?: HotbarProps | undefined;
+  readonly playerStatus?: PlayerStatusProps | undefined;
 }
 
 /** M0-04 acceptance criterion: picking a locale re-renders every string below. */
@@ -40,7 +42,7 @@ function LocalePicker() {
  * comes from the locale bundles, and the locale can be switched live. The HUD from
  * DESIGN §4 replaces it in M2.
  */
-export function App({ controls, hotbar }: AppProps) {
+export function App({ controls, hotbar, playerStatus }: AppProps) {
   return (
     <>
       <div class="hud-top-left">
@@ -48,6 +50,7 @@ export function App({ controls, hotbar }: AppProps) {
         <Panel />
       </div>
       <PerfOverlay />
+      {playerStatus ? <PlayerStatus {...playerStatus} /> : null}
       {hotbar ? <Hotbar {...hotbar} /> : null}
       {controls ? <TouchControls {...controls} /> : null}
     </>

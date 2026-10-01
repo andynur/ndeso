@@ -5,6 +5,7 @@ export * from './state.ts';
 export * from './systems/farming.ts';
 export * from './systems/inventory.ts';
 export * from './systems/movement.ts';
+export * from './systems/player.ts';
 export * from './systems/time.ts';
 export * from './systems/weather.ts';
 export * from './types.ts';

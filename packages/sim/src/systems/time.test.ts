@@ -43,16 +43,11 @@ describe('time system', () => {
     ]);
   });
 
-  test('the day ends at 01:00 and the next starts at 05:00', () => {
+  test('the clock stops at 01:00 until the player acknowledges the day end', () => {
     const { state, events } = run(dayTicks());
-    expect(state.clock).toEqual({ tick: 0, day: 1, minute: 300 });
-    const rollover = events.slice(events.findIndex((e) => e.type === 'dayStarted'));
-    expect(rollover).toEqual([
-      { type: 'dayStarted', day: 1 },
-      { type: 'pasaranChanged', pasaran: 'kliwon' },
-      { type: 'hourChanged', hour: 5 },
-      { type: 'prayerTimeChanged', band: 'subuh' },
-    ]);
+    expect(state.clock).toEqual({ tick: 0, day: 0, minute: 1500 });
+    expect(events.at(-1)).toEqual({ type: 'dayExpired', day: 0 });
+    expect(run(1, state)).toEqual({ state, events: [] });
   });
 
   test('passes midnight without ending the day', () => {

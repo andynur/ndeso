@@ -207,6 +207,9 @@ function hoe(state: FarmingState, key: TileKey, tile: FarmTile, ctx: SimContext)
 
 function water(state: FarmingState, key: TileKey, tile: FarmTile, ctx: SimContext): void {
   if (tile.phase === 'untilled') return;
+  if ((tile.plot === 'sawah' && tile.waterLevel === 3) || (tile.plot !== 'sawah' && tile.watered)) {
+    return;
+  }
   const next: FarmTile =
     tile.plot === 'sawah'
       ? { ...tile, waterLevel: Math.min(3, tile.waterLevel + 1) as 0 | 1 | 2 | 3 }

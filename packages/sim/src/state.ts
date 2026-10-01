@@ -2,6 +2,7 @@ import type { AreaDef, CalendarData, PlayerData, WeatherData } from '@bale/share
 import { createFarmingState, type FarmingState, type FarmPlot } from './systems/farming.ts';
 import { createInventoryPlayerState, type InventoryState } from './systems/inventory.ts';
 import { createPlayerState, type MovementState } from './systems/movement.ts';
+import { createPlayerProgress, type PlayerProgressState } from './systems/player.ts';
 import { createTimeState, type TimeState } from './systems/time.ts';
 import { createWeatherState, DEFAULT_GAME_SEED, type WeatherState } from './systems/weather.ts';
 
@@ -9,7 +10,12 @@ import { createWeatherState, DEFAULT_GAME_SEED, type WeatherState } from './syst
  * The sim state so far (ARCHITECTURE §3.3 sketch): each system's slice, joined. Grows task
  * by task; the saved schema arrives with `save.ts`.
  */
-export type GameState = TimeState & MovementState & FarmingState & InventoryState & WeatherState;
+export type GameState = TimeState &
+  MovementState &
+  PlayerProgressState &
+  FarmingState &
+  InventoryState &
+  WeatherState;
 
 export function createGameState(
   cal: CalendarData,
@@ -30,7 +36,11 @@ export function createGameState(
   return {
     ...time,
     ...createWeatherState(seed, time.clock.day, cal, weather),
-    player: { ...createPlayerState(area), ...createInventoryPlayerState(playerData) },
+    player: {
+      ...createPlayerState(area),
+      ...createInventoryPlayerState(playerData),
+      ...createPlayerProgress(),
+    },
     ...createFarmingState(plots),
   };
 }

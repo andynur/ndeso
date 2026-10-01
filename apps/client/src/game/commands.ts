@@ -62,6 +62,8 @@ export function createCommandMapper(): CommandMapper {
         submit({ type: 'cycleSlot', delta: steps > 0 ? 1 : -1 });
       }
       if (frame.interact) submit({ type: 'interact' });
+      if (frame.sleep) submit({ type: 'sleep' });
+      if (frame.continueDay) submit({ type: 'continueDay' });
     },
   };
 }

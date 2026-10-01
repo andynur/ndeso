@@ -63,16 +63,17 @@ The table lives as data in `tools/deps/rules.ts`. A PostToolUse hook (`scripts/h
 - **Commands in, events out:** input becomes `Command`s (`{ type: 'useTool', tool: 'hoe', target: {x,z} }`). Systems emit `Event`s (`cropHarvested`, `dayStarted`, `moneyChanged`) that render, UI, and audio subscribe to.
 
 ### 3.2 System order (per tick)
-1. `time` → advances the tick and `day` counter; emits `hourChanged`, `prayerTimeChanged`, `dayStarted`, `monthChanged`, `musimChanged`, `pasaranChanged`, `hijriMonthChanged`. All of those are **projections of `day`** ([ADR-0007](adr/0007-three-calendars.md)), not stored fields — the system compares yesterday's projection with today's to decide what to emit
-2. `weather` → on `dayStarted`, roll the day's weather from seed + day index
-3. `commands` → validate and apply player commands (movement intent, tool use, interact)
-4. `farming` → on `dayStarted`: growth, watering reset, withering; rain auto-waters
-5. `irrigation` (P1) → water levels for sawah, gate states
-6. `animals` → hunger, affection, production
-7. `npc` → schedule resolution (target position per time), simple path following on nav grid
-8. `economy` → shipping payout at `dayStarted`, market prices on `pasaranChanged`
-9. `social` → friendship decay, event triggers
-10. `stamina` / `player`
+1. `time` → advances the tick and clock, stopping at 01:00 with `dayExpired`. Calendar values are **projections of `day`** ([ADR-0007](adr/0007-three-calendars.md)), not stored fields
+2. `player/day transition` → sleep, exhaustion and `dayExpired` open a sim-owned summary and freeze later systems; acknowledgement advances `day`, restores stamina and emits `dayStarted` plus calendar changes
+3. `weather` → on `dayStarted`, roll the day's weather from seed + day index
+4. `commands` → validate and apply player commands (movement intent, inventory selection, tool use, interact)
+5. `stamina` → charge accepted tool actions; zero stamina ends the day before daily systems run
+6. `farming` → on `dayStarted`: growth, watering reset, withering; rain auto-waters
+7. `irrigation` (P1) → water levels for sawah, gate states
+8. `animals` → hunger, affection, production
+9. `npc` → schedule resolution (target position per time), simple path following on nav grid
+10. `economy` → shipping payout at `dayStarted`, market prices on `pasaranChanged`
+11. `social` → friendship decay, event triggers
 
 ### 3.3 State shape (sketch)
 ```ts
@@ -81,7 +82,11 @@ interface GameState {
   seed: number; rng: RngState;
   clock: { tick: number; day: number; minute: number };   // day is absolute; masehi/jawa/hijri/musim/pasaran are derived (ADR-0009)
   weather: { today: Weather; tomorrow: Weather };
-  player: { area: AreaId; pos: Vec2; facing: Dir; stamina: number; money: number; inventory: Slot[] };
+  player: {
+    area: AreaId; pos: Vec2; facing: Dir;
+    stamina: number; maxStamina: number; money: number;
+    inventory: Slot[]; dayEndSummary: DayEndSummary | null;
+  };
   farm: { tiles: Record<TileKey, Tile> };           // TileKey = `${area}:${x},${z}`
   animals: Record<AnimalId, Animal>;
   npcs: Record<NpcId, NpcState>;

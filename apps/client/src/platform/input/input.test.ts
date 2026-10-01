@@ -207,11 +207,25 @@ describe('createInput', () => {
     input.pointer.down(1, 'touch', 100, 500, WIDTH);
     input.pointer.move(1, 100 + STICK_RADIUS_PX, 500);
     input.pressInteract();
+    input.pressSleep();
+    input.continueDay();
     input.pressSlot(4);
     input.pressRotate(-1);
     const frame = input.sample();
     expect(frame.moveX).toBeCloseTo(1, 10);
-    expect(frame).toMatchObject({ interact: true, rotate: -1, slot: 4 });
-    expect(input.sample()).toMatchObject({ interact: false, rotate: 0, slot: -1 });
+    expect(frame).toMatchObject({
+      interact: true,
+      sleep: true,
+      continueDay: true,
+      rotate: -1,
+      slot: 4,
+    });
+    expect(input.sample()).toMatchObject({
+      interact: false,
+      sleep: false,
+      continueDay: false,
+      rotate: 0,
+      slot: -1,
+    });
   });
 });

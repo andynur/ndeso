@@ -1,7 +1,7 @@
 import { beforeAll, expect, test } from 'bun:test';
 import { type CalendarData, HIJRI_MONTH } from '@bale/shared';
 import { type CalendarDate, hijriToDay, projectDay } from './calendar.ts';
-import { createTimeState, createTimeSystem } from './systems/time.ts';
+import { createTimeState, startNextDay } from './systems/time.ts';
 import { loadCalendarForTests } from './testing/calendar-data.ts';
 import { createContext } from './types.ts';
 
@@ -57,17 +57,14 @@ test(`Hijri festival dates for ${YEARS} years`, () => {
   expect(rows.map((row) => row.text)).toMatchSnapshot();
 });
 
-test(`the time system's calendar events agree with the projections over ${YEARS} years`, () => {
+test(`the day transition's calendar events agree with the projections over ${YEARS} years`, () => {
   const state = createTimeState(cal);
-  const ctx = createContext(
-    cal.clock.ticksPerMinute * (cal.clock.dayEndMinute - cal.clock.dayStartMinute),
-  );
-  const system = createTimeSystem(cal);
+  const ctx = createContext();
   const seen: string[] = [];
   const expected: string[] = [];
   for (let day = 1; day < cal.gameYearDays * YEARS; day++) {
     ctx.events.length = 0;
-    system(state, ctx);
+    startNextDay(state, ctx, cal);
     expect(state.clock.day).toBe(day);
     for (const { type, month } of ctx.events) {
       if (type === 'monthChanged') seen.push(`${day} month ${String(month)}`);

@@ -167,6 +167,104 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* M2-06: compact stamina/readiness card opposite the clock. */
+.player-status {
+  position: absolute;
+  top: max(var(--space-4), env(safe-area-inset-top));
+  right: max(var(--space-4), env(safe-area-inset-right));
+  width: min(13rem, 32vw);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--kayu-500);
+  border-radius: 12px;
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  box-shadow: 0 2px 0 rgb(27 20 16 / 0.35);
+  pointer-events: auto;
+}
+
+.player-status__line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.player-status__track {
+  height: 8px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(107 91 78 / 0.25);
+}
+
+.player-status__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sawah-500);
+}
+
+.player-status__sleep,
+.day-end__continue {
+  min-height: 48px;
+  border: 2px solid var(--sawah-500);
+  border-radius: 8px;
+  background: var(--sawah-500);
+  color: var(--kapur-50);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.player-status__sleep {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.day-end {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-4), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  place-items: center;
+  background: rgb(22 29 56 / 0.82);
+  pointer-events: auto;
+}
+
+.day-end__panel {
+  width: min(30rem, 100%);
+  padding: 24px;
+  border: 2px solid var(--kayu-500);
+  border-radius: 12px;
+  background: var(--kapur-50);
+  color: var(--ink-900);
+  box-shadow: 0 2px 0 rgb(27 20 16 / 0.35);
+  text-align: center;
+}
+
+.day-end__panel h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.day-end__panel p {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-500);
+}
+
+.day-end__continue {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.player-status__sleep:active,
+.day-end__continue:active {
+  transform: translateY(2px);
+}
+
 /* M2-04 hotbar: 16 px placeholder icons at 3×, centred above the safe-area edge. */
 .hotbar {
   position: absolute;
@@ -263,7 +361,7 @@ body {
 .perf {
   position: absolute;
   top: max(var(--space-2), env(safe-area-inset-top));
-  right: max(var(--space-2), env(safe-area-inset-right));
+  right: max(calc(var(--space-4) + 14rem), calc(env(safe-area-inset-right) + 14rem));
   margin: 0;
   padding: var(--space-2);
   border-radius: 4px;

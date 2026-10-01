@@ -17,6 +17,8 @@ export interface Input {
   readonly pointer: PointerSource;
   /** On-screen context button (GDD §12, touch). */
   pressInteract(): void;
+  pressSleep(): void;
+  continueDay(): void;
   /** On-screen hotbar slot, zero-based. */
   pressSlot(slot: number): void;
   /** On-screen camera buttons (GDD §12: "two-finger swipe / buttons"). */
@@ -30,6 +32,8 @@ export function createInput(onStick: (view: StickView | null) => void): Input {
   const pointer = createPointerSource(onStick);
   const frame = createInputFrame();
   let interact = false;
+  let sleep = false;
+  let continueDay = false;
   let slot = -1;
   let rotate = 0;
 
@@ -38,6 +42,12 @@ export function createInput(onStick: (view: StickView | null) => void): Input {
     pointer,
     pressInteract() {
       interact = true;
+    },
+    pressSleep() {
+      sleep = true;
+    },
+    continueDay() {
+      continueDay = true;
     },
     pressSlot(next) {
       slot = next;
@@ -51,9 +61,13 @@ export function createInput(onStick: (view: StickView | null) => void): Input {
       pointer.sample(frame);
       clampMove(frame);
       if (interact) frame.interact = true;
+      if (sleep) frame.sleep = true;
+      if (continueDay) frame.continueDay = true;
       if (slot >= 0) frame.slot = slot;
       frame.rotate += rotate;
       interact = false;
+      sleep = false;
+      continueDay = false;
       slot = -1;
       rotate = 0;
       return frame;

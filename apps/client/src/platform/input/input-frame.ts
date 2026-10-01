@@ -12,6 +12,10 @@ export interface InputFrame {
   moveY: number;
   /** Edge: use the tool / interact was pressed this frame. */
   interact: boolean;
+  /** Edge: voluntarily end the day. */
+  sleep: boolean;
+  /** Edge: acknowledge the day-end summary. */
+  continueDay: boolean;
   /** Edge: hotbar slot picked this frame, `0`-based, or `-1` for none. */
   slot: number;
   /** Edge: hotbar steps this frame (wheel notches), signed. */
@@ -23,7 +27,17 @@ export interface InputFrame {
 }
 
 export function createInputFrame(): InputFrame {
-  return { moveX: 0, moveY: 0, interact: false, slot: -1, cycle: 0, rotate: 0, zoom: 0 };
+  return {
+    moveX: 0,
+    moveY: 0,
+    interact: false,
+    sleep: false,
+    continueDay: false,
+    slot: -1,
+    cycle: 0,
+    rotate: 0,
+    zoom: 0,
+  };
 }
 
 /** Clears the edges and the held movement, ready for the sources to write again. */
@@ -31,6 +45,8 @@ export function resetInputFrame(frame: InputFrame): void {
   frame.moveX = 0;
   frame.moveY = 0;
   frame.interact = false;
+  frame.sleep = false;
+  frame.continueDay = false;
   frame.slot = -1;
   frame.cycle = 0;
   frame.rotate = 0;

@@ -161,6 +161,27 @@ test('a full inventory leaves a ripe crop intact until its whole yield fits', ()
   });
 });
 
+test('accepted tools spend stamina, sleep freezes the day, and continue starts tomorrow', () => {
+  const game = freshGame();
+  const target = { area: 'bale', x: BALE_AREA.field.x, z: BALE_AREA.field.z };
+  game.submit({ type: 'useTool', tool: 'hoe', target });
+  game.step();
+  expect(game.state.player.stamina).toBe(96);
+
+  game.submit({ type: 'sleep' });
+  game.step();
+  expect(game.state.player.dayEndSummary).toMatchObject({ reason: 'sleep' });
+  const frozenMinute = game.state.clock.minute;
+  for (let tick = 0; tick < cal.clock.ticksPerMinute * 2; tick++) game.step();
+  expect(game.state.clock.minute).toBe(frozenMinute);
+
+  game.submit({ type: 'continueDay' });
+  game.step();
+  expect(game.state.clock).toMatchObject({ day: 1, minute: cal.clock.dayStartMinute });
+  expect(game.state.player.stamina).toBe(100);
+  expect(game.state.player.dayEndSummary).toBeNull();
+});
+
 test('?clock= reads a time inside the game day, after midnight included', () => {
   expect(parseStartClock('17:30', cal)).toBe(1050);
   expect(parseStartClock('00:30', cal)).toBe(1470);

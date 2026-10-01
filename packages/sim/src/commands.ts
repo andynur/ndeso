@@ -24,6 +24,10 @@ export type Command =
   | { readonly type: 'move'; readonly x: number; readonly z: number }
   /** Use the held tool or talk to whatever is in front of the player (GDD §12 auto-target). */
   | { readonly type: 'interact' }
+  /** End the current day voluntarily and open its summary. */
+  | { readonly type: 'sleep' }
+  /** Close the day-end summary and begin the next day. */
+  | { readonly type: 'continueDay' }
   /** Pick a hotbar slot, `0` to `HOTBAR_SLOTS - 1`. */
   | { readonly type: 'selectSlot'; readonly slot: number }
   /** Step the hotbar selection by one, wrapping. */
@@ -52,7 +56,9 @@ export function sanitizeCommand(command: Command): Command | null {
       return { type: 'move', x: x / length, z: z / length };
     }
     case 'interact':
-      return { type: 'interact' };
+    case 'sleep':
+    case 'continueDay':
+      return { type: command.type };
     case 'selectSlot':
       return Number.isInteger(command.slot) && command.slot >= 0 && command.slot < HOTBAR_SLOTS
         ? { type: 'selectSlot', slot: command.slot }

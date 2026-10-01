@@ -67,6 +67,8 @@ function emitCalendarChanges(before: CalendarDate, after: CalendarDate, ctx: Sim
 export function createTimeSystem(cal: CalendarData): System<TimeState> {
   return (state, ctx) => {
     const { clock } = state;
+    // The player system owns the transition after the 01:00 summary is acknowledged.
+    if (clock.minute >= cal.clock.dayEndMinute) return;
     for (let i = 0; i < ctx.ticks; i++) {
       clock.tick++;
       if (clock.tick < cal.clock.ticksPerMinute) continue;
@@ -76,8 +78,9 @@ export function createTimeSystem(cal: CalendarData): System<TimeState> {
       const bandBefore = prayerBandOf(clock.minute, month, cal);
       clock.minute++;
       if (clock.minute >= cal.clock.dayEndMinute) {
-        startNextDay(state, ctx, cal);
-        continue;
+        clock.minute = cal.clock.dayEndMinute;
+        ctx.emit({ type: 'dayExpired', day: clock.day });
+        break;
       }
       if (clock.minute % 60 === 0) ctx.emit({ type: 'hourChanged', hour: hourOf(clock.minute) });
       const band = prayerBandOf(clock.minute, month, cal);

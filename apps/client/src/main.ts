@@ -29,6 +29,7 @@ import { hotbarView, inventoryViewOf } from './ui/hotbar.tsx';
 import { clockView } from './ui/hud-clock.tsx';
 import { mountOverlay } from './ui/mount.ts';
 import { perfView } from './ui/perf-overlay.tsx';
+import { playerStatusView } from './ui/player-status.tsx';
 import { colorHex } from './ui/tokens.ts';
 import { stickView } from './ui/touch-controls.tsx';
 
@@ -132,6 +133,7 @@ async function boot(): Promise<void> {
   mountOverlay(overlay, {
     controls: { onInteract: input.pressInteract, onTurn: input.pressRotate },
     hotbar: { onSelect: input.pressSlot },
+    playerStatus: { onSleep: input.pressSleep, onContinue: input.continueDay },
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
@@ -158,7 +160,15 @@ async function boot(): Promise<void> {
       TOOL_DATA,
     );
   };
+  const syncPlayerStatus = () => {
+    playerStatusView.value = {
+      stamina: game.state.player.stamina,
+      maxStamina: game.state.player.maxStamina,
+      summary: game.state.player.dayEndSummary,
+    };
+  };
   syncHotbar();
+  syncPlayerStatus();
   scene.syncFarm(game.state.farm.tiles);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
   const commands = createCommandMapper();
@@ -216,6 +226,16 @@ async function boot(): Promise<void> {
           events.some((event) => event.type === 'slotSelected' || event.type === 'inventoryChanged')
         ) {
           syncHotbar();
+        }
+        if (
+          events.some(
+            (event) =>
+              event.type === 'staminaChanged' ||
+              event.type === 'dayEnded' ||
+              event.type === 'dayStarted',
+          )
+        ) {
+          syncPlayerStatus();
         }
         // ui.sync (ARCHITECTURE §4.1): the clock view changes once per game minute at most.
         if (clock.minute !== lastMinute || clock.day !== lastDay) {

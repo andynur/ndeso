@@ -73,14 +73,12 @@ describe('createCommandMapper', () => {
     expect(command.z).toBeCloseTo(0, 10);
   });
 
-  test('edges map to commands in a fixed order: move, slot, cycle, interact', () => {
-    expect(mapped([{ moveY: 1, slot: 4, cycle: -2, interact: true }]).map((c) => c.type)).toEqual([
-      'move',
-      'selectSlot',
-      'cycleSlot',
-      'cycleSlot',
-      'interact',
-    ]);
+  test('edges map to commands in a fixed order', () => {
+    expect(
+      mapped([
+        { moveY: 1, slot: 4, cycle: -2, interact: true, sleep: true, continueDay: true },
+      ]).map((c) => c.type),
+    ).toEqual(['move', 'selectSlot', 'cycleSlot', 'cycleSlot', 'interact', 'sleep', 'continueDay']);
     expect(mapped([{ cycle: -2 }])).toEqual([
       { type: 'cycleSlot', delta: -1 },
       { type: 'cycleSlot', delta: -1 },

@@ -11,12 +11,14 @@ import {
   buildCollisionGrid,
   type Command,
   createContext,
+  createDayTransitionSystem,
   createFarmCommandSystem,
   createFarmInteractionSystem,
   createFarmingSystem,
   createGameState,
   createInventoryEventSystem,
   createMovementSystem,
+  createStaminaSystem,
   createTimeSystem,
   createWeatherSystem,
   type Dir,
@@ -76,12 +78,14 @@ export function createGame(
   after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
+  const dayTransition = createDayTransitionSystem(cal);
   const movement = createMovementSystem(buildCollisionGrid(area), player);
   const weather = createWeatherSystem(cal, weatherData);
   const farmCommands = createFarmCommandSystem(crops);
   const farmInteraction = createFarmInteractionSystem(crops, items, tools);
   const inventoryEvents = createInventoryEventSystem(items);
   const farming = createFarmingSystem(crops, cal);
+  const stamina = createStaminaSystem(tools);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
   let previousZ = state.player.z;
@@ -104,12 +108,27 @@ export function createGame(
       const ctx = createContext(1, commands);
       previousX = state.player.x;
       previousZ = state.player.z;
-      time(state, ctx);
+      if (state.player.dayEndSummary) dayTransition(state, ctx);
+      else {
+        time(state, ctx);
+        dayTransition(state, ctx);
+      }
+      if (state.player.dayEndSummary) {
+        ticks++;
+        if (ctx.events.length > 0) pending.push(...ctx.events);
+        return;
+      }
       weather(state, ctx);
       movement(state, ctx);
       inventoryCommandSystem(state, ctx);
       farmCommands(state, ctx);
       farmInteraction(state, ctx);
+      stamina(state, ctx);
+      if (state.player.dayEndSummary) {
+        ticks++;
+        if (ctx.events.length > 0) pending.push(...ctx.events);
+        return;
+      }
       inventoryEvents(state, ctx);
       farming(state, ctx);
       for (const system of after) system(state, ctx);
