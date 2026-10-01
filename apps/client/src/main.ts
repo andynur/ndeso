@@ -162,6 +162,7 @@ async function boot(): Promise<void> {
   };
   const syncPlayerStatus = () => {
     playerStatusView.value = {
+      money: game.state.player.money,
       stamina: game.state.player.stamina,
       maxStamina: game.state.player.maxStamina,
       summary: game.state.player.dayEndSummary,
@@ -231,6 +232,7 @@ async function boot(): Promise<void> {
           events.some(
             (event) =>
               event.type === 'staminaChanged' ||
+              event.type === 'moneyChanged' ||
               event.type === 'dayEnded' ||
               event.type === 'dayStarted',
           )

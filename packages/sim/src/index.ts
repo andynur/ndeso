@@ -2,6 +2,7 @@ export * from './calendar.ts';
 export * from './collision.ts';
 export * from './commands.ts';
 export * from './state.ts';
+export * from './systems/economy.ts';
 export * from './systems/farming.ts';
 export * from './systems/inventory.ts';
 export * from './systems/movement.ts';

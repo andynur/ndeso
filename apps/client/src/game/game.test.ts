@@ -182,6 +182,30 @@ test('accepted tools spend stamina, sleep freezes the day, and continue starts t
   expect(game.state.player.dayEndSummary).toBeNull();
 });
 
+test('setoran removes selected produce and pays its base price the next morning', () => {
+  const game = freshGame();
+  const [x, z] = BALE_AREA.setoran;
+  game.state.player.x = x + 0.5;
+  game.state.player.z = z + 1.5;
+  game.state.player.facing = 'north';
+  game.state.player.inventory[8] = { kind: 'item', id: 'cabai', quantity: 3 };
+  game.state.player.selectedSlot = 8;
+
+  game.submit({ type: 'interact' });
+  game.step();
+  expect(game.state.player.inventory[8]).toBeNull();
+  expect(game.state.shipping.items).toEqual({ cabai: 3 });
+  expect(game.state.player.money).toBe(0);
+
+  game.submit({ type: 'sleep' });
+  game.step();
+  game.submit({ type: 'continueDay' });
+  game.step();
+  expect(game.state.shipping.items).toEqual({});
+  expect(game.state.player.money).toBe(2_100);
+  expect(game.drainEvents()).toContainEqual({ type: 'shipmentPaid', count: 3, money: 2_100 });
+});
+
 test('?clock= reads a time inside the game day, after midnight included', () => {
   expect(parseStartClock('17:30', cal)).toBe(1050);
   expect(parseStartClock('00:30', cal)).toBe(1470);

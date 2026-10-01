@@ -219,6 +219,19 @@ export function buildJoglo(area: AreaDef): GlbMesh {
   for (const [x, y, z] of area.lamps) {
     mesh.box([x - 0.1, y - 0.15, z - 0.1], [x + 0.1, y + 0.1, z + 0.1], LAMP, true);
   }
+
+  // Setoran: a lidded wooden shipping box on its authored gameplay tile.
+  const [setoranX, setoranZ] = area.setoran;
+  mesh.box(
+    [setoranX + 0.12, plinth, setoranZ + 0.12],
+    [setoranX + 0.88, plinth + 0.72, setoranZ + 0.88],
+    WOOD,
+  );
+  mesh.box(
+    [setoranX + 0.08, plinth + 0.72, setoranZ + 0.08],
+    [setoranX + 0.92, plinth + 0.82, setoranZ + 0.92],
+    WOOD,
+  );
   return mesh.build();
 }
 

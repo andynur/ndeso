@@ -4,6 +4,7 @@ import { BALE_AREA } from './areas-bundle.ts';
 test('the base area is Balé, with its ground and its joglo', () => {
   expect(BALE_AREA.id).toBe('bale');
   expect(BALE_AREA.models).toEqual(['bale_ground_lvl0', 'bale_joglo_lvl0']);
+  expect(BALE_AREA.setoran).toEqual([2, -1]);
 });
 
 test('the spawn is clear of the field, the joglo and the kalen', () => {

@@ -12,6 +12,7 @@ import {
   type Command,
   createContext,
   createDayTransitionSystem,
+  createEconomySystem,
   createFarmCommandSystem,
   createFarmInteractionSystem,
   createFarmingSystem,
@@ -86,6 +87,7 @@ export function createGame(
   const inventoryEvents = createInventoryEventSystem(items);
   const farming = createFarmingSystem(crops, cal);
   const stamina = createStaminaSystem(tools);
+  const economy = createEconomySystem(area, items);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
   let previousZ = state.player.z;
@@ -131,6 +133,7 @@ export function createGame(
       }
       inventoryEvents(state, ctx);
       farming(state, ctx);
+      economy(state, ctx);
       for (const system of after) system(state, ctx);
       ticks++;
       if (ctx.events.length > 0) pending.push(...ctx.events);

@@ -72,7 +72,7 @@ The table lives as data in `tools/deps/rules.ts`. A PostToolUse hook (`scripts/h
 7. `irrigation` (P1) → water levels for sawah, gate states
 8. `animals` → hunger, affection, production
 9. `npc` → schedule resolution (target position per time), simple path following on nav grid
-10. `economy` → shipping payout at `dayStarted`, market prices on `pasaranChanged`
+10. `economy` → selected produce enters the authored-area setoran on interaction; shipping pays base prices at `dayStarted`, market prices on `pasaranChanged`
 11. `social` → friendship decay, event triggers
 
 ### 3.3 State shape (sketch)
@@ -88,6 +88,7 @@ interface GameState {
     inventory: Slot[]; dayEndSummary: DayEndSummary | null;
   };
   farm: { tiles: Record<TileKey, Tile> };           // TileKey = `${area}:${x},${z}`
+  shipping: { items: Record<ItemId, number> };      // setoran contents awaiting tomorrow
   animals: Record<AnimalId, Animal>;
   npcs: Record<NpcId, NpcState>;
   flags: Record<string, boolean | number>;          // story/quest flags

@@ -38,6 +38,8 @@ export interface AreaDef {
   readonly field: GroundRect;
   /** The joglo's footprint, platform included. */
   readonly joglo: GroundRect;
+  /** Shipping-box tile on the joglo platform (GDD §7). */
+  readonly setoran: Vec2;
   /**
    * The kalen, a channel of `width` along axis-aligned segments between `points`. It blocks
    * walking except at `crossings`: points on the channel where a plank (*wot*) spans it,
@@ -64,6 +66,7 @@ type Field =
   | 'spawn'
   | 'field'
   | 'joglo'
+  | 'setoran'
   | 'kalen'
   | 'lamps'
   | 'points'
@@ -106,7 +109,7 @@ export function validateArea(raw: unknown, file: string): AreaResult {
   const err = (message: string) => errors.push(`${file}: ${message}`);
   if (!isObj(raw)) return { ok: false, errors: [`${file}: is not an object`] };
 
-  const { id, origin, size, models, spawn, kalen, lamps } = raw;
+  const { id, origin, size, models, spawn, setoran, kalen, lamps } = raw;
   if (typeof id !== 'string' || !SNAKE_ID.test(id)) err('id must be a snake_case id');
   if (origin !== AREA_ORIGIN) err(`origin must be '${AREA_ORIGIN}' (PLACES §1)`);
   if (!isTuple(size, 2) || size.some((n) => n <= 0)) err('size must be [w, d], both > 0');
@@ -147,6 +150,19 @@ export function validateArea(raw: unknown, file: string): AreaResult {
       err(`${name} lies outside the area`);
     }
     rects[name] = value;
+  }
+
+  if (!isTuple(setoran, 2) || !setoran.every(Number.isInteger)) {
+    err('setoran must be an integer [x, z] tile');
+  } else {
+    const [x, z] = setoran as [number, number];
+    const joglo = rects.joglo;
+    if (
+      joglo !== undefined &&
+      (x < joglo.x || x + 1 > joglo.x + joglo.w || z < joglo.z || z + 1 > joglo.z + joglo.d)
+    ) {
+      err('setoran tile must lie on the joglo');
+    }
   }
 
   let kalenDef: AreaDef['kalen'] | undefined;
@@ -197,6 +213,7 @@ export function validateArea(raw: unknown, file: string): AreaResult {
       spawn: spawn as unknown as Vec2,
       field: rects.field as GroundRect,
       joglo: rects.joglo as GroundRect,
+      setoran: setoran as unknown as Vec2,
       kalen: kalenDef as AreaDef['kalen'],
       lamps: lamps as unknown as Vec3[],
     },

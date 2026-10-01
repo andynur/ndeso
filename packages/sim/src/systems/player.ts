@@ -21,7 +21,7 @@ export interface DayEndSummary {
 export interface PlayerProgress {
   stamina: number;
   maxStamina: number;
-  /** M2-07 exposes and changes the wallet; M2-06 needs it for the fainting penalty. */
+  /** The economy owns earnings; day transitions may deduct the fainting penalty. */
   money: number;
   dayEndSummary: DayEndSummary | null;
 }

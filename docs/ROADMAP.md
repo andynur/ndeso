@@ -40,7 +40,7 @@
 - [x] **M2-04** Inventory + hotbar (sim + UI), tool switching.
 - [x] **M2-05** Weather (clear/rain) seeded per month; rain particles; rain auto-waters. Januari is the heavy one (GDD §3.3).
 - [x] **M2-06** Stamina + sleep + passing out at 01:00; day-end summary screen.
-- [ ] **M2-07** Setoran box + money + overnight payout; `format.money` in HUD.
+- [x] **M2-07** Setoran box + money + overnight payout; `format.money` in HUD.
 - [ ] **M2-08** **Pasar Baledono**: buy seeds and sell produce, prices better on the *pasaran* day, **closes late morning**. (Bu Ratna)
 - [ ] **M2-09** NPC schedules + nav grid + **3 NPCs (Mbah Hita, Pak Harjo, Bu Ratna)** with placeholder sprites. Mbah Hita gets the writing budget of three.
 - [ ] **M2-10** Ink dialog runtime + DialogBox UI + 3 scripts per NPC in EN and ID + `check-ink`.

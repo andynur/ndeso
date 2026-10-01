@@ -113,7 +113,7 @@ Palette inspired by *batik*, *sawah*, *kunyit* (turmeric), and *terakota*.
 | `Toast` | Top-center, 2.5 s, max 2 stacked |
 | `ItemSlot` | 16 px icon at 3×, quantity bottom-right in tabular nums |
 | `Tooltip` | Long-press (touch) / hover (desktop) |
-| `PlayerStatus` | Compact stamina bar + sleep action; projects sim state |
+| `PlayerStatus` | Compact formatted-money wallet, stamina bar + sleep action; projects sim state |
 | `DayEndSummary` | Modal reason/stamina/penalty recap; acknowledgement starts the next day |
 
 Every component must accept only i18n keys or already-translated strings, never literal copy. See [I18N](I18N.md).

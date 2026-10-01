@@ -1,4 +1,5 @@
 import type { AreaDef, CalendarData, PlayerData, WeatherData } from '@bale/shared';
+import { createEconomyState, type EconomyState } from './systems/economy.ts';
 import { createFarmingState, type FarmingState, type FarmPlot } from './systems/farming.ts';
 import { createInventoryPlayerState, type InventoryState } from './systems/inventory.ts';
 import { createPlayerState, type MovementState } from './systems/movement.ts';
@@ -15,6 +16,7 @@ export type GameState = TimeState &
   PlayerProgressState &
   FarmingState &
   InventoryState &
+  EconomyState &
   WeatherState;
 
 export function createGameState(
@@ -41,6 +43,7 @@ export function createGameState(
       ...createInventoryPlayerState(playerData),
       ...createPlayerProgress(),
     },
+    ...createEconomyState(),
     ...createFarmingState(plots),
   };
 }

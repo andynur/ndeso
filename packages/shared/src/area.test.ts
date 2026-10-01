@@ -9,6 +9,7 @@ const valid = () => ({
   spawn: [0, 2],
   field: { x: 7, z: -6, w: 8, d: 12 },
   joglo: { x: -4, z: -10, w: 8, d: 8 },
+  setoran: [2, -3],
   kalen: {
     points: [
       [5.5, -12],
@@ -39,6 +40,15 @@ describe('validateArea', () => {
   test('keeps the field inside the area', () => {
     expect(errorsOf({ ...valid(), field: { x: 12, z: 0, w: 8, d: 2 } })).toEqual([
       'a.json5: field lies outside the area',
+    ]);
+  });
+
+  test('keeps the setoran on an integer joglo tile', () => {
+    expect(errorsOf({ ...valid(), setoran: [2.5, -3] })).toEqual([
+      'a.json5: setoran must be an integer [x, z] tile',
+    ]);
+    expect(errorsOf({ ...valid(), setoran: [5, -3] })).toEqual([
+      'a.json5: setoran tile must lie on the joglo',
     ]);
   });
 

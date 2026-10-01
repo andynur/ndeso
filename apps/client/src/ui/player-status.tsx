@@ -3,12 +3,14 @@ import { signal } from '@preact/signals';
 import { format, t } from '../i18n/index.ts';
 
 export interface PlayerStatusView {
+  readonly money: number;
   readonly stamina: number;
   readonly maxStamina: number;
   readonly summary: DayEndSummary | null;
 }
 
 export const playerStatusView = signal<PlayerStatusView>({
+  money: 0,
   stamina: 100,
   maxStamina: 100,
   summary: null,
@@ -34,6 +36,10 @@ export function PlayerStatus({ onSleep, onContinue }: PlayerStatusProps) {
   return (
     <>
       <section class="player-status" aria-label={t('hud.stamina')}>
+        <div class="player-status__money">
+          <span>{t('hud.money')}</span>
+          <strong>{format.value.money(view.money)}</strong>
+        </div>
         <div class="player-status__line">
           <span>{t('hud.stamina')}</span>
           <strong>
