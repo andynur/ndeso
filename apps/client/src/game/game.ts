@@ -7,9 +7,10 @@ import {
   type WeatherData,
   type WeatherId,
 } from '@bale/shared';
-import type { CropDef, ItemDef, ToolDef } from '@bale/shared/content';
+import type { CropDef, ItemDef, NpcDef, ToolDef } from '@bale/shared/content';
 import {
   buildCollisionGrid,
+  buildNavGrid,
   type Command,
   createContext,
   createDayTransitionSystem,
@@ -20,6 +21,7 @@ import {
   createGameState,
   createInventoryEventSystem,
   createMovementSystem,
+  createNpcSystem,
   createStaminaSystem,
   createTimeSystem,
   createWeatherSystem,
@@ -48,6 +50,17 @@ export interface PlayerPose {
   moving: boolean;
 }
 
+export interface NpcPose {
+  id: string;
+  area: string;
+  x: number;
+  z: number;
+  facing: Dir;
+  anim: string;
+  active: boolean;
+  moving: boolean;
+}
+
 export interface Game {
   readonly state: Readonly<GameState>;
   /** Ticks stepped since boot; with `alpha` it gives render a continuous sim time. */
@@ -62,6 +75,8 @@ export interface Game {
   drainEvents(): SimEvent[];
   /** Writes the player's pose `alpha` of the way from the previous tick to the last. */
   playerPose(alpha: number, out: PlayerPose): PlayerPose;
+  /** Writes interpolated NPC projections into the caller-owned array. */
+  npcPoses(alpha: number, out: NpcPose[]): NpcPose[];
 }
 
 /**
@@ -77,22 +92,30 @@ export function createGame(
   tools: readonly ToolDef[],
   weatherData: WeatherData,
   market: MarketData,
-  state: GameState = createGameState(cal, area, player, weatherData),
+  npcs: readonly NpcDef[],
+  state: GameState = createGameState(cal, area, player, weatherData, npcs),
   after: readonly System<GameState>[] = [],
 ): Game {
   const time = createTimeSystem(cal);
   const dayTransition = createDayTransitionSystem(cal);
-  const movement = createMovementSystem(buildCollisionGrid(area), player);
+  const collision = buildCollisionGrid(area);
+  const movement = createMovementSystem(collision, player);
   const weather = createWeatherSystem(cal, weatherData);
   const farmCommands = createFarmCommandSystem(crops);
   const farmInteraction = createFarmInteractionSystem(crops, items, tools);
   const inventoryEvents = createInventoryEventSystem(items);
   const farming = createFarmingSystem(crops, cal);
   const stamina = createStaminaSystem(tools);
+  const npc = createNpcSystem(npcs, cal, { [area.id]: buildNavGrid(collision) });
   const economy = createEconomySystem(area, items, cal, market);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
   let previousZ = state.player.z;
+  const previousNpcs = state.npcs.map((actor) => ({
+    x: actor.x,
+    z: actor.z,
+    active: actor.active,
+  }));
   let ticks = 0;
   let pending: SimEvent[] = [];
   let queued: Command[] = [];
@@ -112,6 +135,15 @@ export function createGame(
       const ctx = createContext(1, commands);
       previousX = state.player.x;
       previousZ = state.player.z;
+      for (let index = 0; index < state.npcs.length; index++) {
+        const actor = state.npcs[index];
+        const previous = previousNpcs[index];
+        if (actor && previous) {
+          previous.x = actor.x;
+          previous.z = actor.z;
+          previous.active = actor.active;
+        }
+      }
       if (state.player.dayEndSummary) dayTransition(state, ctx);
       else {
         time(state, ctx);
@@ -135,6 +167,15 @@ export function createGame(
       }
       inventoryEvents(state, ctx);
       farming(state, ctx);
+      npc(state, ctx);
+      for (let index = 0; index < state.npcs.length; index++) {
+        const actor = state.npcs[index];
+        const previous = previousNpcs[index];
+        if (actor?.active && previous && !previous.active) {
+          previous.x = actor.x;
+          previous.z = actor.z;
+        }
+      }
       economy(state, ctx);
       for (const system of after) system(state, ctx);
       ticks++;
@@ -151,6 +192,25 @@ export function createGame(
       out.z = previousZ + (player.z - previousZ) * alpha;
       out.facing = player.facing;
       out.moving = isMoving(player);
+      return out;
+    },
+    npcPoses(alpha, out) {
+      out.length = state.npcs.length;
+      for (let index = 0; index < state.npcs.length; index++) {
+        const actor = state.npcs[index];
+        const previous = previousNpcs[index];
+        if (!actor || !previous) continue;
+        const pose = out[index] ?? ({} as NpcPose);
+        pose.id = actor.id;
+        pose.area = actor.area;
+        pose.x = previous.x + (actor.x - previous.x) * alpha;
+        pose.z = previous.z + (actor.z - previous.z) * alpha;
+        pose.facing = actor.facing;
+        pose.anim = actor.anim;
+        pose.active = actor.active;
+        pose.moving = actor.moving;
+        out[index] = pose;
+      }
       return out;
     },
   };

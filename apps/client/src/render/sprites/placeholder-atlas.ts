@@ -39,27 +39,43 @@ export interface PixelAtlas {
 }
 
 export function buildPlaceholderCharAtlas(palette: CharPalette): PixelAtlas {
+  return buildPlaceholderCharAtlasVariants([{ id: '', palette }]);
+}
+
+export interface PlaceholderCharVariant {
+  readonly id: string;
+  readonly palette: CharPalette;
+}
+
+/** Several distinct placeholders in one texture and therefore one sprite draw call. */
+export function buildPlaceholderCharAtlasVariants(
+  variants: readonly PlaceholderCharVariant[],
+): PixelAtlas {
+  if (variants.length === 0) throw new RangeError('character atlas needs at least one variant');
   const columns = Math.max(...ANIMS.map((anim) => anim.frames));
   const width = columns * CHAR_FRAME_W;
-  const height = ANIMS.length * DIRECTIONS.length * CHAR_FRAME_H;
+  const height = variants.length * ANIMS.length * DIRECTIONS.length * CHAR_FRAME_H;
   const pixels = new Uint8Array(width * height * 4);
   const frames: AtlasFrame[] = [];
   const tags: Record<string, AtlasTag> = {};
 
   let row = 0;
-  for (const anim of ANIMS) {
-    for (const direction of DIRECTIONS) {
-      const from = frames.length;
-      for (let f = 0; f < anim.frames; f++) {
-        const x = f * CHAR_FRAME_W;
-        const y = row * CHAR_FRAME_H;
-        const canvas = new FrameCanvas(pixels, width, x, y);
-        drawFigure(canvas, palette, direction, anim.bob[f] ?? 0, anim.stride[f] ?? 0);
-        canvas.outline(palette.outline);
-        frames.push({ x, y, w: CHAR_FRAME_W, h: CHAR_FRAME_H, durationMs: anim.durationMs });
+  for (const variant of variants) {
+    for (const anim of ANIMS) {
+      for (const direction of DIRECTIONS) {
+        const from = frames.length;
+        for (let f = 0; f < anim.frames; f++) {
+          const x = f * CHAR_FRAME_W;
+          const y = row * CHAR_FRAME_H;
+          const canvas = new FrameCanvas(pixels, width, x, y);
+          drawFigure(canvas, variant.palette, direction, anim.bob[f] ?? 0, anim.stride[f] ?? 0);
+          canvas.outline(variant.palette.outline);
+          frames.push({ x, y, w: CHAR_FRAME_W, h: CHAR_FRAME_H, durationMs: anim.durationMs });
+        }
+        const prefix = variant.id ? `${variant.id}_` : '';
+        tags[`${prefix}${anim.name}_${direction}`] = { from, to: frames.length - 1 };
+        row++;
       }
-      tags[`${anim.name}_${direction}`] = { from, to: frames.length - 1 };
-      row++;
     }
   }
 

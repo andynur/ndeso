@@ -87,6 +87,17 @@ export type ItemsKey =
   | 'tool.watering_can.desc'
   | 'tool.watering_can.name';
 
+export type NpcsKey =
+  | 'bu_ratna.bio'
+  | 'bu_ratna.name'
+  | 'bu_ratna.title'
+  | 'mbah_hita.bio'
+  | 'mbah_hita.name'
+  | 'mbah_hita.title'
+  | 'pak_harjo.bio'
+  | 'pak_harjo.name'
+  | 'pak_harjo.title';
+
 export type UiKey =
   | 'app.tagline'
   | 'app.title'
@@ -177,9 +188,10 @@ export type I18nKey =
   | `calendar:${CalendarKey}`
   | `glossary:${GlossaryKey}`
   | `items:${ItemsKey}`
+  | `npcs:${NpcsKey}`
   | `ui:${UiKey}`;
 
-export const GENERATED_NAMESPACES = ['calendar', 'glossary', 'items', 'ui'] as const;
+export const GENERATED_NAMESPACES = ['calendar', 'glossary', 'items', 'npcs', 'ui'] as const;
 export type GeneratedNamespace = (typeof GENERATED_NAMESPACES)[number];
 
 export type BundleLoader = () => Promise<{ readonly default: Readonly<Record<string, string>> }>;
@@ -192,12 +204,14 @@ export const LOCALE_BUNDLES: Readonly<
     calendar: () => import('../locales/en/calendar.json'),
     glossary: () => import('../locales/en/glossary.json'),
     items: () => import('../locales/en/items.json'),
+    npcs: () => import('../locales/en/npcs.json'),
     ui: () => import('../locales/en/ui.json'),
   },
   id: {
     calendar: () => import('../locales/id/calendar.json'),
     glossary: () => import('../locales/id/glossary.json'),
     items: () => import('../locales/id/items.json'),
+    npcs: () => import('../locales/id/npcs.json'),
     ui: () => import('../locales/id/ui.json'),
   },
 };

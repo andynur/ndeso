@@ -2,7 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { DataTexture, NearestFilter, SRGBColorSpace } from 'three';
 import { frameAt } from './animation.ts';
 import { frameUv, getTag, type SpriteAtlas } from './atlas.ts';
-import { buildPlaceholderCharAtlas, CHAR_FRAME_H, CHAR_FRAME_W } from './placeholder-atlas.ts';
+import {
+  buildPlaceholderCharAtlas,
+  buildPlaceholderCharAtlasVariants,
+  CHAR_FRAME_H,
+  CHAR_FRAME_W,
+} from './placeholder-atlas.ts';
 import { createAtlasTexture, SpriteBatch } from './sprite-batch.ts';
 
 const TINY: SpriteAtlas = {
@@ -79,6 +84,16 @@ describe('placeholder character atlas (DESIGN §1.2)', () => {
 
   test('pixel buffer matches the atlas size', () => {
     expect(pixels.length).toBe(atlas.width * atlas.height * 4);
+  });
+
+  test('packs named character variants into distinct tags', () => {
+    const variants = buildPlaceholderCharAtlasVariants([
+      { id: 'mbah_hita', palette: PALETTE },
+      { id: 'bu_ratna', palette: { ...PALETTE, shirt: 0xd23c3c } },
+    ]);
+    expect(getTag(variants.atlas, 'mbah_hita_idle_down')).toBeDefined();
+    expect(getTag(variants.atlas, 'bu_ratna_walk_side')).toBeDefined();
+    expect(variants.atlas.height).toBe(atlas.height * 2);
   });
 
   test('every frame is drawn, outlined in ink, and stands on the frame bottom', () => {
@@ -173,6 +188,16 @@ describe('SpriteBatch', () => {
     expect(batch.size).toBe(0);
     expect(batch.capacity).toBe(3);
     expect(batch.mesh.count).toBe(0);
+  });
+
+  test('packs only visible sprites into the live GPU range', () => {
+    const batch = makeBatch();
+    batch.add({ x: 1, y: 0, z: 0, tag: 'idle_down', visible: false });
+    batch.add({ x: 2, y: 0, z: 0, tag: 'idle_down' });
+    batch.update(0);
+    expect(batch.size).toBe(2);
+    expect(batch.mesh.count).toBe(1);
+    expect(batch.mesh.instanceMatrix.array[12]).toBe(2);
   });
 
   test('rejects an unknown tag and an overfull batch', () => {

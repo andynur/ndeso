@@ -4,10 +4,17 @@ import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { MARKET_DATA } from '@bale/content/market';
+import { NPC_DATA } from '@bale/content/npcs';
 import { PLAYER_DATA } from '@bale/content/player';
 import { WEATHER_DATA } from '@bale/content/weather';
-import type { Command } from '@bale/sim';
-import { createGame, type PlayerPose, parseStartClock, parseStartWeather } from './game.ts';
+import { buildCollisionGrid, buildNavGrid, type Command, findNavPath } from '@bale/sim';
+import {
+  createGame,
+  type NpcPose,
+  type PlayerPose,
+  parseStartClock,
+  parseStartWeather,
+} from './game.ts';
 
 const cal = CALENDAR_DATA;
 const freshGame = () =>
@@ -20,7 +27,27 @@ const freshGame = () =>
     TOOL_DATA,
     WEATHER_DATA,
     MARKET_DATA,
+    NPC_DATA,
   );
+
+test('every authored Balé schedule leg has a walkable nav route', () => {
+  const nav = buildNavGrid(buildCollisionGrid(BALE_AREA));
+  for (const npc of NPC_DATA) {
+    for (const rule of npc.schedules) {
+      for (let index = 0; index < rule.entries.length; index++) {
+        const entry = rule.entries[index];
+        const previous = rule.entries[Math.max(0, index - 1)];
+        expect(entry?.area).toBe('bale');
+        expect(
+          entry && previous
+            ? findNavPath(nav, [previous.x, previous.z], [entry.x, entry.z])
+            : undefined,
+          `${npc.id} schedule entry ${index} must be walkable`,
+        ).toBeDefined();
+      }
+    }
+  }
+});
 
 test('one game minute per ticksPerMinute steps', () => {
   const game = freshGame();
@@ -50,6 +77,7 @@ test('submitted commands reach the next tick only, sanitized and in order', () =
     TOOL_DATA,
     WEATHER_DATA,
     MARKET_DATA,
+    NPC_DATA,
     undefined,
     [(_state, ctx) => seen.push(ctx.commands)],
   );
@@ -85,6 +113,24 @@ test('the player walks on held intent and render interpolates between ticks', ()
     moving: true,
   });
   expect(game.playerPose(1, pose).x).toBe(x);
+});
+
+test('NPC poses project sim-owned schedules and interpolate path movement', () => {
+  const game = freshGame();
+  const poses: NpcPose[] = [];
+  game.state.clock.minute = 389;
+  for (let tick = 0; tick < cal.clock.ticksPerMinute; tick++) game.step();
+  const mbah = game.npcPoses(1, poses).find((pose) => pose.id === 'mbah_hita');
+  expect(mbah).toMatchObject({ active: true, area: 'bale', x: -2.5, z: 2.5 });
+
+  game.state.clock.minute = 540;
+  game.step();
+  const currentX = game.state.npcs.find((npc) => npc.id === 'mbah_hita')?.x ?? 0;
+  const before = game.npcPoses(0, poses).find((pose) => pose.id === 'mbah_hita')?.x ?? 0;
+  const halfway = game.npcPoses(0.5, poses).find((pose) => pose.id === 'mbah_hita');
+  expect(currentX).toBeGreaterThan(before);
+  expect(halfway).toMatchObject({ moving: true });
+  expect(halfway?.x).toBeCloseTo((before + currentX) / 2);
 });
 
 test('farm commands run against the area field', () => {

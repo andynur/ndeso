@@ -1,0 +1,17 @@
+// Mbah Hita lives with family in the kampung. M2-09 owns only visits inside the currently
+// authored Balé area; his home route arrives with kampung streaming in M2-13.
+{
+  id: 'mbah_hita',
+  nameKey: 'npcs:mbah_hita.name',
+  titleKey: 'npcs:mbah_hita.title',
+  bioKey: 'npcs:mbah_hita.bio',
+  origin: 'Baledono, Purworejo, Jawa Tengah',
+  schedules: [{
+    entries: [
+      { time: '06:30', area: 'bale', x: -2.5, z: 2.5, anim: 'idle' },
+      { time: '09:00', area: 'bale', x: 3.5, z: 2.5, anim: 'idle' },
+      { time: '12:00', area: 'bale', x: -2.5, z: 4.5, anim: 'idle' },
+      { time: '16:30', area: 'bale', x: -2.5, z: 2.5, anim: 'idle' },
+    ],
+  }],
+}

@@ -1,0 +1,15 @@
+// Pak Harjo's Balé calls are authored here. His RT and kampung stops wait for M2-13.
+{
+  id: 'pak_harjo',
+  nameKey: 'npcs:pak_harjo.name',
+  titleKey: 'npcs:pak_harjo.title',
+  bioKey: 'npcs:pak_harjo.bio',
+  origin: 'Baledono, Purworejo, Jawa Tengah',
+  schedules: [{
+    entries: [
+      { time: '08:00', area: 'bale', x: -8.5, z: 4.5, anim: 'idle' },
+      { time: '10:00', area: 'bale', x: -3.5, z: 3.5, anim: 'idle' },
+      { time: '14:00', area: 'bale', x: -8.5, z: 4.5, anim: 'idle' },
+    ],
+  }],
+}

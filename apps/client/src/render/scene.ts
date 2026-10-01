@@ -21,7 +21,11 @@ import { CropView, type FarmTilesView, type WateredSoilPalette } from './crops/c
 import type { CropPalette } from './crops/placeholder-crop-atlas.ts';
 import { createDayNight, createLightingSample } from './lighting/day-night.ts';
 import { clampPixelRatio, QUALITY } from './quality/presets.ts';
-import { buildPlaceholderCharAtlas, type CharPalette } from './sprites/placeholder-atlas.ts';
+import {
+  buildPlaceholderCharAtlas,
+  buildPlaceholderCharAtlasVariants,
+  type CharPalette,
+} from './sprites/placeholder-atlas.ts';
 import { createAtlasTexture, type Sprite, SpriteBatch } from './sprites/sprite-batch.ts';
 import { RainField } from './weather/rain-field.ts';
 
@@ -45,15 +49,20 @@ const LAMP_RANGE = 7;
 /** A plain plane to stand on until the area's models have loaded (or if they cannot). */
 const FALLBACK_GROUND_SIZE = 40;
 
-/** Placeholder villagers: four stand in a row west of the spawn, facing each way. */
-const IDLE_DXS = [-8.5, -7, -5.5, -4] as const;
-
 /** The player as the sim last left them, interpolated to this frame (`game/game.ts`). */
 export interface PlayerView {
   readonly x: number;
   readonly z: number;
   readonly facing: Dir;
   readonly moving: boolean;
+}
+
+/** Read-only NPC projection; authored schedule and movement remain sim-owned. */
+export interface NpcView extends PlayerView {
+  readonly id: string;
+  readonly area: string;
+  readonly anim: string;
+  readonly active: boolean;
 }
 
 /**
@@ -65,6 +74,7 @@ export interface ScenePalette {
   /** The fallback ground plane shown before the area's models arrive. */
   readonly ground: number;
   readonly character: CharPalette;
+  readonly npcCharacters: readonly { readonly id: string; readonly palette: CharPalette }[];
   readonly crop: CropPalette;
   readonly wateredSoil: WateredSoilPalette;
 }
@@ -134,6 +144,7 @@ export interface SceneHandle {
     clockMinute: number,
     weather: WeatherId,
     player: PlayerView,
+    npcs: readonly NpcView[],
   ): void;
   readonly camera: CameraControls;
   dispose(): void;
@@ -196,8 +207,16 @@ export function createScene(options: SceneOptions): SceneHandle {
 
   const { atlas, pixels } = buildPlaceholderCharAtlas(palette.character);
   const atlasTexture = createAtlasTexture(pixels, atlas);
-  const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 64 });
+  const sprites = new SpriteBatch({ atlas, texture: atlasTexture, capacity: 1 });
   scene.add(sprites.mesh);
+  const npcAtlasData = buildPlaceholderCharAtlasVariants(palette.npcCharacters);
+  const npcAtlasTexture = createAtlasTexture(npcAtlasData.pixels, npcAtlasData.atlas);
+  const npcSprites = new SpriteBatch({
+    atlas: npcAtlasData.atlas,
+    texture: npcAtlasTexture,
+    capacity: palette.npcCharacters.length,
+  });
+  scene.add(npcSprites.mesh);
   const cropView = new CropView({
     areaId: area.id,
     crops,
@@ -213,31 +232,32 @@ export function createScene(options: SceneOptions): SceneHandle {
   const playerSprite = sprites.add({ x: spawnX, y: 0, z: spawnZ, tag: 'idle_down' });
   rig.snapTo(spawnX, spawnZ);
   let playerWasMoving = false;
-  // World headings (dx, dz): at yaw 0 these face down, up, right and left.
-  const idleHeadings = [
-    [0, 1],
-    [0, -1],
-    [1, 0],
-    [-1, 0],
-  ] as const;
-  const idlers = idleHeadings.map(([dx, dz], i) => ({
-    // Staggered starts, so the four do not breathe in lockstep.
-    sprite: sprites.add({
-      x: spawnX + (IDLE_DXS[i] ?? 0),
-      y: 0,
-      z: spawnZ,
-      tag: 'idle_down',
-      startSeconds: i * 0.3,
-    }),
-    dx,
-    dz,
-  }));
+  const npcSpriteById = new Map<string, Sprite>();
+  for (const [index, character] of palette.npcCharacters.entries()) {
+    npcSpriteById.set(
+      character.id,
+      npcSprites.add({
+        x: 0,
+        y: 0,
+        z: 0,
+        tag: `${character.id}_idle_down`,
+        startSeconds: index * 0.3,
+        visible: false,
+      }),
+    );
+  }
   const facing: Facing = { facing: 'down', flipX: false };
 
   /** Picks the tag for a world heading as the camera currently sees it. */
-  function face(sprite: Sprite, action: 'idle' | 'walk', dx: number, dz: number): void {
+  function face(
+    sprite: Sprite,
+    action: 'idle' | 'walk',
+    dx: number,
+    dz: number,
+    prefix = '',
+  ): void {
     rig.screenFacing(dx, dz, facing);
-    sprite.tag = TAGS[action][facing.facing];
+    sprite.tag = `${prefix}${TAGS[action][facing.facing]}`;
     sprite.flipX = facing.flipX;
   }
 
@@ -309,6 +329,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     ambient.intensity = light.ambientIntensity;
     sky.setRGB(light.haze[0], light.haze[1], light.haze[2]);
     sprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
+    npcSprites.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
     cropView.tint.setRGB(light.spriteTint[0], light.spriteTint[1], light.spriteTint[2]);
     for (const lamp of lamps) lamp.intensity = light.lamps * LAMP_INTENSITY;
   }
@@ -319,6 +340,7 @@ export function createScene(options: SceneOptions): SceneHandle {
     clockMinute: number,
     nextWeather: WeatherId,
     player: PlayerView,
+    npcs: readonly NpcView[],
   ): void {
     if (nextWeather !== weather) {
       weather = nextWeather;
@@ -335,8 +357,22 @@ export function createScene(options: SceneOptions): SceneHandle {
     playerWasMoving = player.moving;
     const heading = HEADINGS[player.facing];
     face(playerSprite, player.moving ? 'walk' : 'idle', heading[0], heading[1]);
-    for (const idler of idlers) face(idler.sprite, 'idle', idler.dx, idler.dz);
+    for (const npc of npcs) {
+      const sprite = npcSpriteById.get(npc.id);
+      if (!sprite) continue;
+      const visible = npc.active && npc.area === area.id;
+      if (visible && npc.moving && (!sprite.visible || !sprite.tag.includes('_walk_'))) {
+        sprite.startSeconds = simSeconds;
+      }
+      sprite.visible = visible;
+      if (!visible) continue;
+      sprite.x = npc.x;
+      sprite.z = npc.z;
+      const npcHeading = HEADINGS[npc.facing];
+      face(sprite, npc.moving ? 'walk' : 'idle', npcHeading[0], npcHeading[1], `${npc.id}_`);
+    }
     sprites.update(simSeconds);
+    npcSprites.update(simSeconds);
 
     rig.pose(cameraPose);
     rain.update(simSeconds, cameraPose.lookX, cameraPose.lookZ);
@@ -374,12 +410,15 @@ export function createScene(options: SceneOptions): SceneHandle {
     canvas.removeEventListener('webglcontextrestored', onContextRestored);
     sprites.dispose();
     atlasTexture.dispose();
+    npcSprites.dispose();
+    npcAtlasTexture.dispose();
     cropView.group.removeFromParent();
     cropView.dispose();
     rain.points.removeFromParent();
     rain.dispose();
     scene.traverse((object) => {
-      if (!(object instanceof Mesh) || object === sprites.mesh) return;
+      if (!(object instanceof Mesh) || object === sprites.mesh || object === npcSprites.mesh)
+        return;
       object.geometry.dispose();
       const { material } = object;
       for (const slot of Array.isArray(material) ? material : [material]) slot.dispose();

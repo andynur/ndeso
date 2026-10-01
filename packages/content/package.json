@@ -11,6 +11,7 @@
     "./inventory": "./src/inventory-bundle.ts",
     "./lighting": "./src/lighting-bundle.ts",
     "./market": "./src/market-bundle.ts",
+    "./npcs": "./src/npcs-bundle.ts",
     "./areas": "./src/areas-bundle.ts",
     "./player": "./src/player-bundle.ts",
     "./weather": "./src/weather-bundle.ts",

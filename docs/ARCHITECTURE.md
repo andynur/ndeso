@@ -87,6 +87,11 @@ interface GameState {
     stamina: number; maxStamina: number; money: number;
     inventory: Slot[]; dayEndSummary: DayEndSummary | null;
   };
+  npcs: Array<{
+    id: string; area: AreaId; x: number; z: number; facing: Dir;
+    anim: string; active: boolean; moving: boolean;
+    scheduleDay: number; scheduleIndex: number; entryIndex: number;
+  }>;
   farm: { tiles: Record<TileKey, Tile> };           // TileKey = `${area}:${x},${z}`
   shipping: { items: Record<ItemId, number> };      // setoran contents awaiting tomorrow
   animals: Record<AnimalId, Animal>;

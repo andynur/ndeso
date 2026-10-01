@@ -1,0 +1,17 @@
+// Bu Ratna comes after her fresh-produce stall closes at 11:30 (M2-08). The Pasar
+// Baledono half of this route remains off-screen until the pasar area lands in M2-13.
+{
+  id: 'bu_ratna',
+  nameKey: 'npcs:bu_ratna.name',
+  titleKey: 'npcs:bu_ratna.title',
+  bioKey: 'npcs:bu_ratna.bio',
+  origin: 'Baledono, Purworejo, Jawa Tengah',
+  schedules: [{
+    entries: [
+      { time: '12:00', area: 'bale', x: 10.5, z: 3.5, anim: 'idle' },
+      { time: '13:00', area: 'bale', x: 4.5, z: 3.5, anim: 'idle' },
+      { time: '15:00', area: 'bale', x: -1.5, z: 5.5, anim: 'idle' },
+      { time: '17:00', area: 'bale', x: 4.5, z: 3.5, anim: 'idle' },
+    ],
+  }],
+}

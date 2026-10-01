@@ -4,13 +4,20 @@ import { CROP_DATA } from '@bale/content/crops';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
 import { LIGHTING_DATA } from '@bale/content/lighting';
 import { MARKET_DATA } from '@bale/content/market';
+import { NPC_DATA } from '@bale/content/npcs';
 import { PLAYER_DATA } from '@bale/content/player';
 import { WEATHER_DATA } from '@bale/content/weather';
 import { parseAssetManifest, TICK_MS } from '@bale/shared';
 import { createGameState } from '@bale/sim';
 import { clockViewOf } from './game/clock-view.ts';
 import { createCommandMapper } from './game/commands.ts';
-import { createGame, type PlayerPose, parseStartClock, parseStartWeather } from './game/game.ts';
+import {
+  createGame,
+  type NpcPose,
+  type PlayerPose,
+  parseStartClock,
+  parseStartWeather,
+} from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
 import { PerfMeter } from './game/perf-meter.ts';
 import { createQualityControl, initialPreset, type QualityControl } from './game/quality.ts';
@@ -53,6 +60,38 @@ const PALETTE: ScenePalette = {
     shirt: colorHex('hujan400'),
     trousers: colorHex('indigo700'),
   },
+  npcCharacters: [
+    {
+      id: 'mbah_hita',
+      palette: {
+        outline: colorHex('ink900'),
+        skin: colorHex('kayu500'),
+        hair: colorHex('ink500'),
+        shirt: colorHex('kunyit400'),
+        trousers: colorHex('indigo700'),
+      },
+    },
+    {
+      id: 'pak_harjo',
+      palette: {
+        outline: colorHex('ink900'),
+        skin: colorHex('kayu500'),
+        hair: colorHex('indigo900'),
+        shirt: colorHex('sawah700'),
+        trousers: colorHex('indigo700'),
+      },
+    },
+    {
+      id: 'bu_ratna',
+      palette: {
+        outline: colorHex('ink900'),
+        skin: colorHex('kayu500'),
+        hair: colorHex('indigo900'),
+        shirt: colorHex('terakota500'),
+        trousers: colorHex('indigo700'),
+      },
+    },
+  ],
   crop: {
     leaf: colorHex('sawah500'),
     leafDark: colorHex('sawah700'),
@@ -155,7 +194,7 @@ async function boot(): Promise<void> {
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state = createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA);
+  const state = createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA, NPC_DATA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
   const startWeather = parseStartWeather(params.get('weather'));
@@ -169,6 +208,7 @@ async function boot(): Promise<void> {
     TOOL_DATA,
     WEATHER_DATA,
     MARKET_DATA,
+    NPC_DATA,
     state,
   );
   const syncHotbar = () => {
@@ -202,6 +242,7 @@ async function boot(): Promise<void> {
   syncMarket();
   scene.syncFarm(game.state.farm.tiles);
   const playerPose: PlayerPose = { x: 0, z: 0, facing: 'south', moving: false };
+  const npcPoses: NpcPose[] = [];
   const commands = createCommandMapper();
   const now = BROWSER_FRAMES.now;
   const meter = debug ? new PerfMeter() : undefined;
@@ -248,6 +289,7 @@ async function boot(): Promise<void> {
           clockMinute,
           game.state.weather.today,
           game.playerPose(alpha, playerPose),
+          game.npcPoses(alpha, npcPoses),
         );
         const events = game.drainEvents();
         // Crop batches are rebuilt only when the farm changes. `dayStarted` matters even

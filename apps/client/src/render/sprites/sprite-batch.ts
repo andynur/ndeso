@@ -30,6 +30,8 @@ export interface Sprite {
   flipX: boolean;
   /** Sim time the current tag started; animation time counts from here. */
   startSeconds: number;
+  /** Invisible sprites keep their caller-owned handle but consume no GPU instance. */
+  visible: boolean;
 }
 
 export type SpriteInit = Pick<Sprite, 'x' | 'y' | 'z' | 'tag'> & Partial<Sprite>;
@@ -169,7 +171,7 @@ export class SpriteBatch {
       throw new RangeError(`sprite batch is full (${this.options.capacity})`);
     }
     getTag(this.options.atlas, init.tag);
-    const sprite: Sprite = { flipX: false, startSeconds: 0, ...init };
+    const sprite: Sprite = { flipX: false, startSeconds: 0, visible: true, ...init };
     this.sprites.push(sprite);
     return sprite;
   }
@@ -193,22 +195,24 @@ export class SpriteBatch {
     const { atlas } = this.options;
     const matrices = this.mesh.instanceMatrix.array;
     const uvs = this.uvRects.array;
-    for (let i = 0; i < this.sprites.length; i++) {
-      const sprite = this.sprites[i] as Sprite;
-      const m = i * 16;
+    let visible = 0;
+    for (const sprite of this.sprites) {
+      if (!sprite.visible) continue;
+      const m = visible * 16;
       matrices[m + 12] = sprite.x;
       matrices[m + 13] = sprite.y;
       matrices[m + 14] = sprite.z;
       const frame = frameAt(atlas, sprite.tag, simSeconds - sprite.startSeconds);
       const f = frame * 4;
-      const o = i * 4;
+      const o = visible * 4;
       // Mirroring swaps the left and right edges, as `frameUv(..., true)` does.
       uvs[o] = this.frameUvs[f + (sprite.flipX ? 2 : 0)] as number;
       uvs[o + 1] = this.frameUvs[f + 1] as number;
       uvs[o + 2] = this.frameUvs[f + (sprite.flipX ? 0 : 2)] as number;
       uvs[o + 3] = this.frameUvs[f + 3] as number;
+      visible++;
     }
-    this.mesh.count = this.sprites.length;
+    this.mesh.count = visible;
     this.mesh.instanceMatrix.needsUpdate = true;
     this.uvRects.needsUpdate = true;
   }
