@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M2 — Vertical slice. M2-11 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
+- **Milestone:** M2 — Vertical slice. M2-12 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-12 (3-slot save/load, validation, backup, migrations scaffold, autosave). Human: M1-10 device test ([`device-test.md`](device-test.md)).
+- **Next task:** M2-13 (`pasar` area, transitions/streaming/fade, `kampung` façade). Human: M1-10 device test ([`device-test.md`](device-test.md)).
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
-- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. NPC schedules contain Balé visits only until M2-13 authors the `kampung` and `pasar` areas. The market panel opens from a temporary HUD button until then; haggling/friendship modifiers remain deferred to the social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s and NPC speed 2 tiles/s are untuned. Villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 194.9 KB brotli of 350 KB.
+- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. Until M2-17, boot always uses save slot 1 and a valid backup is recovered with a console warning rather than a restore prompt. NPC schedules contain Balé visits only until M2-13 authors the `kampung` and `pasar` areas. The market panel opens from a temporary HUD button until then; haggling/friendship modifiers remain deferred to the social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s and NPC speed 2 tiles/s are untuned. Villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 210.4 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-10-02 · M2-12 · feat/M2-12-save-load
+- Done: added a versioned Zod save schema for the complete sim snapshot, a migration chain scaffold, three IndexedDB slots, last-good backup and restore/fallback paths, active-play-time metadata, and serialized autosaves on `dayEnded` and before a hidden tab pauses. Slot 1 boots automatically until M2-17 adds title-screen slot choice.
+- Tests: `bun run check` green (494 tests); build + `check:size` green (shell 210.4 KB brotli, first frame 219.9 KB). Browser QA could not run because Chrome automation was blocked by an open extension panel and the in-app browser was unavailable.
+- Notes/decisions: a save snapshots state before awaiting IndexedDB so the live sim cannot mutate the write; concurrent triggers are queued. Only a valid primary becomes `:backup`, preserving the last known-good copy. Persistent storage is requested once after the first successful write.
+- Next: M2-13.
+
 ### 2026-10-01 · M2-11 · feat/M2-11-chicken
 - Done: authored a collision-backed kandang ayam and one ayam kampung, with sim-authoritative daily feeding, once-daily petting, affection/neglect, deterministic ordinary/good egg production, coop collection, and setoran sale. Added generated coop/chicken placeholders plus a localized care-status projection.
 - Tests: `bun run check` green (490 tests); build + `check:size` green (shell 196.3 KB brotli, first frame 205.9 KB). Browser visual QA could not run because no in-app or connected browser was available.

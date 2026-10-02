@@ -143,10 +143,10 @@ requestAnimationFrame(frame):
 | `pwa` | SW registration, update prompt ("New version, reload?"), install prompt |
 
 ## 5. Save format
-- `SaveFile = { format: 'bale-save', version, createdAt, updatedAt, meta: { day, money, playTime }, state: GameState }`.
+- `SaveFile = { format: 'bale-save', version, createdAt, updatedAt, meta: { day, money, playTime }, state: GameState }`; `playTime` is active foreground time in milliseconds.
 - **`day` is the only time stored.** The Masehi, Javanese and Hijri dates, musim, pasaran and weton are all pure projections of it ([ADR-0009](adr/0009-masehi-jawa-hijri.md)), so storing them would let the save disagree with itself after a data fix.
 - Validated with Zod on load. `migrations[version] = (old) => new` chain in `packages/shared/src/migrations.ts`.
-- Before overwriting a slot, copy the previous save to `:backup`. On validation failure, offer to restore the backup.
+- Before overwriting a slot, copy the previous valid save to `:backup`. A corrupt primary exposes the last valid backup for recovery; the pre-title-screen boot uses that backup, and M2-17 owns the visible restore choice.
 - Export: JSON → gzip (`CompressionStream`) → base64url file download.
 
 ## 6. Content pipeline

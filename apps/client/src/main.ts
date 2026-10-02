@@ -28,6 +28,8 @@ import { createQualityControl, initialPreset, type QualityControl } from './game
 import { initI18n, loadNamespace, locale, t } from './i18n/index.ts';
 import { attachInput, createInput } from './platform/input/input.ts';
 import { localSettings } from './platform/settings.ts';
+import { createAutosaveController } from './platform/storage/autosave.ts';
+import { createSaveStore } from './platform/storage/save-store.ts';
 import { cropViewNeedsSync } from './render/crops/crop-view.ts';
 import { guessPreset } from './render/quality/presets.ts';
 import {
@@ -156,6 +158,18 @@ async function boot(): Promise<void> {
   });
 
   const params = new URLSearchParams(location.search);
+  // M2-17 will put slot choice on the title screen. Until then the vertical slice owns slot 1.
+  const saveStore = createSaveStore();
+  const loaded = await saveStore.load(1).catch((error) => {
+    // biome-ignore lint/suspicious/noConsole: storage failure must remain diagnosable.
+    console.error('[save] could not read slot 1; starting a new game', error);
+    return undefined;
+  });
+  if (loaded?.source === 'backup') {
+    // M2-17 will surface the restore choice; the valid backup is safe to play in the meantime.
+    // biome-ignore lint/suspicious/noConsole: a recovered corrupt save must be visible to a developer.
+    console.warn('[save] slot 1 primary was invalid; loaded its backup', loaded.primaryError);
+  }
   // PERFORMANCE_BUDGET §4: `?quality=` → the stored choice → a guess the benchmark checks.
   const quality = initialPreset(params.get('quality'), localSettings, () =>
     guessPreset({
@@ -212,14 +226,9 @@ async function boot(): Promise<void> {
   });
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state = createGameState(
-    CALENDAR_DATA,
-    BALE_AREA,
-    PLAYER_DATA,
-    WEATHER_DATA,
-    NPC_DATA,
-    ANIMAL_DATA,
-  );
+  const state =
+    loaded?.save.state ??
+    createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA, NPC_DATA, ANIMAL_DATA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
   const startWeather = parseStartWeather(params.get('weather'));
@@ -237,6 +246,13 @@ async function boot(): Promise<void> {
     ANIMAL_DATA,
     state,
   );
+  const autosave = createAutosaveController(saveStore, 1, loaded?.save.meta.playTime);
+  const requestAutosave = () => {
+    void autosave.save(game.state).catch((error) => {
+      // biome-ignore lint/suspicious/noConsole: a failed autosave must remain diagnosable.
+      console.error('[save] autosave failed', error);
+    });
+  };
   const syncHotbar = () => {
     hotbarView.value = inventoryViewOf(
       game.state.player.inventory,
@@ -343,6 +359,7 @@ async function boot(): Promise<void> {
           animalViews,
         );
         const events = game.drainEvents();
+        if (events.some((event) => event.type === 'dayEnded')) requestAutosave();
         // Crop batches are rebuilt only when the farm changes. `dayStarted` matters even
         // when no crop-specific event fires because ordinary growth can cross a stage.
         if (cropViewNeedsSync(events)) scene.syncFarm(game.state.farm.tiles);
@@ -425,19 +442,21 @@ async function boot(): Promise<void> {
     quality.benchmark,
   );
 
-  // ARCHITECTURE §4.1: pause the sim and the renderer while hidden, so the game clock does
-  // not run on in a background tab and the battery is spared. Saving first joins here once
-  // there is a save (M2).
+  // ARCHITECTURE §4.1: snapshot first, then pause the sim and renderer while hidden.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+      autosave.pause();
+      requestAutosave();
       loop.stop();
     } else {
+      autosave.resume();
       control?.reset();
       loop.start();
     }
   });
 
   if (!document.hidden) loop.start();
+  else autosave.pause();
   window.__GAME_READY__ = true;
 }
 
