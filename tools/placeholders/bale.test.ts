@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { BALE_AREA } from '../../packages/content/src/areas-bundle.ts';
+import { BALE_AREA } from '../../packages/content/src/area-bale.ts';
 import { buildGround, buildJoglo } from './bale.ts';
 
 function bounds(positions: Float32Array) {

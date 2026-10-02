@@ -1,5 +1,5 @@
 import { ANIMAL_DATA } from '@bale/content/animals';
-import { BALE_AREA } from '@bale/content/areas';
+import { type AreaId, loadArea } from '@bale/content/areas';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
 import { loadDialogStories } from '@bale/content/dialog';
@@ -9,7 +9,7 @@ import { MARKET_DATA } from '@bale/content/market';
 import { NPC_DATA } from '@bale/content/npcs';
 import { PLAYER_DATA } from '@bale/content/player';
 import { WEATHER_DATA } from '@bale/content/weather';
-import { parseAssetManifest, TICK_MS } from '@bale/shared';
+import { type AreaDef, type AssetManifest, parseAssetManifest, TICK_MS } from '@bale/shared';
 import { createGameState } from '@bale/sim';
 import { clockViewOf } from './game/clock-view.ts';
 import { createCommandMapper } from './game/commands.ts';
@@ -19,10 +19,12 @@ import {
   createGame,
   type NpcPose,
   type PlayerPose,
+  parseStartArea,
   parseStartClock,
   parseStartWeather,
 } from './game/game.ts';
 import { createLoop, type FrameScheduler } from './game/loop.ts';
+import { facesMarket } from './game/market-target.ts';
 import { PerfMeter } from './game/perf-meter.ts';
 import { createQualityControl, initialPreset, type QualityControl } from './game/quality.ts';
 import { initI18n, loadNamespace, locale, t } from './i18n/index.ts';
@@ -36,14 +38,13 @@ import {
   type AnimalView,
   createScene,
   type RenderStats,
-  type SceneHandle,
   type ScenePalette,
 } from './render/scene.ts';
 import { loadAreaModels } from './render/world/area-models.ts';
 import { animalStatusView, animalStatusViewOf } from './ui/animal-status.tsx';
 import { hotbarView, inventoryViewOf } from './ui/hotbar.tsx';
 import { clockView } from './ui/hud-clock.tsx';
-import { marketView, marketViewOf } from './ui/market.tsx';
+import { marketOpen, marketView, marketViewOf } from './ui/market.tsx';
 import { mountOverlay } from './ui/mount.ts';
 import { perfView } from './ui/perf-overlay.tsx';
 import { playerStatusView } from './ui/player-status.tsx';
@@ -126,24 +127,50 @@ const BROWSER_FRAMES: FrameScheduler = {
   now: () => performance.now(),
 };
 
-async function loadWorld(scene: SceneHandle): Promise<void> {
+async function loadManifest(): Promise<{ manifest: AssetManifest; url: URL } | undefined> {
   const manifestUrl = new URL('assets/manifest.json', document.baseURI);
   try {
     const response = await fetch(manifestUrl);
     if (!response.ok) throw new Error(`${manifestUrl.href}: HTTP ${response.status}`);
     const manifest = parseAssetManifest(await response.json());
     if (!manifest) throw new Error(`${manifestUrl.href} is not an asset manifest`);
-    scene.setWorld(await loadAreaModels(BALE_AREA, manifest, manifestUrl));
+    return { manifest, url: manifestUrl };
   } catch (error) {
     // biome-ignore lint/suspicious/noConsole: a missing world must be visible to a developer.
     console.error('[assets] area models failed to load; showing the fallback ground', error);
+    return undefined;
   }
+}
+
+async function loadWorld(area: AreaDef, assets: Awaited<ReturnType<typeof loadManifest>>) {
+  if (!assets) return undefined;
+  try {
+    return await loadAreaModels(area, assets.manifest, assets.url);
+  } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: a missing area must remain diagnosable.
+    console.error(`[assets] ${area.id} models failed to load; showing fallback ground`, error);
+    return undefined;
+  }
+}
+
+function waitForFade(element: HTMLElement): Promise<void> {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => {
+      element.removeEventListener('transitionend', done);
+      resolve();
+    };
+    element.addEventListener('transitionend', done, { once: true });
+    setTimeout(done, 450);
+  });
 }
 
 async function boot(): Promise<void> {
   const canvas = document.querySelector<HTMLCanvasElement>('#stage');
   const overlay = document.querySelector<HTMLElement>('#overlay');
   if (!canvas || !overlay) throw new Error('index.html is missing #stage or #overlay');
+
+  const BALE_AREA = await loadArea('bale');
 
   await initI18n(navigator.languages);
   // The HUD clock names the months (GDD §3.2).
@@ -170,6 +197,21 @@ async function boot(): Promise<void> {
     // biome-ignore lint/suspicious/noConsole: a recovered corrupt save must be visible to a developer.
     console.warn('[save] slot 1 primary was invalid; loaded its backup', loaded.primaryError);
   }
+  const state =
+    loaded?.save.state ??
+    createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA, NPC_DATA, ANIMAL_DATA);
+  if (state.player.area !== 'bale' && state.player.area !== 'pasar') {
+    // A valid save from a future content set may name an area this build does not ship.
+    state.player.area = BALE_AREA.id;
+    [state.player.x, state.player.z] = BALE_AREA.spawn;
+  }
+  const previewArea = parseStartArea(params.get('area'));
+  const startingArea =
+    (previewArea ?? state.player.area) === 'pasar' ? await loadArea('pasar') : BALE_AREA;
+  if (previewArea) {
+    state.player.area = startingArea.id;
+    [state.player.x, state.player.z] = startingArea.spawn;
+  }
   // PERFORMANCE_BUDGET §4: `?quality=` → the stored choice → a guess the benchmark checks.
   const quality = initialPreset(params.get('quality'), localSettings, () =>
     guessPreset({
@@ -184,12 +226,17 @@ async function boot(): Promise<void> {
     preset: quality.preset,
     palette: PALETTE,
     lighting: LIGHTING_DATA,
-    area: BALE_AREA,
+    area: startingArea,
     crops: CROP_DATA,
   });
+  let activeAreaId = startingArea.id;
   // ASSET_PIPELINE §3: the area's models come from the generated manifest. The game runs
   // on the fallback ground meanwhile, and stays on it if the models cannot be had.
-  void loadWorld(scene);
+  const assetsPromise = loadManifest();
+  void assetsPromise.then(async (assets) => {
+    const world = await loadWorld(startingArea, assets);
+    if (world && activeAreaId === startingArea.id) scene.setWorld(world);
+  });
 
   // PERFORMANCE_BUDGET §6: render telemetry belongs behind `?debug=perf`.
   const debug = params.get('debug') === 'perf';
@@ -224,11 +271,10 @@ async function boot(): Promise<void> {
         }),
     },
   });
+  const fade = overlay.querySelector<HTMLElement>('.area-fade');
+  if (!fade) throw new Error('overlay did not mount .area-fade');
 
   // `?clock=17:30` opens the day at that hour, to judge its lighting (DESIGN §1.3).
-  const state =
-    loaded?.save.state ??
-    createGameState(CALENDAR_DATA, BALE_AREA, PLAYER_DATA, WEATHER_DATA, NPC_DATA, ANIMAL_DATA);
   const startMinute = parseStartClock(params.get('clock'), CALENDAR_DATA);
   if (startMinute !== undefined) state.clock.minute = startMinute;
   const startWeather = parseStartWeather(params.get('weather'));
@@ -245,7 +291,13 @@ async function boot(): Promise<void> {
     NPC_DATA,
     ANIMAL_DATA,
     state,
+    [],
+    [BALE_AREA, ...(startingArea.id === 'bale' ? [] : [startingArea])],
   );
+  const areas = new Map<string, AreaDef>([
+    [BALE_AREA.id, BALE_AREA],
+    [startingArea.id, startingArea],
+  ]);
   const autosave = createAutosaveController(saveStore, 1, loaded?.save.meta.playTime);
   const requestAutosave = () => {
     void autosave.save(game.state).catch((error) => {
@@ -311,16 +363,41 @@ async function boot(): Promise<void> {
   let lastMinute = Number.NaN;
   let lastDay = Number.NaN;
 
-  const loop = createLoop(
+  let transitioning = false;
+  let loop: ReturnType<typeof createLoop>;
+
+  const transitionTo = async (id: AreaId): Promise<void> => {
+    if (transitioning || id === activeAreaId) return;
+    transitioning = true;
+    loop.stop();
+    fade.classList.add('area-fade--opaque');
+    await waitForFade(fade);
+    const nextArea = areas.get(id) ?? (await loadArea(id));
+    areas.set(id, nextArea);
+    game.registerArea(nextArea);
+    const world = scene.hasCachedArea(id)
+      ? undefined
+      : await loadWorld(nextArea, await assetsPromise);
+    activeAreaId = id;
+    scene.setArea(nextArea, world);
+    scene.syncFarm(game.state.farm.tiles);
+    fade.classList.remove('area-fade--opaque');
+    await waitForFade(fade);
+    transitioning = false;
+    control?.reset();
+    if (!document.hidden) loop.start();
+  };
+
+  loop = createLoop(
     {
       step: meter
         ? () => {
             const start = now();
-            if (!dialog.active) game.step();
+            if (!dialog.active && !marketOpen.value && !transitioning) game.step();
             stepMs += now() - start;
           }
         : () => {
-            if (!dialog.active) game.step();
+            if (!dialog.active && !marketOpen.value && !transitioning) game.step();
           },
       frame(alpha, realDtMs) {
         const frameStart = meter ? now() : 0;
@@ -333,9 +410,9 @@ async function boot(): Promise<void> {
         }
         if (frame.zoom !== 0) scene.camera.zoomBy(frame.zoom);
         const { clock } = game.state;
-        if (dialog.active) {
+        if (dialog.active || marketOpen.value || transitioning) {
           commands.stop(game.submit);
-          if (frame.interact) dialog.advance();
+          if (frame.interact && dialog.active) dialog.advance();
         } else {
           const target = frame.interact
             ? npcInFront(game.state.player, game.state.npcs)
@@ -343,6 +420,9 @@ async function boot(): Promise<void> {
           if (target) {
             commands.stop(game.submit);
             void dialog.start(target.id, dialogScriptAt(clock.minute));
+          } else if (frame.interact && facesMarket(game.state.player, areas.get(activeAreaId))) {
+            commands.stop(game.submit);
+            marketOpen.value = true;
           } else {
             commands.map(frame, scene.camera.yaw, game.submit);
           }
@@ -359,6 +439,13 @@ async function boot(): Promise<void> {
           animalViews,
         );
         const events = game.drainEvents();
+        const areaChanged = events.find((event) => event.type === 'areaChanged') as
+          | { readonly to?: unknown }
+          | undefined;
+        const destination = areaChanged?.to;
+        if (destination === 'bale' || destination === 'pasar') {
+          void transitionTo(destination);
+        }
         if (events.some((event) => event.type === 'dayEnded')) requestAutosave();
         // Crop batches are rebuilt only when the farm changes. `dayStarted` matters even
         // when no crop-specific event fires because ordinary growth can cross a stage.

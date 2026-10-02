@@ -61,6 +61,7 @@ export function App({ controls, dialog, hotbar, playerStatus, market }: AppProps
       {dialog ? <DialogBox {...dialog} /> : null}
       {hotbar ? <Hotbar {...hotbar} /> : null}
       {controls ? <TouchControls {...controls} /> : null}
+      <div class="area-fade" aria-hidden="true" />
     </>
   );
 }

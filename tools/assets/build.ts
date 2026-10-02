@@ -19,8 +19,10 @@ import { existsSync } from 'node:fs';
 import { mkdir, readdir, rm } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import type { AssetManifest } from '@bale/shared';
-import { BALE_AREA } from '../../packages/content/src/areas-bundle.ts';
+import { BALE_AREA } from '../../packages/content/src/area-bale.ts';
+import { PASAR_AREA } from '../../packages/content/src/area-pasar.ts';
 import { balePlaceholders } from '../placeholders/bale.ts';
+import { pasarPlaceholders } from '../placeholders/pasar.ts';
 import { writeGlb } from './glb.ts';
 
 const REPO_ROOT = join(import.meta.dir, '../..');
@@ -77,7 +79,10 @@ export function hashedUrl(id: string, bytes: Uint8Array): string {
 }
 
 export function placeholderSources(): ModelSource[] {
-  return Object.entries(balePlaceholders(BALE_AREA)).map(([id, meshes]) => ({
+  return Object.entries({
+    ...balePlaceholders(BALE_AREA),
+    ...pasarPlaceholders(PASAR_AREA),
+  }).map(([id, meshes]) => ({
     id,
     area: areaOf(id),
     bytes: writeGlb(meshes, 'bale placeholder (tools/placeholders)'),

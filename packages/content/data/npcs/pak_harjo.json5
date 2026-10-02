@@ -1,4 +1,5 @@
-// Pak Harjo's Balé calls are authored here. His RT and kampung stops wait for M2-13.
+// Pak Harjo's Balé calls are authored here. The M2 kampung façade is not navigable, so
+// off-site RT and home stops remain outside the slice schedule.
 {
   id: 'pak_harjo',
   nameKey: 'npcs:pak_harjo.name',

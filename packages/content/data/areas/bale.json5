@@ -10,9 +10,12 @@
   id: 'bale',
   origin: 'Baledono, Purworejo, Jawa Tengah',
   size: [32, 24],
-  models: ['bale_ground_lvl0', 'bale_joglo_lvl0'],
+  models: ['bale_ground_lvl0', 'bale_joglo_lvl0', 'bale_kampung_facade_lvl0'],
   // In front of the joglo, where the camera opens.
   spawn: [0, 3],
+  solids: [],
+  // The southern lane is compressed into the walk to Pasar Baledono (PLACES §2).
+  exits: [{ trigger: { x: -1, z: 10.5, w: 2, d: 1.5 }, to: 'pasar', spawn: [0, 7.5], facing: 'north' }],
   // The overgrown field east of the kalen. 8 × 12 tiles.
   field: { x: 7, z: -6, w: 8, d: 12 },
   // The half-built joglo, just north of the spawn: 8 × 8 including its stone platform.

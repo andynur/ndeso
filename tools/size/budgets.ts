@@ -57,7 +57,6 @@ export const BUDGETS: readonly Budget[] = [
     label: 'Per additional area chunk',
     limit: 3 * MB,
     compressed: true,
-    pendingUntil: 'M2-13',
   },
 ];
 

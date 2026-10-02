@@ -47,7 +47,7 @@ type AnimalsSystemState = AnimalsState &
 
 /** GDD §6 daily care, deterministic production, and adjacent coop interaction. */
 export function createAnimalsSystem(
-  area: Pick<AreaDef, 'id' | 'coop'>,
+  area: Required<Pick<AreaDef, 'id' | 'coop'>>,
   data: AnimalData,
   items: readonly ItemDef[],
 ): System<AnimalsSystemState> {
@@ -153,7 +153,10 @@ function collectProducts(
   }
 }
 
-function facesCoop(player: MovementState['player'], area: Pick<AreaDef, 'id' | 'coop'>): boolean {
+function facesCoop(
+  player: MovementState['player'],
+  area: Required<Pick<AreaDef, 'id' | 'coop'>>,
+): boolean {
   if (player.area !== area.id) return false;
   const [x, z] = area.coop;
   const targetX =

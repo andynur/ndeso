@@ -32,7 +32,10 @@ export function buildCollisionGrid(area: AreaDef): CollisionGrid {
       const x = originX + col + 0.5;
       const z = originZ + row + 0.5;
       const solid =
-        inRect(area.joglo, x, z) || inTile(area.coop, x, z) || inKalen(area.kalen, x, z);
+        area.solids.some((rect) => inRect(rect, x, z)) ||
+        (area.joglo !== undefined && inRect(area.joglo, x, z)) ||
+        (area.coop !== undefined && inTile(area.coop, x, z)) ||
+        (area.kalen !== undefined && inKalen(area.kalen, x, z));
       cells[row * width + col] = solid ? 1 : 0;
     }
   }
@@ -69,7 +72,7 @@ const inRect = (rect: GroundRect, x: number, z: number): boolean =>
 const inTile = ([tx, tz]: Vec2, x: number, z: number): boolean =>
   x >= tx && x < tx + 1 && z >= tz && z < tz + 1;
 
-function inKalen(kalen: AreaDef['kalen'], x: number, z: number): boolean {
+function inKalen(kalen: NonNullable<AreaDef['kalen']>, x: number, z: number): boolean {
   const half = kalen.width / 2;
   const { points } = kalen;
   for (let i = 1; i < points.length; i++) {

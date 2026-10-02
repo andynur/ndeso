@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import type { AreaDef } from '@bale/shared';
+import type { FarmAreaDef } from '@bale/shared';
 import { buildCollisionGrid } from './collision.ts';
 import { buildNavGrid, findNavPath, type NavGrid } from './nav.ts';
 import { loadAreaForTests } from './testing/area-data.ts';
 
-let area: AreaDef;
+let area: FarmAreaDef;
 let nav: NavGrid;
 beforeAll(async () => {
   area = await loadAreaForTests('bale');

@@ -4,13 +4,13 @@
 > The SessionStart hook prints the top of this file into context, so keep it short and current. Put older history under "Log" (newest first) and trim entries older than ~10 sessions into `docs/status-archive.md`.
 
 ## Now
-- **Milestone:** M2 — Vertical slice. M2-12 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
+- **Milestone:** M2 — Vertical slice. M2-13 done. M1-10 device test is still the human's; the human culture round + photo trip remain deferred to M4.
 - **The game:** *Balé* — farming sim set in **Baledono, Purworejo**, a real place. You take over Mbah Hita's ground (he is alive, elderly) and make it *asri, nyaman, tenang*. Read `docs/PLACES.md` before naming any location.
-- **Next task:** M2-13 (`pasar` area, transitions/streaming/fade, `kampung` façade). Human: M1-10 device test ([`device-test.md`](device-test.md)).
+- **Next task:** M2-14 (audio platform: unlock, streamed day/night music, core SFX, locale-aware adzan default). Human: M1-10 device test ([`device-test.md`](device-test.md)).
 - **Blockers:** none.
 - **Harness:** no MCP servers ([ADR-0008](adr/0008-drop-serena-context-mode.md)). Locate with `Grep output_mode:"count"` then read only the hit; `Edit`/`Write` for source files, never `sed -i`; never chain a denied path (`dist/`, `assets/`, `bun.lock`) into a compound command. GitHub work goes through `bun tools/gh.ts`.
 - **Open decisions:** the Javanese year anchor and the per-month prayer-time table are `verified: false` (PRD §12.6) · maghrib look needs a phone check (`?clock=17:30`) · `manggis`/`vanili` crop numbers are starting values, untested by `balance` (M3).
-- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. Until M2-17, boot always uses save slot 1 and a valid backup is recovered with a console warning rather than a restore prompt. NPC schedules contain Balé visits only until M2-13 authors the `kampung` and `pasar` areas. The market panel opens from a temporary HUD button until then; haggling/friendship modifiers remain deferred to the social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s and NPC speed 2 tiles/s are untuned. Villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 210.4 KB brotli of 350 KB.
+- **Known issues:** `smoke` (M2-19) is still a `tools/todo.ts` stub. Until M2-17, boot always uses save slot 1 and a valid backup is recovered with a console warning rather than a restore prompt. The `kampung` remains a two-building façade rather than a navigable area, so Mbah Hita and Pak Harjo only have on-screen Balé schedule legs; haggling/friendship modifiers remain deferred to the social slice. Storm crop damage, overflowing *kalen* and debris are not implemented. Inventory-full and setoran deposits emit events without toasts until the UI feedback pass. Walk speed 4 tiles/s and NPC speed 2 tiles/s are untuned. Villagers have no collision. No blob shadows on Low yet. The M0 placeholder panel still covers the top-left of the view. Shell is 213.8 KB brotli of 350 KB.
 
 ## Log
 <!-- Newest first. Format:
@@ -20,6 +20,12 @@
 - Notes/decisions: …
 - Next: …
 -->
+### 2026-10-02 · M2-13 · feat/M2-13-area-streaming
+- Done: authored a compressed-by-feel Pasar Baledono area and a two-house kampung façade; added validated bidirectional loading edges, sim-owned player area transitions, lazy area data/models, a 400 ms indigo fade, and High-only previous-area retention. Bu Ratna now works at her authored market stall from 04:30–11:30, and interacting there replaces the temporary HUD launcher.
+- Tests: `bun run check` green (502 tests); build + `check:size` green (shell 213.8 KB brotli, first frame 224.9 KB, Pasar chunk 2.4 KB). Chrome rendered Balé and Pasar without console errors at desktop and 390×820; the extension UI blocked the final post-schedule reload, so Bu Ratna's updated placement was source/test-verified rather than visually rechecked.
+- Notes/decisions: the slice keeps `kampung` as scenery, not a third navigable area. Area JSON and GLBs stay outside the core shell; Low/Medium dispose the prior scene while High retains it for the return trip. `?area=pasar` is the local visual-QA shortcut.
+- Next: M2-14.
+
 ### 2026-10-02 · M2-12 · feat/M2-12-save-load
 - Done: added a versioned Zod save schema for the complete sim snapshot, a migration chain scaffold, three IndexedDB slots, last-good backup and restore/fallback paths, active-play-time metadata, and serialized autosaves on `dayEnded` and before a hidden tab pauses. Slot 1 boots automatically until M2-17 adds title-screen slot choice.
 - Tests: `bun run check` green (494 tests); build + `check:size` green (shell 210.4 KB brotli, first frame 219.9 KB). Browser QA could not run because Chrome automation was blocked by an open extension panel and the in-app browser was unavailable.

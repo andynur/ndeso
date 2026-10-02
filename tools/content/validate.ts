@@ -67,6 +67,7 @@ export function validateContentSet(
 ): ContentProblem[] {
   const problems: ContentProblem[] = [];
   const areaIds = new Set<string>();
+  const areas: { readonly file: string; readonly data: import('@bale/shared').AreaDef }[] = [];
   const npcIds = new Set<string>();
   const cropIds = new Set<string>();
   const toolIds = new Set<string>();
@@ -80,6 +81,7 @@ export function validateContentSet(
           problems.push({ file, message: `duplicate area id '${result.data.id}'` });
         }
         areaIds.add(result.data.id);
+        areas.push({ file, data: result.data });
       } else problems.push(...result.errors.map((message) => ({ file, message })));
       continue;
     }
@@ -131,6 +133,40 @@ export function validateContentSet(
       if (!result.ok) problems.push(...result.errors.map((message) => ({ file, message })));
     } else {
       problems.push({ file, message: 'no content schema registered for this file' });
+    }
+  }
+
+  for (const area of areas) {
+    for (const [index, exit] of area.data.exits.entries()) {
+      const destination = areas.find((candidate) => candidate.data.id === exit.to)?.data;
+      if (!destination) {
+        problems.push({
+          file: area.file,
+          message: `exits.${index}.to references missing area '${exit.to}'`,
+        });
+        continue;
+      }
+      const [x, z] = exit.spawn;
+      if (Math.abs(x) > destination.size[0] / 2 || Math.abs(z) > destination.size[1] / 2) {
+        problems.push({
+          file: area.file,
+          message: `exits.${index}.spawn lies outside destination '${exit.to}'`,
+        });
+      }
+      if (
+        destination.exits.some(
+          ({ trigger }) =>
+            x >= trigger.x &&
+            x < trigger.x + trigger.w &&
+            z >= trigger.z &&
+            z < trigger.z + trigger.d,
+        )
+      ) {
+        problems.push({
+          file: area.file,
+          message: `exits.${index}.spawn overlaps a destination exit in '${exit.to}'`,
+        });
+      }
     }
   }
 

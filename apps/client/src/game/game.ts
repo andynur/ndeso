@@ -1,6 +1,7 @@
 import {
   type AreaDef,
   type CalendarData,
+  type FarmAreaDef,
   type MarketData,
   type PlayerData,
   parseClockTime,
@@ -78,6 +79,8 @@ export interface Game {
   playerPose(alpha: number, out: PlayerPose): PlayerPose;
   /** Writes interpolated NPC projections into the caller-owned array. */
   npcPoses(alpha: number, out: NpcPose[]): NpcPose[];
+  /** Adds collision/navigation for a lazily loaded area before the next sim step. */
+  registerArea(area: AreaDef): void;
 }
 
 /**
@@ -86,7 +89,7 @@ export interface Game {
  */
 export function createGame(
   cal: CalendarData,
-  area: AreaDef,
+  area: FarmAreaDef,
   player: PlayerData,
   crops: readonly CropDef[],
   items: readonly ItemDef[],
@@ -97,11 +100,20 @@ export function createGame(
   animals: AnimalData,
   state: GameState = createGameState(cal, area, player, weatherData, npcs, animals),
   after: readonly System<GameState>[] = [],
+  areas: readonly AreaDef[] = [area],
 ): Game {
   const time = createTimeSystem(cal);
   const dayTransition = createDayTransitionSystem(cal);
-  const collision = buildCollisionGrid(area);
-  const movement = createMovementSystem(collision, player);
+  const areaById: Record<string, AreaDef> = Object.fromEntries(
+    areas.map((entry) => [entry.id, entry]),
+  );
+  const collisions: Record<string, ReturnType<typeof buildCollisionGrid>> = Object.fromEntries(
+    areas.map((entry) => [entry.id, buildCollisionGrid(entry)]),
+  );
+  const navs = Object.fromEntries(
+    Object.entries(collisions).map(([id, grid]) => [id, buildNavGrid(grid)]),
+  );
+  const movement = createMovementSystem(collisions, player, areaById);
   const weather = createWeatherSystem(cal, weatherData);
   const farmCommands = createFarmCommandSystem(crops);
   const farmInteraction = createFarmInteractionSystem(crops, items, tools);
@@ -109,7 +121,7 @@ export function createGame(
   const farming = createFarmingSystem(crops, cal);
   const animal = createAnimalsSystem(area, animals, items);
   const stamina = createStaminaSystem(tools);
-  const npc = createNpcSystem(npcs, cal, { [area.id]: buildNavGrid(collision) });
+  const npc = createNpcSystem(npcs, cal, navs);
   const economy = createEconomySystem(area, items, cal, market);
   // The player's position before the last tick, for render interpolation.
   let previousX = state.player.x;
@@ -217,6 +229,13 @@ export function createGame(
       }
       return out;
     },
+    registerArea(nextArea) {
+      if (areaById[nextArea.id]) return;
+      const grid = buildCollisionGrid(nextArea);
+      areaById[nextArea.id] = nextArea;
+      collisions[nextArea.id] = grid;
+      navs[nextArea.id] = buildNavGrid(grid);
+    },
   };
 }
 
@@ -237,4 +256,9 @@ export function parseStartWeather(value: string | null): WeatherId | undefined {
   return value === 'clear' || value === 'cloudy' || value === 'rain' || value === 'storm'
     ? value
     : undefined;
+}
+
+/** `?area=pasar` opens an authored area directly for local visual QA. */
+export function parseStartArea(value: string | null): 'bale' | 'pasar' | undefined {
+  return value === 'bale' || value === 'pasar' ? value : undefined;
 }

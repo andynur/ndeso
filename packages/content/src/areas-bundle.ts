@@ -1,15 +1,15 @@
-/// <reference path="./json5.d.ts" />
-import { type AreaDef, validateArea } from '@bale/shared';
-import bale from '../data/areas/bale.json5';
+import type { AreaDef, FarmAreaDef } from '@bale/shared';
 
-/**
- * Area layouts for the browser (PLACES §3), inlined by the bundler and validated once at
- * import. Only the base exists until area streaming (M2-13).
- */
-function load(raw: unknown, file: string): AreaDef {
-  const result = validateArea(raw, file);
-  if (!result.ok) throw new Error(`invalid area data:\n  ${result.errors.join('\n  ')}`);
-  return result.data;
+export type AreaId = 'bale' | 'pasar';
+
+/** Each branch stays a separate browser chunk; no area data enters the core shell. */
+export async function loadArea(id: 'bale'): Promise<FarmAreaDef>;
+export async function loadArea(id: AreaId): Promise<AreaDef>;
+export async function loadArea(id: AreaId): Promise<AreaDef> {
+  if (id === 'bale') return (await import('./area-bale.ts')).BALE_AREA;
+  return (await import('./area-pasar.ts')).PASAR_AREA;
 }
 
-export const BALE_AREA: AreaDef = load(bale, 'areas/bale.json5');
+export async function loadAreas(): Promise<readonly [FarmAreaDef, AreaDef]> {
+  return Promise.all([loadArea('bale'), loadArea('pasar')]);
+}

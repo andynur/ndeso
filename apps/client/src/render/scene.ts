@@ -140,6 +140,10 @@ export interface SceneHandle {
    * ground. The scene owns and disposes them from then on.
    */
   setWorld(world: Group): void;
+  /** High keeps the previous parsed area in memory for a fast return trip. */
+  hasCachedArea(areaId: string): boolean;
+  /** Atomically replaces the streamed area while the DOM fade is opaque. */
+  setArea(area: AreaDef, world?: Group): void;
   /** Rebuilds farm instances after a farm event; never called every render frame. */
   syncFarm(tiles: FarmTilesView): void;
   /**
@@ -169,7 +173,8 @@ export interface SceneHandle {
  * fallback ground plane and swaps in the area once its models have loaded.
  */
 export function createScene(options: SceneOptions): SceneHandle {
-  const { canvas, palette, lighting, area, crops } = options;
+  const { canvas, palette, lighting, crops } = options;
+  let area = options.area;
   const [spawnX, spawnZ] = area.spawn;
   let preset = options.preset;
   let renderScale = 1;
@@ -238,16 +243,17 @@ export function createScene(options: SceneOptions): SceneHandle {
     capacity: 1,
   });
   scene.add(animalSprites.mesh);
+  const coop = area.coop ?? [0, 0];
   const animalSprite = animalSprites.add({
-    x: area.coop[0] + 0.5,
+    x: coop[0] + 0.5,
     y: 0.35,
-    z: area.coop[1] + 0.5,
+    z: coop[1] + 0.5,
     tag: 'hungry',
   });
-  const cropView = new CropView({
+  let cropView = new CropView({
     areaId: area.id,
     crops,
-    capacity: area.field.w * area.field.d,
+    capacity: area.field ? area.field.w * area.field.d : 1,
     cropPalette: palette.crop,
     soilPalette: palette.wateredSoil,
   });
@@ -255,6 +261,8 @@ export function createScene(options: SceneOptions): SceneHandle {
   const rain = new RainField();
   scene.add(rain.points);
   let weather: WeatherId = 'clear';
+  let currentWorld: Group | undefined;
+  const worldCache = new Map<string, Group>();
   // The player, the camera's follow target; placed by `draw` from the sim every frame.
   const playerSprite = sprites.add({ x: spawnX, y: 0, z: spawnZ, tag: 'idle_down' });
   rig.snapTo(spawnX, spawnZ);
@@ -293,6 +301,10 @@ export function createScene(options: SceneOptions): SceneHandle {
   /** Applies everything the preset owns except the pixel ratio, which `resize` sets. */
   function applyPreset(): void {
     const quality = QUALITY[preset];
+    if (preset !== 'high') {
+      for (const cached of worldCache.values()) disposeWorld(cached);
+      worldCache.clear();
+    }
     rain.setWeather(weather, quality.rainParticles);
     const shadows = quality.shadowMapSize > 0;
     const shadowType = quality.softShadows ? PCFSoftShadowMap : PCFShadowMap;
@@ -307,7 +319,7 @@ export function createScene(options: SceneOptions): SceneHandle {
       sun.shadow.map?.dispose();
       sun.shadow.map = null;
     }
-    while (lamps.length > quality.lamps) lamps.pop()?.removeFromParent();
+    while (lamps.length > 0) lamps.pop()?.removeFromParent();
     for (const [x, y, z] of area.lamps.slice(lamps.length, quality.lamps)) {
       const lamp = new PointLight(LAMP_COLOR, 0, LAMP_RANGE, 2);
       lamp.position.set(x, y, z);
@@ -466,6 +478,8 @@ export function createScene(options: SceneOptions): SceneHandle {
       for (const slot of Array.isArray(material) ? material : [material]) slot.dispose();
     });
     renderer.dispose();
+    for (const cached of worldCache.values()) disposeWorld(cached);
+    worldCache.clear();
   }
 
   return {
@@ -493,7 +507,55 @@ export function createScene(options: SceneOptions): SceneHandle {
         (fallbackGround.material as MeshLambertMaterial).dispose();
         fallbackGround = undefined;
       }
+      currentWorld = world;
       scene.add(world);
+    },
+    hasCachedArea: (areaId) => worldCache.has(areaId),
+    setArea(nextArea, world) {
+      currentWorld?.removeFromParent();
+      if (currentWorld) {
+        if (preset === 'high') worldCache.set(area.id, currentWorld);
+        else disposeWorld(currentWorld);
+      }
+      if (fallbackGround) {
+        fallbackGround.removeFromParent();
+        fallbackGround.geometry.dispose();
+        (fallbackGround.material as MeshLambertMaterial).dispose();
+        fallbackGround = undefined;
+      }
+      area = nextArea;
+      const cached = worldCache.get(area.id);
+      if (cached) worldCache.delete(area.id);
+      if (cached && world) disposeWorld(world);
+      currentWorld = cached ?? world;
+      if (currentWorld) scene.add(currentWorld);
+      else {
+        fallbackGround = new Mesh(
+          new PlaneGeometry(
+            area.size[0] + FALLBACK_GROUND_SIZE,
+            area.size[1] + FALLBACK_GROUND_SIZE,
+          ),
+          new MeshLambertMaterial({ color: palette.ground }),
+        );
+        fallbackGround.rotation.x = -Math.PI / 2;
+        fallbackGround.receiveShadow = true;
+        scene.add(fallbackGround);
+      }
+      cropView.group.removeFromParent();
+      cropView.dispose();
+      cropView = new CropView({
+        areaId: area.id,
+        crops,
+        capacity: area.field ? area.field.w * area.field.d : 1,
+        cropPalette: palette.crop,
+        soilPalette: palette.wateredSoil,
+      });
+      scene.add(cropView.group);
+      const nextCoop = area.coop;
+      animalSprite.x = (nextCoop?.[0] ?? 0) + 0.5;
+      animalSprite.z = (nextCoop?.[1] ?? 0) + 0.5;
+      rig.snapTo(area.spawn[0], area.spawn[1]);
+      applyPreset();
     },
     syncFarm: (tiles) => cropView.sync(tiles),
     stats(out) {
@@ -530,3 +592,12 @@ const HEADINGS: Readonly<Record<Dir, readonly [number, number]>> = {
   south: [0, 1],
   west: [-1, 0],
 };
+
+function disposeWorld(world: Group): void {
+  world.traverse((object) => {
+    if (!(object instanceof Mesh)) return;
+    object.geometry.dispose();
+    const material = object.material;
+    for (const slot of Array.isArray(material) ? material : [material]) slot.dispose();
+  });
+}

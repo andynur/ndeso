@@ -22,6 +22,17 @@ export interface GroundRect {
 
 export type Vec2 = readonly [number, number];
 
+export type Dir = 'north' | 'east' | 'south' | 'west';
+
+export interface AreaExit {
+  /** Walkable trigger rectangle at the area's loading edge. */
+  readonly trigger: GroundRect;
+  readonly to: string;
+  /** Safe arrival point in the destination area. */
+  readonly spawn: Vec2;
+  readonly facing: Dir;
+}
+
 /** How wide a plank crossing over the kalen is, along the channel, in tiles. */
 export const CROSSING_WIDTH = 2;
 export type Vec3 = readonly [number, number, number];
@@ -34,26 +45,40 @@ export interface AreaDef {
   /** Asset ids from the manifest, drawn together. */
   readonly models: readonly string[];
   readonly spawn: Vec2;
+  /** Generic solid footprints used by non-farm areas. */
+  readonly solids: readonly GroundRect[];
+  /** Loading edges. Destination ids are checked across the complete content set. */
+  readonly exits: readonly AreaExit[];
+  /** Tile of the fresh-produce stall, when this area contains it. */
+  readonly market?: Vec2;
   /** The farmable ground (GDD §2). */
-  readonly field: GroundRect;
+  readonly field?: GroundRect;
   /** The joglo's footprint, platform included. */
-  readonly joglo: GroundRect;
+  readonly joglo?: GroundRect;
   /** Shipping-box tile on the joglo platform (GDD §7). */
-  readonly setoran: Vec2;
+  readonly setoran?: Vec2;
   /** Chicken-coop tile (GDD §6); solid, with interaction from an adjacent tile. */
-  readonly coop: Vec2;
+  readonly coop?: Vec2;
   /**
    * The kalen, a channel of `width` along axis-aligned segments between `points`. It blocks
    * walking except at `crossings`: points on the channel where a plank (*wot*) spans it,
    * each `CROSSING_WIDTH` wide.
    */
-  readonly kalen: {
+  readonly kalen?: {
     readonly points: readonly Vec2[];
     readonly width: number;
     readonly crossings: readonly Vec2[];
   };
   /** Teras lamps (DESIGN §1.3: max 4 active). */
   readonly lamps: readonly Vec3[];
+}
+
+/** The Balé base has the systems that are intentionally absent from ordinary areas. */
+export type FarmAreaDef = AreaDef &
+  Required<Pick<AreaDef, 'field' | 'joglo' | 'setoran' | 'coop' | 'kalen'>>;
+
+export function isFarmArea(area: AreaDef): area is FarmAreaDef {
+  return Boolean(area.field && area.joglo && area.setoran && area.coop && area.kalen);
 }
 
 export type AreaResult =
@@ -66,6 +91,12 @@ type Field =
   | 'size'
   | 'models'
   | 'spawn'
+  | 'solids'
+  | 'exits'
+  | 'trigger'
+  | 'to'
+  | 'facing'
+  | 'market'
   | 'field'
   | 'joglo'
   | 'setoran'
@@ -112,7 +143,7 @@ export function validateArea(raw: unknown, file: string): AreaResult {
   const err = (message: string) => errors.push(`${file}: ${message}`);
   if (!isObj(raw)) return { ok: false, errors: [`${file}: is not an object`] };
 
-  const { id, origin, size, models, spawn, setoran, coop, kalen, lamps } = raw;
+  const { id, origin, size, models, spawn, setoran, coop, kalen, lamps, market } = raw;
   if (typeof id !== 'string' || !SNAKE_ID.test(id)) err('id must be a snake_case id');
   if (origin !== AREA_ORIGIN) err(`origin must be '${AREA_ORIGIN}' (PLACES §1)`);
   if (!isTuple(size, 2) || size.some((n) => n <= 0)) err('size must be [w, d], both > 0');
@@ -129,6 +160,9 @@ export function validateArea(raw: unknown, file: string): AreaResult {
     ? [(size[0] as number) / 2, (size[1] as number) / 2]
     : [0, 0];
   const inside = (x: number, z: number) => Math.abs(x) <= halfW && Math.abs(z) <= halfD;
+  if (isTuple(spawn, 2) && !inside(spawn[0] as number, spawn[1] as number)) {
+    err('spawn lies outside the area');
+  }
 
   const rects: Record<'field' | 'joglo', GroundRect | undefined> = {
     field: undefined,
@@ -136,6 +170,7 @@ export function validateArea(raw: unknown, file: string): AreaResult {
   };
   for (const name of ['field', 'joglo'] as const) {
     const rect = raw[name];
+    if (rect === undefined) continue;
     if (
       !isObj(rect) ||
       !isFiniteNumber(rect.x) ||
@@ -155,9 +190,9 @@ export function validateArea(raw: unknown, file: string): AreaResult {
     rects[name] = value;
   }
 
-  if (!isTuple(setoran, 2) || !setoran.every(Number.isInteger)) {
+  if (setoran !== undefined && (!isTuple(setoran, 2) || !setoran.every(Number.isInteger))) {
     err('setoran must be an integer [x, z] tile');
-  } else {
+  } else if (isTuple(setoran, 2)) {
     const [x, z] = setoran as [number, number];
     const joglo = rects.joglo;
     if (
@@ -168,9 +203,9 @@ export function validateArea(raw: unknown, file: string): AreaResult {
     }
   }
 
-  if (!isTuple(coop, 2) || !coop.every(Number.isInteger)) {
+  if (coop !== undefined && (!isTuple(coop, 2) || !coop.every(Number.isInteger))) {
     err('coop must be an integer [x, z] tile');
-  } else {
+  } else if (isTuple(coop, 2)) {
     const [x, z] = coop as [number, number];
     if (!inside(x, z) || !inside(x + 1, z + 1)) err('coop tile lies outside the area');
     if (isTuple(spawn, 2)) {
@@ -186,17 +221,18 @@ export function validateArea(raw: unknown, file: string): AreaResult {
     }
   }
 
-  let kalenDef: AreaDef['kalen'] | undefined;
+  let kalenDef: AreaDef['kalen'];
   if (
-    !isObj(kalen) ||
-    !Array.isArray(kalen.points) ||
-    kalen.points.length < 2 ||
-    !kalen.points.every((p) => isTuple(p, 2)) ||
-    !isFiniteNumber(kalen.width) ||
-    kalen.width <= 0
+    kalen !== undefined &&
+    (!isObj(kalen) ||
+      !Array.isArray(kalen.points) ||
+      kalen.points.length < 2 ||
+      !kalen.points.every((p) => isTuple(p, 2)) ||
+      !isFiniteNumber(kalen.width) ||
+      kalen.width <= 0)
   ) {
     err('kalen must be { points: [[x, z], …≥ 2], width > 0 }');
-  } else {
+  } else if (isObj(kalen)) {
     const points = kalen.points as unknown as Vec2[];
     for (let i = 1; i < points.length; i++) {
       const [ax, az] = points[i - 1] as Vec2;
@@ -212,7 +248,95 @@ export function validateArea(raw: unknown, file: string): AreaResult {
         if (!onPolyline(points, point)) err(`kalen crossing ${i} must lie on the kalen`);
       }
     }
-    kalenDef = { points, width: kalen.width, crossings: crossings as unknown as Vec2[] };
+    kalenDef = {
+      points,
+      width: kalen.width as number,
+      crossings: crossings as unknown as Vec2[],
+    };
+  }
+
+  const readRectList = (name: 'solids'): GroundRect[] => {
+    const value = raw[name] ?? [];
+    if (!Array.isArray(value)) {
+      err(`${name} must be a list of { x, z, w, d } rectangles`);
+      return [];
+    }
+    const result: GroundRect[] = [];
+    for (const [index, entry] of value.entries()) {
+      if (
+        !isObj(entry) ||
+        !isFiniteNumber(entry.x) ||
+        !isFiniteNumber(entry.z) ||
+        !isFiniteNumber(entry.w) ||
+        !isFiniteNumber(entry.d) ||
+        entry.w <= 0 ||
+        entry.d <= 0
+      ) {
+        err(`${name}.${index} must be { x, z, w, d } with w, d > 0`);
+        continue;
+      }
+      const rect = { x: entry.x, z: entry.z, w: entry.w, d: entry.d };
+      if (!inside(rect.x, rect.z) || !inside(rect.x + rect.w, rect.z + rect.d)) {
+        err(`${name}.${index} lies outside the area`);
+      }
+      result.push(rect);
+    }
+    return result;
+  };
+  const solids = readRectList('solids');
+
+  const exits: AreaExit[] = [];
+  const rawExits = raw.exits ?? [];
+  if (!Array.isArray(rawExits)) err('exits must be a list');
+  else {
+    for (const [index, exit] of rawExits.entries()) {
+      if (!isObj(exit)) {
+        err(`exits.${index} must be an object`);
+        continue;
+      }
+      const trigger = exit.trigger;
+      const facing = exit.facing;
+      if (
+        !isObj(trigger) ||
+        !isFiniteNumber(trigger.x) ||
+        !isFiniteNumber(trigger.z) ||
+        !isFiniteNumber(trigger.w) ||
+        !isFiniteNumber(trigger.d) ||
+        trigger.w <= 0 ||
+        trigger.d <= 0
+      ) {
+        err(`exits.${index}.trigger must be { x, z, w, d } with w, d > 0`);
+        continue;
+      }
+      const rect = { x: trigger.x, z: trigger.z, w: trigger.w, d: trigger.d };
+      if (!inside(rect.x, rect.z) || !inside(rect.x + rect.w, rect.z + rect.d)) {
+        err(`exits.${index}.trigger lies outside the area`);
+      }
+      if (typeof exit.to !== 'string' || !SNAKE_ID.test(exit.to)) {
+        err(`exits.${index}.to must be a snake_case area id`);
+        continue;
+      }
+      if (!isTuple(exit.spawn, 2)) {
+        err(`exits.${index}.spawn must be [x, z]`);
+        continue;
+      }
+      if (facing !== 'north' && facing !== 'east' && facing !== 'south' && facing !== 'west') {
+        err(`exits.${index}.facing must be north, east, south, or west`);
+        continue;
+      }
+      exits.push({ trigger: rect, to: exit.to, spawn: exit.spawn as unknown as Vec2, facing });
+    }
+  }
+
+  if (market !== undefined && (!isTuple(market, 2) || !market.every(Number.isInteger))) {
+    err('market must be an integer [x, z] tile');
+  } else if (isTuple(market, 2) && !inside(market[0] as number, market[1] as number)) {
+    err('market tile lies outside the area');
+  }
+
+  const baseFeatures = [rects.field, rects.joglo, setoran, coop, kalenDef];
+  if (baseFeatures.some(Boolean) && !baseFeatures.every(Boolean)) {
+    err('field, joglo, setoran, coop, and kalen must be defined together');
   }
 
   if (
@@ -232,11 +356,14 @@ export function validateArea(raw: unknown, file: string): AreaResult {
       size: size as unknown as Vec2,
       models: models as string[],
       spawn: spawn as unknown as Vec2,
-      field: rects.field as GroundRect,
-      joglo: rects.joglo as GroundRect,
-      setoran: setoran as unknown as Vec2,
-      coop: coop as unknown as Vec2,
-      kalen: kalenDef as AreaDef['kalen'],
+      solids,
+      exits,
+      ...(market === undefined ? {} : { market: market as unknown as Vec2 }),
+      ...(rects.field === undefined ? {} : { field: rects.field }),
+      ...(rects.joglo === undefined ? {} : { joglo: rects.joglo }),
+      ...(setoran === undefined ? {} : { setoran: setoran as unknown as Vec2 }),
+      ...(coop === undefined ? {} : { coop: coop as unknown as Vec2 }),
+      ...(kalenDef === undefined ? {} : { kalen: kalenDef }),
       lamps: lamps as unknown as Vec3[],
     },
   };

@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import type { AreaDef } from '@bale/shared';
+import type { FarmAreaDef } from '@bale/shared';
 import { boxHitsSolid, buildCollisionGrid, type CollisionGrid, isSolid } from './collision.ts';
 import { loadAreaForTests } from './testing/area-data.ts';
 
-let area: AreaDef;
+let area: FarmAreaDef;
 let grid: CollisionGrid;
 beforeAll(async () => {
   area = await loadAreaForTests('bale');

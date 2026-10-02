@@ -35,9 +35,15 @@ describe('sources', () => {
     ]);
   });
 
-  test('every model the base area lists has a placeholder', () => {
+  test('every slice area model has a placeholder', () => {
     const ids = placeholderSources().map((s) => s.id);
-    expect(ids.sort()).toEqual(['bale_ground_lvl0', 'bale_joglo_lvl0']);
+    expect(ids.sort()).toEqual([
+      'bale_ground_lvl0',
+      'bale_joglo_lvl0',
+      'bale_kampung_facade_lvl0',
+      'pasar_ground_lvl0',
+      'pasar_stalls_lvl0',
+    ]);
   });
 
   test('placeholders are deterministic', () => {

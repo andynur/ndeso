@@ -1,8 +1,12 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { type AreaDef, type PlayerData, TICKS_PER_SECOND } from '@bale/shared';
+import { type FarmAreaDef, type PlayerData, TICKS_PER_SECOND } from '@bale/shared';
 import { buildCollisionGrid, type CollisionGrid } from '../collision.ts';
 import type { Command } from '../commands.ts';
-import { loadAreaForTests, loadPlayerForTests } from '../testing/area-data.ts';
+import {
+  loadAreaForTests,
+  loadPlayerForTests,
+  loadWorldAreaForTests,
+} from '../testing/area-data.ts';
 import { createContext, type System } from '../types.ts';
 import {
   createMovementSystem,
@@ -12,7 +16,7 @@ import {
   type MovementState,
 } from './movement.ts';
 
-let area: AreaDef;
+let area: FarmAreaDef;
 let grid: CollisionGrid;
 let data: PlayerData;
 let system: System<MovementState>;
@@ -103,6 +107,29 @@ describe('movement system', () => {
     const state = run(fresh(), TICKS_PER_SECOND * 20, [move(0, 1)]);
     expect(state.player.z).toBeLessThan(area.size[1] / 2 - data.radius);
     expect(state.player.z).toBeCloseTo(area.size[1] / 2 - data.radius, 3);
+  });
+
+  test('an authored loading edge moves the player to the destination and emits once', async () => {
+    const pasar = await loadWorldAreaForTests('pasar');
+    const transition = createMovementSystem(
+      { bale: grid, pasar: buildCollisionGrid(pasar) },
+      data,
+      { bale: area, pasar },
+    );
+    const state = fresh();
+    state.player.x = 0;
+    state.player.z = 10.4;
+    const ctx = createContext(1, [move(0, 1)]);
+    transition(state, ctx);
+    expect(state.player).toMatchObject({
+      area: 'pasar',
+      x: 0,
+      z: 7.5,
+      facing: 'north',
+      moveX: 0,
+      moveZ: 0,
+    });
+    expect(ctx.events).toEqual([{ type: 'areaChanged', from: 'bale', to: 'pasar' }]);
   });
 
   test('catching up several ticks at once walks as far as ticking one by one', () => {

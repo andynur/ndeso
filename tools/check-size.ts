@@ -15,7 +15,8 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { brotliCompressSync, constants } from 'node:zlib';
 import { LOCALE_NAMESPACES, SUPPORTED_LOCALES } from '@bale/shared';
-import { BALE_AREA } from '../packages/content/src/areas-bundle.ts';
+import { BALE_AREA } from '../packages/content/src/area-bale.ts';
+import { PASAR_AREA } from '../packages/content/src/area-pasar.ts';
 import {
   BUDGETS,
   type Budget,
@@ -96,12 +97,39 @@ async function measureFirstFrame(shell: Measurement): Promise<Measurement> {
   for await (const path of new Bun.Glob('{ui,calendar}-*.js').scan({ cwd: DIST })) {
     locales.push(path);
   }
-  const rest = await brotliTotal(['assets/manifest.json', ...models, ...locales]);
+  const areaModules: string[] = [];
+  for await (const path of new Bun.Glob('area-bale-*.js').scan({ cwd: DIST })) {
+    areaModules.push(path);
+  }
+  if (areaModules.length !== 1) {
+    throw new Error(`expected one lazy bale area module, found ${areaModules.length}`);
+  }
+  const rest = await brotliTotal(['assets/manifest.json', ...areaModules, ...models, ...locales]);
   return measure(
     budget('first-playable-frame'),
     (shell.actual ?? 0) + rest,
-    `shell + ${locales.length} locale chunks + manifest + ${models.length} models`,
+    `shell + ${locales.length} locale chunks + area data + manifest + ${models.length} models`,
   );
+}
+
+/** The lazy area module plus every model fetched on first entry to that area. */
+async function measureAreaChunk(): Promise<Measurement> {
+  const manifest = (await Bun.file(join(DIST, 'assets', 'manifest.json')).json()) as Record<
+    string,
+    { url: string }
+  >;
+  const modules: string[] = [];
+  for await (const path of new Bun.Glob('area-pasar-*.js').scan({ cwd: DIST })) modules.push(path);
+  if (modules.length !== 1) {
+    throw new Error(`expected one lazy pasar area module, found ${modules.length}`);
+  }
+  const models = PASAR_AREA.models.map((id) => {
+    const entry = manifest[id];
+    if (!entry) throw new Error(`dist/assets/manifest.json has no ${id}`);
+    return `assets/${entry.url}`;
+  });
+  const files = [...modules, ...models];
+  return measure(budget('area-chunk'), await brotliTotal(files), files.join(', '));
 }
 
 /** Locale bundles are measured at the source, where they are authored and reviewed. */
@@ -135,17 +163,20 @@ async function main(): Promise<number> {
   const { GITHUB_SHA } = process.env;
   const shell = await measureShell();
   const firstFrame = await measureFirstFrame(shell);
+  const areaChunk = await measureAreaChunk();
   const locales = await measureLocales();
   const pending = BUDGETS.filter((entry) => entry.pendingUntil !== undefined).map((entry) =>
     measure(entry, undefined),
   );
-  const all = [shell, firstFrame, ...locales, ...pending];
+  const all = [shell, firstFrame, areaChunk, ...locales, ...pending];
 
   console.log('\n  size budget — PERFORMANCE_BUDGET §2\n');
   console.log(`  ${'shell (brotli)'}`);
   console.log(line(shell));
   console.log('\n  first playable frame (brotli)');
   console.log(line(firstFrame));
+  console.log('\n  additional area chunks (brotli)');
+  console.log(line(areaChunk));
   console.log('\n  locale namespaces (raw)');
   for (const measurement of locales) console.log(line(measurement));
   console.log('\n  not measurable yet');

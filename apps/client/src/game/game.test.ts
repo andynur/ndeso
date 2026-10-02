@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { ANIMAL_DATA } from '@bale/content/animals';
-import { BALE_AREA } from '@bale/content/areas';
+import { BALE_AREA } from '@bale/content/area-bale';
+import { PASAR_AREA } from '@bale/content/area-pasar';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { CROP_DATA } from '@bale/content/crops';
 import { ITEM_DATA, TOOL_DATA } from '@bale/content/inventory';
@@ -13,6 +14,7 @@ import {
   createGame,
   type NpcPose,
   type PlayerPose,
+  parseStartArea,
   parseStartClock,
   parseStartWeather,
 } from './game.ts';
@@ -32,18 +34,23 @@ const freshGame = () =>
     ANIMAL_DATA,
   );
 
-test('every authored Balé schedule leg has a walkable nav route', () => {
-  const nav = buildNavGrid(buildCollisionGrid(BALE_AREA));
+test('every authored schedule leg lands on walkable area navigation', () => {
+  const navByArea = {
+    bale: buildNavGrid(buildCollisionGrid(BALE_AREA)),
+    pasar: buildNavGrid(buildCollisionGrid(PASAR_AREA)),
+  };
   for (const npc of NPC_DATA) {
     for (const rule of npc.schedules) {
       for (let index = 0; index < rule.entries.length; index++) {
         const entry = rule.entries[index];
         const previous = rule.entries[Math.max(0, index - 1)];
-        expect(entry?.area).toBe('bale');
+        const nav = entry ? navByArea[entry.area as keyof typeof navByArea] : undefined;
         expect(
-          entry && previous
+          entry && previous && entry.area === previous.area && nav
             ? findNavPath(nav, [previous.x, previous.z], [entry.x, entry.z])
-            : undefined,
+            : entry && nav
+              ? findNavPath(nav, [entry.x, entry.z], [entry.x, entry.z])
+              : undefined,
           `${npc.id} schedule entry ${index} must be walkable`,
         ).toBeDefined();
       }
@@ -320,4 +327,9 @@ test('?weather= accepts only a known weather id', () => {
   expect(parseStartWeather('rain')).toBe('rain');
   expect(parseStartWeather('sunny')).toBeUndefined();
   expect(parseStartWeather(null)).toBeUndefined();
+});
+
+test('?area= accepts only a vertical-slice area', () => {
+  expect(parseStartArea('pasar')).toBe('pasar');
+  expect(parseStartArea('kampung')).toBeUndefined();
 });

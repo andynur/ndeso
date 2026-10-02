@@ -5,7 +5,7 @@
  * assets' ids so Blender exports replace them without a code change.
  */
 
-import { type AreaDef, CROSSING_WIDTH } from '@bale/shared';
+import { CROSSING_WIDTH, type FarmAreaDef } from '@bale/shared';
 import { colorHex } from '../../apps/client/src/ui/tokens.ts';
 import type { GlbMesh } from '../assets/glb.ts';
 import { MeshBuilder, type V3 } from '../assets/mesh-builder.ts';
@@ -35,7 +35,7 @@ function lcg(seed: number): () => number {
 }
 
 /** Ground plane with the kalen cut into it, the field's bare soil, and its weeds. */
-export function buildGround(area: AreaDef): GlbMesh {
+export function buildGround(area: FarmAreaDef): GlbMesh {
   const mesh = new MeshBuilder('ground');
   const [w, d] = area.size;
   const minX = -w / 2 - GROUND_MARGIN;
@@ -152,7 +152,7 @@ export function buildGround(area: AreaDef): GlbMesh {
  * The joglo, half built: the stone platform, the four saka guru and twelve outer posts,
  * the tie beams on two sides only, the bare hip rafters, and one slope tiled.
  */
-export function buildJoglo(area: AreaDef): GlbMesh {
+export function buildJoglo(area: FarmAreaDef): GlbMesh {
   const mesh = new MeshBuilder('joglo');
   const { joglo } = area;
   const cx = joglo.x + joglo.w / 2;
@@ -248,10 +248,27 @@ export function buildJoglo(area: AreaDef): GlbMesh {
   return mesh.build();
 }
 
+/**
+ * Two ordinary kampung house fronts frame the southern lane. They are scenery, not a
+ * surveyed street or an explorable third area in the M2 slice (GDD §13).
+ */
+export function buildKampungFacade(area: FarmAreaDef): GlbMesh {
+  const mesh = new MeshBuilder('kampung_facade');
+  const south = area.size[1] / 2 - 1.5;
+  for (const x of [-8, 4]) {
+    mesh.box([x, 0, south - 3], [x + 4, 2.4, south], STONE);
+    // A restrained limasan-like hip roof placeholder; final art replaces this model id.
+    mesh.pyramid([x + 2, 2.4, south - 1.5], 3.4, 1.35, TILE);
+    mesh.box([x + 1.55, 0, south - 3.04], [x + 2.45, 1.8, south - 2.9], WOOD);
+  }
+  return mesh.build();
+}
+
 /** Every placeholder model for the base area, by asset id (DESIGN §11 naming). */
-export function balePlaceholders(area: AreaDef): Record<string, GlbMesh[]> {
+export function balePlaceholders(area: FarmAreaDef): Record<string, GlbMesh[]> {
   return {
     bale_ground_lvl0: [buildGround(area)],
     bale_joglo_lvl0: [buildJoglo(area)],
+    bale_kampung_facade_lvl0: [buildKampungFacade(area)],
   };
 }

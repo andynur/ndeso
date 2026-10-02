@@ -3,7 +3,6 @@ import type { CalendarData, MarketData, PasaranId } from '@bale/shared';
 import type { ItemDef } from '@bale/shared/content';
 import { type InventorySlot, marketIsOpen, marketSellPrice, pasaranOf } from '@bale/sim';
 import { signal } from '@preact/signals';
-import { useState } from 'preact/hooks';
 import { format, t } from '../i18n/index.ts';
 
 export interface MarketItemView {
@@ -27,6 +26,8 @@ export interface MarketView {
 }
 
 export const marketView = signal<MarketView | null>(null);
+/** The panel is client-ephemeral; prices, hours, inventory, and money remain sim-owned. */
+export const marketOpen = signal(false);
 
 export function marketViewOf(
   player: { readonly money: number; readonly inventory: readonly InventorySlot[] },
@@ -82,64 +83,62 @@ export interface MarketProps {
 }
 
 export function Market({ onBuy, onSell }: MarketProps) {
-  const [shown, setShown] = useState(false);
   const view = marketView.value;
   if (!view) return null;
   const marketName = t(view.nameKey as I18nKey);
   const sellerName = t(view.sellerNameKey as I18nKey);
-  return (
-    <>
-      <button type="button" class="market-launch" onClick={() => setShown(true)}>
-        {t('market.visit', { market: marketName })}
-      </button>
-      {shown ? (
-        <div class="market" role="dialog" aria-modal="true" aria-labelledby="market-title">
-          <section class="market__panel">
-            <header class="market__header">
-              <div>
-                <h2 id="market-title">
-                  {t('market.title', { seller: sellerName, market: marketName })}
-                </h2>
-                <p>
-                  {t('market.hours', {
-                    open: clockLabel(view.openMinute),
-                    close: clockLabel(view.closeMinute),
-                  })}
-                </p>
-              </div>
-              <button type="button" class="market__close" onClick={() => setShown(false)}>
-                {t('common.back')}
-              </button>
-            </header>
-            <div class={`market__status ${view.isOpen ? '' : 'market__status--closed'}`}>
-              {view.isOpen
-                ? view.favorable
-                  ? t('market.status.favorable', { pasaran: t(`pasaran.${view.pasaran}`) })
-                  : t('market.status.open')
-                : t('market.status.closed')}
-            </div>
-            <p class="market__money">
-              {t('hud.money')}: <strong>{format.value.money(view.money)}</strong>
+  return marketOpen.value ? (
+    <div class="market" role="dialog" aria-modal="true" aria-labelledby="market-title">
+      <section class="market__panel">
+        <header class="market__header">
+          <div>
+            <h2 id="market-title">
+              {t('market.title', { seller: sellerName, market: marketName })}
+            </h2>
+            <p>
+              {t('market.hours', {
+                open: clockLabel(view.openMinute),
+                close: clockLabel(view.closeMinute),
+              })}
             </p>
-            <MarketList
-              title={t('market.buy_seeds')}
-              actionKey="market.buy"
-              items={view.seeds}
-              disabled={(item) => !view.isOpen || view.money < item.price}
-              onAction={onBuy}
-            />
-            <MarketList
-              title={t('market.sell_produce')}
-              actionKey="market.sell"
-              items={view.produce}
-              disabled={(item) => !view.isOpen || item.owned < 1}
-              onAction={onSell}
-            />
-          </section>
+          </div>
+          <button
+            type="button"
+            class="market__close"
+            onClick={() => {
+              marketOpen.value = false;
+            }}
+          >
+            {t('common.back')}
+          </button>
+        </header>
+        <div class={`market__status ${view.isOpen ? '' : 'market__status--closed'}`}>
+          {view.isOpen
+            ? view.favorable
+              ? t('market.status.favorable', { pasaran: t(`pasaran.${view.pasaran}`) })
+              : t('market.status.open')
+            : t('market.status.closed')}
         </div>
-      ) : null}
-    </>
-  );
+        <p class="market__money">
+          {t('hud.money')}: <strong>{format.value.money(view.money)}</strong>
+        </p>
+        <MarketList
+          title={t('market.buy_seeds')}
+          actionKey="market.buy"
+          items={view.seeds}
+          disabled={(item) => !view.isOpen || view.money < item.price}
+          onAction={onBuy}
+        />
+        <MarketList
+          title={t('market.sell_produce')}
+          actionKey="market.sell"
+          items={view.produce}
+          disabled={(item) => !view.isOpen || item.owned < 1}
+          onAction={onSell}
+        />
+      </section>
+    </div>
+  ) : null;
 }
 
 function MarketList({

@@ -38,6 +38,12 @@ describe('validateArea', () => {
     ]);
   });
 
+  test('keeps the spawn inside the area', () => {
+    expect(errorsOf({ ...valid(), spawn: [30, 0] })).toEqual([
+      'a.json5: spawn lies outside the area',
+    ]);
+  });
+
   test('keeps the field inside the area', () => {
     expect(errorsOf({ ...valid(), field: { x: 12, z: 0, w: 8, d: 2 } })).toEqual([
       'a.json5: field lies outside the area',
@@ -85,7 +91,7 @@ describe('validateArea', () => {
     const raw: { kalen: { crossings?: unknown } } = valid();
     delete raw.kalen.crossings;
     const result = validateArea(raw, 'a.json5');
-    expect(result.ok && result.data.kalen.crossings).toEqual([]);
+    expect(result.ok && result.data.kalen?.crossings).toEqual([]);
   });
 
   test('no more lamps than any preset can light', () => {

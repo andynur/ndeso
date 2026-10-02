@@ -27,7 +27,7 @@ type EconomySystemState = EconomyState &
  * her authored morning hours, with stable seeded produce prices for the current day.
  */
 export function createEconomySystem(
-  area: Pick<AreaDef, 'id' | 'setoran'>,
+  area: Required<Pick<AreaDef, 'id' | 'setoran'>>,
   items: readonly ItemDef[],
   cal: CalendarData,
   market: MarketData,
@@ -212,7 +212,7 @@ function payShipment(
 
 function facesSetoran(
   player: MovementState['player'],
-  area: Pick<AreaDef, 'id' | 'setoran'>,
+  area: Required<Pick<AreaDef, 'id' | 'setoran'>>,
 ): boolean {
   if (player.area !== area.id) return false;
   const [x, z] = area.setoran;

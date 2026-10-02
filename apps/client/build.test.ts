@@ -71,7 +71,7 @@ describe('build', () => {
 describe('precache-manifest.json', () => {
   test('lists index.html plus exactly what it links, as root-absolute URLs', () => {
     expect(manifest.shell[0]).toBe('/index.html');
-    expect(manifest.shell).toHaveLength(3); // html + entry js + css
+    expect(manifest.shell).toHaveLength(4); // html + entry js + shared preload + css
     for (const path of manifest.shell) expect(path.startsWith('/')).toBe(true);
   });
 
@@ -81,6 +81,12 @@ describe('precache-manifest.json', () => {
     const localeChunks = result.files.filter((file) => /^(ui|glossary)-/.test(file.path));
     expect(localeChunks.length).toBeGreaterThan(0);
     for (const chunk of localeChunks) expect(manifest.shell).not.toContain(`/${chunk.path}`);
+  });
+
+  test('leaves lazily loaded area data out of the shell', () => {
+    const areaChunks = result.files.filter((file) => /^area-(bale|pasar)-.+\.js$/.test(file.path));
+    expect(areaChunks).toHaveLength(2);
+    for (const chunk of areaChunks) expect(manifest.shell).not.toContain(`/${chunk.path}`);
   });
 
   test('compiles localized Ink into lazy dialog chunks', () => {

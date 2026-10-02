@@ -71,7 +71,7 @@ test('a scripted 14-day chicken care cycle', () => {
     },
   };
   const system = createAnimalsSystem(
-    { id: 'bale', coop: [-6, 2] } as Pick<AreaDef, 'id' | 'coop'>,
+    { id: 'bale', coop: [-6, 2] } as Required<Pick<AreaDef, 'id' | 'coop'>>,
     data,
     items,
   );

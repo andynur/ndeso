@@ -1,4 +1,4 @@
-import type { AreaDef, CalendarData, PlayerData, WeatherData } from '@bale/shared';
+import type { CalendarData, FarmAreaDef, PlayerData, WeatherData } from '@bale/shared';
 import type { AnimalData, NpcDef } from '@bale/shared/content';
 import { type AnimalsState, createAnimalsState } from './systems/animals.ts';
 import { createEconomyState, type EconomyState } from './systems/economy.ts';
@@ -26,7 +26,7 @@ export type GameState = TimeState &
 
 export function createGameState(
   cal: CalendarData,
-  area: AreaDef,
+  area: FarmAreaDef,
   playerData: PlayerData,
   weather: WeatherData,
   npcs: readonly NpcDef[],

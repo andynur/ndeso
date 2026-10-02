@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { ANIMAL_DATA } from '@bale/content/animals';
-import { BALE_AREA } from '@bale/content/areas';
+import { BALE_AREA } from '@bale/content/area-bale';
 import { CALENDAR_DATA } from '@bale/content/calendar';
 import { NPC_DATA } from '@bale/content/npcs';
 import { PLAYER_DATA } from '@bale/content/player';

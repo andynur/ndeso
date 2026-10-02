@@ -1,0 +1,18 @@
+// Pasar Baledono (PLACES §3, ring 2). Layout by feel, not survey: this placeholder
+// represents the rhythm and function of the public market without copying map geometry.
+{
+  id: 'pasar',
+  origin: 'Baledono, Purworejo, Jawa Tengah',
+  size: [28, 20],
+  models: ['pasar_ground_lvl0', 'pasar_stalls_lvl0'],
+  spawn: [0, 7.5],
+  // Two long market sheds with a broad central aisle.
+  solids: [
+    { x: -12, z: -7, w: 8, d: 12 },
+    { x: 4, z: -7, w: 8, d: 12 },
+  ],
+  exits: [{ trigger: { x: -1, z: 8.5, w: 2, d: 1.5 }, to: 'bale', spawn: [0, 9.5], facing: 'north' }],
+  // Bu Ratna's fresh-produce stall, faced from the central aisle.
+  market: [3, -1],
+  lamps: [[-3.5, 2.4, -5], [3.5, 2.4, -5], [-3.5, 2.4, 3], [3.5, 2.4, 3]],
+}

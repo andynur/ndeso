@@ -17,6 +17,30 @@ const crop = {
 };
 
 describe('validateContentSet', () => {
+  test('cross-checks authored area exits', () => {
+    const area = {
+      id: 'bale',
+      origin: 'Baledono, Purworejo, Jawa Tengah',
+      size: [10, 10],
+      models: ['bale_ground_lvl0'],
+      spawn: [0, 0],
+      solids: [],
+      exits: [
+        {
+          trigger: { x: -1, z: 4, w: 2, d: 1 },
+          to: 'missing',
+          spawn: [0, 0],
+          facing: 'north',
+        },
+      ],
+      lamps: [],
+    };
+    expect(validateContentSet(new Map([['areas/bale.json5', area]]), new Set())).toContainEqual({
+      file: 'areas/bale.json5',
+      message: "exits.0.to references missing area 'missing'",
+    });
+  });
+
   test('checks locale references across files', () => {
     const files = new Map<string, unknown>([['crops.json5', [crop]]]);
     const problems = validateContentSet(files, new Set());

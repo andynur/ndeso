@@ -53,9 +53,15 @@ export function facingOf(x: number, z: number, current: Dir): Dir {
 }
 
 /** `data` is `content/data/player.json5`: walk speed and collision size. */
-export function createMovementSystem(grid: CollisionGrid, data: PlayerData): System<MovementState> {
+export function createMovementSystem(
+  collision: CollisionGrid | Readonly<Record<string, CollisionGrid>>,
+  data: PlayerData,
+  areas: Readonly<Record<string, AreaDef>> = {},
+): System<MovementState> {
   const step = data.speed / TICKS_PER_SECOND;
   const r = data.radius;
+  const singleGrid = isCollisionGrid(collision) ? collision : undefined;
+  const grids = singleGrid ? undefined : (collision as Readonly<Record<string, CollisionGrid>>);
   return (state, ctx) => {
     const { player } = state;
     // Only the last intent of the step counts: intents are held, not summed.
@@ -67,10 +73,39 @@ export function createMovementSystem(grid: CollisionGrid, data: PlayerData): Sys
     if (!isMoving(player)) return;
     player.facing = facingOf(player.moveX, player.moveZ, player.facing);
     for (let i = 0; i < ctx.ticks; i++) {
+      const grid = grids?.[player.area] ?? singleGrid;
+      if (!grid) {
+        player.moveX = 0;
+        player.moveZ = 0;
+        return;
+      }
       moveAxis(player, grid, r, 'x', player.moveX * step);
       moveAxis(player, grid, r, 'z', player.moveZ * step);
+      const exit = areas[player.area]?.exits.find(({ trigger }) =>
+        pointInRect(player.x, player.z, trigger),
+      );
+      if (!exit) continue;
+      const from = player.area;
+      player.area = exit.to;
+      player.x = exit.spawn[0];
+      player.z = exit.spawn[1];
+      player.facing = exit.facing;
+      player.moveX = 0;
+      player.moveZ = 0;
+      ctx.emit({ type: 'areaChanged', from, to: exit.to });
+      return;
     }
   };
+}
+
+function isCollisionGrid(
+  value: CollisionGrid | Readonly<Record<string, CollisionGrid>>,
+): value is CollisionGrid {
+  return value.cells instanceof Uint8Array;
+}
+
+function pointInRect(x: number, z: number, rect: AreaDef['exits'][number]['trigger']): boolean {
+  return x >= rect.x && x < rect.x + rect.w && z >= rect.z && z < rect.z + rect.d;
 }
 
 /**

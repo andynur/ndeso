@@ -61,7 +61,7 @@ const items = [
   },
 ] satisfies ItemDef[];
 
-const area = { id: 'bale', coop: [-6, 2] } as Pick<AreaDef, 'id' | 'coop'>;
+const area = { id: 'bale', coop: [-6, 2] } as Required<Pick<AreaDef, 'id' | 'coop'>>;
 
 function state() {
   return {

@@ -1,5 +1,5 @@
-// Mbah Hita lives with family in the kampung. M2-09 owns only visits inside the currently
-// authored Balé area; his home route arrives with kampung streaming in M2-13.
+// Mbah Hita lives with family in the kampung; the M2 façade is scenery rather than a
+// navigable home area, so this vertical-slice schedule records only his Balé visits.
 {
   id: 'mbah_hita',
   nameKey: 'npcs:mbah_hita.name',
